@@ -35,20 +35,27 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private int expired;        // 만료시간
     @Qualifier("Kakao")
     private final OpenIdConnectService kakaoOpenIdConnectService;
-
+    @Qualifier("Google")
+    private final OpenIdConnectService googleOpenIdConnectService;
     private final String REFRESH_TOKEN = "refreshToken";
 
     @Override
     public Map<String,String> authenticateOrRegisterUser(LoginType loginType,String socialJwt) {
         String socialId = "";
+        LoginType socialType = null;
+
         if(loginType.equals(LoginType.KAKAO)){
             socialId = kakaoOpenIdConnectService.getSocialId(socialJwt);
+            socialType = LoginType.KAKAO;
+        }else {
+            socialId = googleOpenIdConnectService.getSocialId(socialJwt);
+            socialType = LoginType.GOOGLE;
         }
 
         Long memberId = null;
         Optional<Member> optionalMember = memberRepository.findBySocialId(socialId);
         if (!optionalMember.isPresent()){
-            Member member = memberRepository.save(Member.createSocialId(socialId,LoginType.KAKAO));
+            Member member = memberRepository.save(Member.createSocialId(socialId,socialType));
             optionalMember = Optional.of(member);
             memberId = member.getId();
         }
