@@ -1,5 +1,6 @@
 package team9499.commitbody.global.authorization.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -24,8 +25,10 @@ public class AuthorizationController {
 
     @PostMapping("/auth")
     public ResponseEntity<?> socialLogin(@RequestParam("type")LoginType loginType,
-                                         @RequestHeader("Authorization") String authorization){
+                                         HttpServletRequest request){
+        String authorization = request.getHeader("Authorization");
         String jwtToken = authorization.replace("Bearer ", "");
+
         Map<String, String> map = authorizationService.authenticateOrRegisterUser(loginType, jwtToken);
 
         ResponseCookie accessCookie = CookieUtils.createCookie(ACCESS_TOKEN, map.get(ACCESS_TOKEN));
