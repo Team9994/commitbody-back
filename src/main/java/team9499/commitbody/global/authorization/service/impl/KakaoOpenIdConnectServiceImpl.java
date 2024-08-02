@@ -36,8 +36,6 @@ public class KakaoOpenIdConnectServiceImpl implements OpenIdConnectService {
 
     @Override
     public String getSocialId(String socialJwtToken) {
-        socialJwtToken = "eyJraWQiOiI5ZjI1MmRhZGQ1ZjIzM2Y5M2QyZmE1MjhkMTJmZWEiLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJjMGY1MzBhOGMyYmQwOGFiZGUzYTE5YTlkYmY2M2EyNyIsInN1YiI6IjMyODEyODI5NTciLCJhdXRoX3RpbWUiOjE3MjI1ODcyNzUsImlzcyI6Imh0dHBzOi8va2F1dGgua2FrYW8uY29tIiwibmlja25hbWUiOiLrr7zsmrAiLCJleHAiOjE3MjI2MDg4NzUsImlhdCI6MTcyMjU4NzI3NSwiZW1haWwiOiJrZXV5ZTYwMzhAbmF2ZXIuY29tIn0.ATSfMiUJ-nRUJWH1WJ8HIhO2170-eWYPdvJvIsQOAkyHgEeY0j4ptW3Ml2ltOewORLx6LjYHAVwbmIjM3I0eSZnkKoJkA78aHLFJ7VJg5ppeukvP_4U8p0UWuAnSEXdOkiU-qur9wIrhl4dRfDYTyhiTcynESRNFC6XseVZ29bgHi4FkWTPvmyVQlNCEyNao4HXIovy5BHh1_3vh5rYxWYMCdiVF3mNzb6nZ0N25TFvoB5qo--3KKdf46VSFD6UL_diUxEQzKJlxchuPiOgOeGRZ5MBSJvtnD8ayyCmDPtsp_C_rxdZMzq7YmAaZ7D45qYxHNnFI6AC9vP5UJNUtMw";
-
         String openIdURL = "https://kauth.kakao.com/.well-known/jwks.json";
 
         String redisPublicKey = redisService.getValue(REDIS_PUBLIC_KEY);
