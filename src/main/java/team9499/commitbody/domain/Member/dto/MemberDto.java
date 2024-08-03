@@ -5,7 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import team9499.commitbody.domain.Member.domain.Gender;
 import team9499.commitbody.domain.Member.domain.LoginType;
+import team9499.commitbody.domain.Member.domain.WeightUnit;
+
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -24,19 +28,19 @@ public class MemberDto {
 
     private String weight;      // 몸무게
 
-    private String birthday;    // 생년월일
+    private LocalDate birthday;    // 생년월일
 
-    private Integer sex;         // 성별 (남 : 0, 여 : 1)
+    private Gender gender;         // 성별(MALE, FEMALE)
 
     private String email;       // 이메일
 
-    private float BoneMineralDensity; // 골극격량
+    private Float BoneMineralDensity; // 골극격량
 
-    private float BodyFatPercentage; // 체지방량
+    private Float BodyFatPercentage; // 체지방량
 
     private boolean notificationEnabled; //알림 유무
 
-    private Integer weightUnit; // 무게 타입 (KG : 1, LB : 0)
+    private WeightUnit weightUnit; // 무게 타입 (KG, LB)
 
     private LoginType loginType;        //로그인 타입 (KAKAO, GOOGLE)
 

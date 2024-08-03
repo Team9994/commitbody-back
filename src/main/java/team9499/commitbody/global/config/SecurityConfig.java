@@ -28,8 +28,10 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(authorizeRequests ->
                 authorizeRequests
-                        .requestMatchers("/api/v1/auth","/actuator/**","/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html","/api-docs/**").permitAll()
-                        .requestMatchers("/api/v1/**").hasRole("USER"));
+                        .requestMatchers("/api/v1/auth","/actuator/**","/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html","/api-docs/**",
+                                "/api/v1/additional-info"
+                                ).permitAll()
+                        .requestMatchers("/api/v1/**").hasAnyRole("USER"));
         return http.build();
     }
 
