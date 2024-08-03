@@ -2,6 +2,9 @@ package team9499.commitbody.global.authorization.service.impl;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.AlgorithmMismatchException;
+import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
@@ -11,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.JwtTokenException;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.authorization.service.OpenIdConnectService;
 import team9499.commitbody.global.redis.RedisService;
@@ -22,6 +25,10 @@ import java.net.URL;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.List;
+
+import static team9499.commitbody.global.Exception.ExceptionStatus.*;
+import static team9499.commitbody.global.Exception.ExceptionStatus.BAD_REQUEST;
+import static team9499.commitbody.global.Exception.ExceptionType.*;
 
 @Slf4j
 @Service
@@ -52,7 +59,7 @@ public class KakaoOpenIdConnectServiceImpl implements OpenIdConnectService {
             String keyId = decodedJWT.getKeyId();
 
             JWK jwk = keys.stream().filter(key -> key.getKeyID().equals(keyId))
-                    .findFirst().orElseThrow(() -> new NoSuchException(ExceptionType.NO_SUCH_DATA));
+                    .findFirst().orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
 
             rsaPublicKey = getPublicKeyFromJWK(jwk);
 
@@ -64,9 +71,21 @@ public class KakaoOpenIdConnectServiceImpl implements OpenIdConnectService {
 
         Algorithm rsa256 = Algorithm.RSA256(rsaPublicKey, null);
 
-        DecodedJWT verify = JWT.require(rsa256).build().verify(socialJwtToken);
+        DecodedJWT verify = getVerify(socialJwtToken, rsa256);
         return verify.getClaim("sub").asString();
 
+    }
+
+    private static DecodedJWT getVerify(String socialJwtToken, Algorithm rsa256) {
+        try {
+            return JWT.require(rsa256).build().verify(socialJwtToken);
+        }catch (AlgorithmMismatchException e){
+            throw new JwtTokenException(UNAUTHORIZED,TOKEN_NOT_FOUND);
+        }catch (JWTDecodeException e){
+            throw new JwtTokenException(BAD_REQUEST,INVALID_TOKEN_MESSAGE);
+        }catch (SignatureVerificationException e){
+            throw new JwtTokenException(UNAUTHORIZED,TOKEN_NOT_FOUND);
+        }
     }
 
     private JWKSet loadJWKSet(String url) {

@@ -1,6 +1,7 @@
 package team9499.commitbody.global.authorization.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -8,21 +9,31 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import team9499.commitbody.domain.Member.domain.Gender;
 import team9499.commitbody.domain.Member.domain.LoginType;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.dto.MemberDto;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
+import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.authorization.domain.RefreshToken;
+import team9499.commitbody.global.authorization.dto.TokenInfoDto;
+import team9499.commitbody.global.authorization.dto.TokenUserInfoResponse;
 import team9499.commitbody.global.authorization.repository.RefreshTokenRepository;
 import team9499.commitbody.global.authorization.service.AuthorizationService;
 import team9499.commitbody.global.authorization.service.OpenIdConnectService;
 import team9499.commitbody.global.utils.JwtUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static team9499.commitbody.global.Exception.ExceptionStatus.*;
+import static team9499.commitbody.global.Exception.ExceptionType.*;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -37,12 +48,16 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final OpenIdConnectService kakaoOpenIdConnectService;
     @Qualifier("Google")
     private final OpenIdConnectService googleOpenIdConnectService;
+
     private final String REFRESH_TOKEN = "refreshToken";
+    private final String JOIN = "회원가입";
+    private final String LOGIN = "로그인";
 
     @Override
-    public Map<String,String> authenticateOrRegisterUser(LoginType loginType,String socialJwt) {
+    public Map<String,Object> authenticateOrRegisterUser(LoginType loginType,String socialJwt) {
         String socialId = "";
         LoginType socialType = null;
+        String joinOrLogin = "";
 
         if(loginType.equals(LoginType.KAKAO)){
             socialId = kakaoOpenIdConnectService.getSocialId(socialJwt);
@@ -54,20 +69,39 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
         Long memberId = null;
         Optional<Member> optionalMember = memberRepository.findBySocialId(socialId);
+
         if (!optionalMember.isPresent()){
             Member member = memberRepository.save(Member.createSocialId(socialId,socialType));
             optionalMember = Optional.of(member);
             memberId = member.getId();
+            joinOrLogin = JOIN;
         }
         else {      //로그인인 경우
             Member member = optionalMember.get();
             memberId = member.getId();
             setSecurityMemberInfo(member);
+            joinOrLogin = LOGIN;
         }
 
-        Map<String, String> tokenMap = jwtUtils.generateAuthTokens(MemberDto.builder().memberId(memberId).build());
-        SaveRefreshToken(memberId, optionalMember, tokenMap.get(REFRESH_TOKEN));
+        Map<String, Object> tokenMap = new LinkedHashMap<>(jwtUtils.generateAuthTokens(MemberDto.builder().memberId(memberId).build()));
+        tokenMap.put("authMode",joinOrLogin);       // 로그인 / 회원가입을 구분하기위함
+
+        if (joinOrLogin.equals(LOGIN)) tokenMap.put("tokenInfo",TokenInfoDto.of(memberId));     //로그인일 경우에만 JWT토큰의대한 정보를 담는다
+        SaveRefreshToken(memberId, optionalMember, (String) tokenMap.get(REFRESH_TOKEN));
         return tokenMap;
+    }
+
+    @Override
+    public TokenUserInfoResponse additionalInfoSave(String nickName, Gender gender, LocalDate birthday, String height, String weight, Float boneMineralDensity, Float bodyFatPercentage, String jwtToken) {
+        String memberId = jwtUtils.accessTokenValid(jwtToken);      // jwt 토큰을 검증후 반환한 memberId
+        Member member = memberRepository.findById(Long.parseLong(memberId)).orElseThrow(() -> new NoSuchException(BAD_REQUEST, No_SUCH_MEMBER));
+
+        if (boneMineralDensity !=null && bodyFatPercentage !=null){
+            member.createAdditionalInfoNotNull(nickName,gender,birthday,height,weight,boneMineralDensity,bodyFatPercentage);
+        }else
+            member.createAdditionalInfoNull(nickName,gender,birthday,height,weight);
+
+        return new TokenUserInfoResponse(TokenInfoDto.of(member.getId()));
     }
 
     /*

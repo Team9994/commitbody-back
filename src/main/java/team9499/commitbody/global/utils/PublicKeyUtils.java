@@ -1,6 +1,7 @@
 package team9499.commitbody.global.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.ServerException;
 
@@ -10,6 +11,8 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+
+import static team9499.commitbody.global.Exception.ExceptionStatus.*;
 
 @Slf4j
 public class PublicKeyUtils {
@@ -47,7 +50,7 @@ public class PublicKeyUtils {
             return (RSAPublicKey) keyFactory.generatePublic(keySpec);
         } catch (InvalidKeySpecException e) {
             log.error("공개키 생성 도중 오류 발생");
-            throw new ServerException(ExceptionType.SERVER_ERROR);
+            throw new ServerException(SERVER_ERROR,ExceptionType.SERVER_ERROR);
         }
     }
     
@@ -59,7 +62,7 @@ public class PublicKeyUtils {
             return KeyFactory.getInstance(type);
         } catch (NoSuchAlgorithmException e) {
             log.error("공개키 변환 과정중 오류 발생");
-            throw new ServerException(ExceptionType.SERVER_ERROR);
+            throw new ServerException(SERVER_ERROR,ExceptionType.SERVER_ERROR);
         }
     }
 }
