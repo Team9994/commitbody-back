@@ -1,5 +1,12 @@
 package team9499.commitbody.global.authorization.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +26,7 @@ import java.util.Map;
 
 import static org.springframework.http.HttpStatus.*;
 
+@Tag(name = "인증 인가",description = "인증 인가관련된 API")
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +35,12 @@ public class AuthorizationController {
 
     private final AuthorizationService authorizationService;
 
+    @Operation(summary = "회원가입/로그인", description = "매 요청마다 OpenID를 type에 전달합니다. 최초 로그인 시에는 회원가입이 진행되며, 이후 로그인이 진행됩니다. 로그인 시에만 tokenInfo에 사용자 정보가 포함됩니다.(authMode: [로그인,회원가입])")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",description = "0K",
+            content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+            examples = @ExampleObject(value = "{\"success\":true,\"message\":\"성공\",\"data\":{\"refreshToken\":\"sample_refresh_token\",\"accessToken\":\"sample_access_token\",\"authMode\":\"타입 종류\",\"tokenInfo\":{\"memberId\":1}}}")))
+    })
     @PostMapping("/auth")
     public ResponseEntity<SuccessResponse> socialLogin(@RequestParam("type")LoginType loginType,
                                          HttpServletRequest request){
@@ -37,6 +51,12 @@ public class AuthorizationController {
         return ResponseEntity.ok().body(new SuccessResponse<>(true,"성공",jwtTokenMap));
     }
 
+    @Operation(summary = "회원가입-추가정보", description = "회원가입의 필요한 추가 개인정보를 작성합니다. 추가정보 입력 완료시 tokenInfo에 사용자 정보가 포함됩니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",description = "0K",
+                    content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                            examples = @ExampleObject(value = "{\"success\":true,\"message\":\"회원가입 성공\",\"data\":{\"tokenInfo\":{\"memberId\":1}}}")))
+    })
     @PostMapping("/additional-info")
     public ResponseEntity<?> additionalInfo(@Valid @RequestBody AdditionalInfoReqeust additionalInfoReqeust, BindingResult result,HttpServletRequest request){
         if (result.hasErrors()){
