@@ -21,4 +21,11 @@ public class ExceptionAdvice {
         e.printStackTrace();
         return ResponseEntity.status(400).body(er);
     }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> jwtTokenException(JwtTokenException e){
+        ErrorResponse er = new ErrorResponse(false, e.getMessage());
+        e.printStackTrace();
+        return ResponseEntity.status(401).body(er);
+    }
 }
