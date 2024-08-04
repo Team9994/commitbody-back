@@ -48,7 +48,7 @@ public class JwtUtils {
      * AccessToken 발급을 담당하는 메서드
      */
     public  String generateAccessToken(MemberDto memberDto) {
-        LocalDateTime now = LocalDateTime.now().plusMinutes(ACCESS_TOKEN_EXPIRED);
+        LocalDateTime now = LocalDateTime.now().plusHours(ACCESS_TOKEN_EXPIRED);
         return creatToken(memberDto, Timestamp.valueOf(now));
     }
 
