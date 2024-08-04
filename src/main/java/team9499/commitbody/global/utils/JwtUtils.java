@@ -48,7 +48,7 @@ public class JwtUtils {
      * AccessToken 발급을 담당하는 메서드
      */
     public  String generateAccessToken(MemberDto memberDto) {
-        LocalDateTime now = LocalDateTime.now().plusHours(ACCESS_TOKEN_EXPIRED);
+        LocalDateTime now = LocalDateTime.now().plusMinutes(ACCESS_TOKEN_EXPIRED);
         return creatToken(memberDto, Timestamp.valueOf(now));
     }
 
@@ -74,8 +74,8 @@ public class JwtUtils {
         try {
             if (!tokenExpiration(jwtToken)) {
                 return verifyToken(jwtToken);
-            }
-            return null;
+            }else
+                throw new JwtTokenException(UNAUTHORIZED,TOKEN_EXPIRED);
         } catch (SignatureVerificationException e) {
             log.error("존재하지 않은 토큰 사용");
             throw new JwtTokenException(UNAUTHORIZED, TOKEN_NOT_FOUND);
