@@ -12,9 +12,8 @@ public interface RedisService {
     void setValues(String key, String value, Duration duration);
     String getValue(String key);
     void deleteValue(String key);
-
     void setMember(Member member);
-
     Optional<Member> getMemberDto(String key);
 
+    boolean nicknameLock(String key, String value,Duration duration);
 }

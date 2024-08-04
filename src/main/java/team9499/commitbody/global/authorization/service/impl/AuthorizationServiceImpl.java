@@ -14,6 +14,7 @@ import team9499.commitbody.domain.Member.domain.LoginType;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.dto.MemberDto;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
+import team9499.commitbody.global.Exception.InvalidUsageException;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.authorization.domain.RefreshToken;
@@ -22,8 +23,10 @@ import team9499.commitbody.global.authorization.dto.TokenUserInfoResponse;
 import team9499.commitbody.global.authorization.repository.RefreshTokenRepository;
 import team9499.commitbody.global.authorization.service.AuthorizationService;
 import team9499.commitbody.global.authorization.service.OpenIdConnectService;
+import team9499.commitbody.global.redis.RedisService;
 import team9499.commitbody.global.utils.JwtUtils;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -39,6 +42,7 @@ import static team9499.commitbody.global.Exception.ExceptionType.*;
 @Transactional
 public class AuthorizationServiceImpl implements AuthorizationService {
 
+    private final RedisService redisService;
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtils jwtUtils;
@@ -52,6 +56,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final String REFRESH_TOKEN = "refreshToken";
     private final String JOIN = "회원가입";
     private final String LOGIN = "로그인";
+    private final String NICKNAME ="nickname_";
 
     @Override
     public Map<String,Object> authenticateOrRegisterUser(LoginType loginType,String socialJwt) {
@@ -104,6 +109,30 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         return new TokenUserInfoResponse(TokenInfoDto.of(member.getId()));
     }
 
+    /**
+     * 회원가입시 닉네임 검증 메서드
+     */
+    @Override
+    public void registerNickname(String nickname) {
+        String redisKey = getNicknameKey(nickname);
+
+        boolean nicknameLock = redisService.nicknameLock(redisKey, nickname, Duration.ofHours(1)); // Redis 닉네임 잠금을 시도.(데이터가 없을시)
+
+        if (nicknameLock) {     // 잠금 성공시
+            try {
+                Member member = memberRepository.existsByNickname(nickname);
+                if (member != null) {       // 닉네임 사용자 존재시
+                    redisService.deleteValue(redisKey);
+                    throw new InvalidUsageException(BAD_REQUEST, DUPLICATE_NICKNAME);
+                }else       // 존재 하지 않을시 저장
+                    redisService.setValues(redisKey, nickname, Duration.ofHours(1));
+            } catch (Exception e) {
+                redisService.deleteValue(redisKey);
+                throw e;
+            }
+        }
+    }
+
     /*
     로그인한 사용자의 정보를 시큐리티 컨텍스트의 저장
      */
@@ -124,5 +153,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                     RefreshToken.of(optionalMember.get(), refreshToken, LocalDateTime.now().plusMonths(expired))
             );
         }
+    }
+
+    private String getNicknameKey(String nickname){
+        return NICKNAME+nickname;
     }
 }
