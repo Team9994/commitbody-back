@@ -58,4 +58,14 @@ public class RedisServiceImpl implements RedisService{
             return Optional.empty();
 
     }
+
+    @Override
+    public boolean nicknameLock(String key, String value, Duration duration) {
+        Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value);
+        if (result!=null && result){
+            redisTemplate.expire(key,duration);
+            return true;
+        }
+        return false;
+    }
 }
