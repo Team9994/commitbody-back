@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import team9499.commitbody.domain.Member.domain.Gender;
 import team9499.commitbody.domain.Member.domain.LoginType;
+import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.domain.WeightUnit;
 
 import java.time.LocalDate;
@@ -47,4 +48,8 @@ public class MemberDto {
     private boolean isUserDeactivated; //알림유무(true : 알림 받기, false : 알림 안받기)
 
 
+    public MemberDto toMemberDTO(Member member){
+        return MemberDto.builder()
+                .memberId(member.getId()).nickname(member.getNickname()).build();
+    }
 }

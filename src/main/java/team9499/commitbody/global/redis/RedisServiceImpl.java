@@ -1,17 +1,23 @@
 package team9499.commitbody.global.redis;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
+import team9499.commitbody.domain.Member.domain.Member;
+import team9499.commitbody.global.utils.CustomMapper;
 
 import java.time.Duration;
+import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RedisServiceImpl implements RedisService{
 
     private final RedisTemplate<String,Object> redisTemplate;
+    private final String MEMBER_ID = "member_";
 
     @Override
     public void setValue(String key, String value) {
@@ -35,5 +41,21 @@ public class RedisServiceImpl implements RedisService{
     @Override
     public void deleteValue(String key) {
         redisTemplate.delete(key);
+    }
+
+    @Override
+    public void setMember(Member member) {
+        redisTemplate.opsForValue().set(MEMBER_ID+member.getId(),member);
+    }
+
+    @Override
+    public Optional<Member> getMemberDto(String key) {
+        Object o = redisTemplate.opsForValue().get(MEMBER_ID+key);
+        if (o!=null){
+            CustomMapper<Member> customMapper = new CustomMapper<>();
+            return Optional.of(customMapper.to(o, Member.class));
+        }else
+            return Optional.empty();
+
     }
 }

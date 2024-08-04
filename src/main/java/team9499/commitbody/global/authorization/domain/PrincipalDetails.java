@@ -22,7 +22,7 @@ public class PrincipalDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> grantedAuthorityList = new ArrayList<>();
-        grantedAuthorityList.add(new SimpleGrantedAuthority("USER"));
+        grantedAuthorityList.add(new SimpleGrantedAuthority("ROLE_USER"));
         return grantedAuthorityList;
     }
 
