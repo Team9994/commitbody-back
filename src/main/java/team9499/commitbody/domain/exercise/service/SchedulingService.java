@@ -12,11 +12,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
+import team9499.commitbody.domain.exercise.domain.ExerciseDoc;
+import team9499.commitbody.domain.exercise.repository.ExerciseElsRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
+import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.ServerException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -25,6 +32,8 @@ import team9499.commitbody.global.Exception.ServerException;
 public class SchedulingService {
 
     private final ExerciseRepository exerciseRepository;
+    private final CustomExerciseRepository customExerciseRepository;
+    private final ExerciseElsRepository exerciseElsRepository;
     private final ObjectMapper objectMapper;
 
     @Value("${api.key}")
@@ -66,5 +75,28 @@ public class SchedulingService {
             }
 
         }
+    }
+
+    /**
+     * gif_url이 업데이트되고난후에 일정시간후 엘라스틱에도 gif_url 주소가 변경될수있도록 새롭게 데이터를 덮어씌운다.
+     */
+    public void updateElData(){
+        List<Exercise> exerciseList = exerciseRepository.findAll();
+        List<CustomExercise> customExercises = customExerciseRepository.findAll();
+        List<ExerciseDoc> exerciseDocList = new ArrayList<>();
+
+        // 기본 운동 목록
+        for (Exercise exercise : exerciseList) {
+            ExerciseDoc aDefault = new ExerciseDoc(String.valueOf(exercise.getId()), exercise.getExerciseName(), exercise.getGifUrl(), exercise.getExerciseTarget().name(),
+                    exercise.getExerciseType().getDescription(), exercise.getExerciseEquipment().getKoreanName(), null, "default", false);
+            exerciseDocList.add(aDefault);
+        }
+        // 커스텀 운동 목록
+        for (CustomExercise customExercise : customExercises) {
+            ExerciseDoc custom = new ExerciseDoc(String.valueOf(customExercise.getId()), customExercise.getCustomExName(), customExercise.getCustomGifUrl(), customExercise.getExerciseTarget().name(), null, customExercise.getExerciseEquipment().getKoreanName(), String.valueOf(customExercise.getMember().getId()), "custom",false);
+            exerciseDocList.add(custom);
+        }
+
+        exerciseElsRepository.saveAll(exerciseDocList);
     }
 }

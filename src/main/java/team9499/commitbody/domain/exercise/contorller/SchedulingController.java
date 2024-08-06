@@ -21,10 +21,21 @@ public class SchedulingController {
         schedulingService.updateGifUrl();
     }
 
+    @PostMapping("/api/v1/scheduled/elastic")
+    public void updateElData(){
+        schedulingService.updateElData();
+    }
+
     @Scheduled(cron = "0 01 03 * * ?")
     public void scheduled(){
         log.info("스케쥴링 실행");
         updateGifUrlSch();
+    }
+
+    @Scheduled(cron = "0 02 03 * * ?")
+    public void scheduledElastic(){
+        log.info("엘라스틱 데이터 업데이트 실행");
+        updateElData();
     }
 
 }
