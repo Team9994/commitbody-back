@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchConfiguration;
 
+import java.time.Duration;
+
 @Configuration
 public class ElasticConfig extends ElasticsearchConfiguration {
 
@@ -21,6 +23,7 @@ public class ElasticConfig extends ElasticsearchConfiguration {
         return ClientConfiguration.builder()
                 .connectedTo(esHost)
                 .withBasicAuth(username, password)
+                .withConnectTimeout(Duration.ofMinutes(1))
                 .build();
     }
 }
