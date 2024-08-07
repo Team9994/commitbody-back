@@ -56,7 +56,7 @@ public class ExerciseController {
     @Operation(summary = "커스텀 운동 등록", description = "사용자는 커스텀 운동을 등록가능하며 단일 사진만 등록 가능합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"회원가입 성공\",\"data\":{\"tokenInfo\":{\"memberId\":1}}}"))),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"저장 성공\"}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 값 입렵 검증", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
