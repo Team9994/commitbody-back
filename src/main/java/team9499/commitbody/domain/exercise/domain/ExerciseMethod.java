@@ -1,4 +1,4 @@
-package team9499.commitbody.domain.exercise.domain.enums;
+package team9499.commitbody.domain.exercise.domain;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

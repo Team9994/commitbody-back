@@ -47,4 +47,13 @@ public class ExerciseDoc {
     @Field(type = FieldType.Boolean,name = "favorites")             // 관심운동
     private Boolean favorites;
 
+
+    public ExerciseDoc customExercise(CustomExercise customExercise,String gifUrl){
+        return ExerciseDoc.builder()
+                .exerciseId(String.valueOf(customExercise.getId())).exerciseName(customExercise.getCustomExName()).gifUrl(gifUrl)
+                .exerciseType(null).exerciseEquipment(customExercise.getExerciseEquipment().getKoreanName()).memberId(String.valueOf(customExercise.getMember().getId()))
+                .source("custom").favorites(false).build();
+    }
+
+
 }

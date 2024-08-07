@@ -56,7 +56,7 @@ public class JwtUtils {
      * RefreshToken 발급을 당당하는 메서드
      */
     public  String generateRefreshToken(MemberDto memberDto) {
-        LocalDateTime now = LocalDateTime.now().plusHours(REFRESH_TOKEN_EXPIRED);
+        LocalDateTime now = LocalDateTime.now().plusMonths(REFRESH_TOKEN_EXPIRED);
         return creatToken(memberDto, Timestamp.valueOf(now));
     }
 
