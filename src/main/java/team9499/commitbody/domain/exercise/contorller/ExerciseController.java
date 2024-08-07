@@ -68,8 +68,8 @@ public class ExerciseController {
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
-    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> saveExercise(@Valid @RequestPart(name = "customExerciseReqeust", required = false) CustomExerciseReqeust customExerciseReqeust, BindingResult result,
+    @PostMapping(value = "/save-exercise", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> saveExercise(@Valid @RequestPart(name = "customExerciseReqeust") CustomExerciseReqeust customExerciseReqeust, BindingResult result,
                                           @RequestPart(name ="file" , required = false) MultipartFile file,
                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long id = principalDetails.getMember().getId();
