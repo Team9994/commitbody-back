@@ -16,11 +16,13 @@ public class SchedulingController {
 
     private final SchedulingService schedulingService;
 
+    @Hidden
     @PostMapping("/api/v1/scheduled")
     public void updateGifUrlSch(){
         schedulingService.updateGifUrl();
     }
 
+    @Hidden
     @PostMapping("/api/v1/scheduled/elastic")
     public void updateElData(){
         schedulingService.updateElData();
