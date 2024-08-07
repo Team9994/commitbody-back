@@ -7,11 +7,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import team9499.commitbody.domain.exercise.dto.CustomExerciseReqeust;
@@ -67,7 +69,7 @@ public class ExerciseController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
     @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> saveExercise(@RequestPart(name = "customExerciseReqeust", required = false) CustomExerciseReqeust customExerciseReqeust,
+    public ResponseEntity<?> saveExercise(@Valid @RequestPart(name = "customExerciseReqeust", required = false) CustomExerciseReqeust customExerciseReqeust, BindingResult result,
                                           @RequestPart(name ="file" , required = false) MultipartFile file,
                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long id = principalDetails.getMember().getId();

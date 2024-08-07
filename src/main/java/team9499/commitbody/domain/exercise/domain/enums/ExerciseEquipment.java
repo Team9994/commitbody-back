@@ -1,5 +1,9 @@
 package team9499.commitbody.domain.exercise.domain.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
+import java.util.Arrays;
+
 /*
 운동 장비
  */
@@ -32,5 +36,15 @@ public enum ExerciseEquipment {
             }
         }
         return null;
+    }
+
+    @JsonCreator
+    public static ExerciseEquipment fromEventStatus(String val) {
+        if (val ==null || val.equals("")){
+            return null;
+        }
+        return Arrays.stream(values())
+                .findFirst()
+                .orElse(null);
     }
 }
