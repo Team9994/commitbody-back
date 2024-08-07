@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.Member.domain.LoginType;
 import team9499.commitbody.global.authorization.dto.AdditionalInfoReqeust;
@@ -23,10 +22,8 @@ import team9499.commitbody.global.authorization.service.AuthorizationService;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.springframework.http.HttpStatus.*;
 
 @Tag(name = "인증 인가",description = "인증 인가관련된 API")
 @Slf4j
@@ -69,9 +66,6 @@ public class AuthorizationController {
     })
     @PostMapping("/additional-info")
     public ResponseEntity<?> additionalInfo(@Valid @RequestBody AdditionalInfoReqeust additionalInfoReqeust, BindingResult result,HttpServletRequest request){
-        ResponseEntity<ErrorResponse<Map<String, String>>> errorResponse = getResponseResponseEntity(result);
-        if (errorResponse != null) return errorResponse;
-
         String jwtToken = getJwtToken(request);
 
         TokenUserInfoResponse tokenUserInfoResponse = authorizationService.additionalInfoSave(
@@ -96,10 +90,6 @@ public class AuthorizationController {
     })
     @PostMapping("/register-nickname")
     public ResponseEntity<?> registerNickname(@Valid @RequestBody RegisterNicknameRequest registerNicknameRequest, BindingResult result){
-        ResponseEntity<ErrorResponse<Map<String, String>>> errorResponse = getResponseResponseEntity(result);
-        if (errorResponse != null) return errorResponse;
-
-
         authorizationService.registerNickname(registerNicknameRequest.getNickname());
         return ResponseEntity.ok(new SuccessResponse<>(true,"사용 가능"));
     }
@@ -107,15 +97,5 @@ public class AuthorizationController {
     private static String getJwtToken(HttpServletRequest request) {
         String authorization = request.getHeader("Authorization");
         return authorization.replace("Bearer ", "");
-    }
-    private static ResponseEntity<ErrorResponse<Map<String, String>>> getResponseResponseEntity(BindingResult result) {
-        if (result.hasErrors()){
-            Map<String,String> errorMap = new LinkedHashMap<>();
-            for(FieldError error : result.getFieldErrors()){
-                errorMap.put(error.getField(),error.getDefaultMessage());
-            }
-            return ResponseEntity.status(BAD_REQUEST).body(new ErrorResponse<>(false, "실패", errorMap));
-        }
-        return null;
     }
 }
