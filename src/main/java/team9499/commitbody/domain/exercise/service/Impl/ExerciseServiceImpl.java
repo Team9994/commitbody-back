@@ -10,14 +10,25 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import team9499.commitbody.domain.Member.domain.Member;
+import team9499.commitbody.domain.Member.repository.MemberRepository;
+import team9499.commitbody.domain.exercise.domain.CustomExercise;
+import team9499.commitbody.domain.exercise.domain.enums.ExerciseEquipment;
+import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
 import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
+import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.Exception.ServerException;
+import team9499.commitbody.global.aws.s3.S3Service;
+import team9499.commitbody.global.redis.RedisService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,6 +38,10 @@ import java.util.stream.Collectors;
 public class ExerciseServiceImpl implements ExerciseService {
     
     private final ElasticsearchClient elasticsearchClient;
+    private final CustomExerciseRepository customExerciseRepository;
+    private final RedisService redisService;
+    private final MemberRepository memberRepository;
+    private final S3Service s3Service;
 
     private final String INDEX_NAME = "exercise_index";
     private final String NAME_FIELD = "exerciseName";
@@ -115,4 +130,25 @@ public class ExerciseServiceImpl implements ExerciseService {
             throw new ServerException(ExceptionStatus.SERVER_ERROR, ExceptionType.SERVER_ERROR);
         }
     }
+
+    /**
+     * 커스텀 운동등록 메서드
+     * 이미지는 s3에 업로드
+     */
+    @Override
+    public Long saveCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment,Long memberId, MultipartFile file) {
+        String storedFileName = s3Service.uploadImage(file);
+        Optional<Member> optionalMember = redisService.getMemberDto(String.valueOf(memberId));
+
+        if (optionalMember.isEmpty()){
+            Member member = memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+            optionalMember = Optional.of(member);
+        }
+
+        CustomExercise customExercise = new CustomExercise().save(exerciseName, storedFileName, exerciseTarget, exerciseEquipment,optionalMember.get());
+        CustomExercise exercise = customExerciseRepository.save(customExercise);
+        return exercise.getId();
+    }
+
+
 }

@@ -8,13 +8,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import team9499.commitbody.domain.exercise.dto.CustomExerciseReqeust;
 import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
+import team9499.commitbody.domain.exercise.event.ElasticSaveExerciseEvent;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.SuccessResponse;
@@ -26,6 +28,7 @@ import team9499.commitbody.global.payload.SuccessResponse;
 public class ExerciseController {
 
     private final ExerciseService exerciseService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Operation(summary = "운동 검색", description = "운동을 검색합니다. [name: 운동명, target: 부위, equipment: 운동 장비, favorite: 관심운동 여부(true/false), from: 시작 위치, size: 페이지당 표시 데이터 양]")
     @ApiResponses(value = {
@@ -46,4 +49,18 @@ public class ExerciseController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"성공",searchExerciseResponse));
     }
 
+
+    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> saveExercise(@RequestPart(name = "customExerciseReqeust", required = false) CustomExerciseReqeust customExerciseReqeust,
+                                          @RequestPart(name ="file" , required = false) MultipartFile file,
+                                          @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long id = principalDetails.getMember().getId();
+        Long customExerciseId = exerciseService.saveCustomExercise(customExerciseReqeust.getExerciseName(), customExerciseReqeust.getExerciseTarget(),
+                customExerciseReqeust.getExerciseEquipment(), id, file);
+
+        eventPublisher.publishEvent(new ElasticSaveExerciseEvent(customExerciseId));
+
+        return ResponseEntity.ok(new SuccessResponse<>(true,"저장 성공"));
+
+    }
 }
