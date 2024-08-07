@@ -62,8 +62,12 @@ public class S3ServiceImpl implements S3Service{
      */
     @Override
     public String updateImage(MultipartFile file, String previousFileName) {
-        deleteImage(previousFileName);
-        return uploadImage(file);
+        String previous = previousFileName;
+        if (file!=null) {
+            deleteImage(previousFileName);
+            previous = uploadImage(file);
+        }
+        return previous;
     }
 
     /**

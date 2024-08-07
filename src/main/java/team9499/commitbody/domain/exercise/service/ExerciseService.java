@@ -10,4 +10,6 @@ public interface ExerciseService {
     SearchExerciseResponse searchExercise(String name, String target,String equipment, Integer from, Integer size, Boolean like, String memberId);
 
     Long saveCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, MultipartFile file);
+
+    Long updateCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, Long customExerciseId,MultipartFile file);
 }

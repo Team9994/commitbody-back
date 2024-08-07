@@ -15,4 +15,9 @@ public class ExerciseHandler {
     public void ElSaveExercise(ElasticSaveExerciseEvent elasticSaveExerciseEvent){
        exerciseService.saveExercise(elasticSaveExerciseEvent.getCustomExerciseId());
     }
+
+    @EventListener
+    public void ElUpdateExercise(ElasticUpdateExerciseEvent elasticUpdateExerciseEvent){
+        exerciseService.updateExercise(elasticUpdateExerciseEvent.getCustomExerciseId());
+    }
 }
