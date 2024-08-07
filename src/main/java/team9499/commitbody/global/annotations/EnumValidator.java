@@ -1,4 +1,4 @@
-package team9499.commitbody.global;
+package team9499.commitbody.global.annotations;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

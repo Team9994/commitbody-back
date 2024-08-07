@@ -1,8 +1,7 @@
-package team9499.commitbody.global;
+package team9499.commitbody.global.annotations;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
-import org.hibernate.validator.internal.constraintvalidators.bv.EmailValidator;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
