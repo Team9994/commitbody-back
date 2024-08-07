@@ -40,4 +40,11 @@ public class CustomExercise {
         return CustomExercise.builder()
                 .customExName(exerciseName).customGifUrl(gifUrl).exerciseTarget(exerciseTarget).exerciseEquipment(exerciseEquipment).member(member).build();
     }
+
+    public void update(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment,String updateUrl){
+        this.customExName = exerciseName;
+        this.customGifUrl= updateUrl;
+        this.exerciseTarget = exerciseTarget;
+        this.exerciseEquipment = exerciseEquipment;
+    }
 }

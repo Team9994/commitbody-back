@@ -138,17 +138,33 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Override
     public Long saveCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment,Long memberId, MultipartFile file) {
         String storedFileName = s3Service.uploadImage(file);
+        Optional<Member> redisMember = getRedisMember(memberId);
+
+        CustomExercise customExercise = new CustomExercise().save(exerciseName, storedFileName, exerciseTarget, exerciseEquipment,redisMember.get());
+        CustomExercise exercise = customExerciseRepository.save(customExercise);
+        return exercise.getId();
+    }
+
+    /**
+     * 커스텀 운동 업데이트 메서드
+     */
+    @Override
+    public Long updateCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, Long customExerciseId, MultipartFile file) {
+        CustomExercise customExercise = customExerciseRepository.findById(customExerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        String updateImage = s3Service.updateImage(file, customExercise.getCustomGifUrl());
+        customExercise.update(exerciseName,exerciseTarget,exerciseEquipment,updateImage);
+        return customExercise.getId();
+    }
+
+
+    private Optional<Member> getRedisMember(Long memberId) {
         Optional<Member> optionalMember = redisService.getMemberDto(String.valueOf(memberId));
 
         if (optionalMember.isEmpty()){
             Member member = memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
             optionalMember = Optional.of(member);
         }
-
-        CustomExercise customExercise = new CustomExercise().save(exerciseName, storedFileName, exerciseTarget, exerciseEquipment,optionalMember.get());
-        CustomExercise exercise = customExerciseRepository.save(customExercise);
-        return exercise.getId();
+        return optionalMember;
     }
-
 
 }
