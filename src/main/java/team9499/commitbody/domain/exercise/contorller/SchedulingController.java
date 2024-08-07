@@ -26,11 +26,11 @@ public class SchedulingController {
         schedulingService.updateElData();
     }
 
-    @Scheduled(cron = "0 01 03 * * ?")
-    public void scheduled(){
-        log.info("스케쥴링 실행");
-        updateGifUrlSch();
-    }
+//    @Scheduled(cron = "0 01 03 * * ?")
+//    public void scheduled(){
+//        log.info("스케쥴링 실행");
+//        updateGifUrlSch();
+//    }
 
     @Scheduled(cron = "0 02 03 * * ?")
     public void scheduledElastic(){
