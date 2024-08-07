@@ -17,8 +17,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import team9499.commitbody.domain.exercise.dto.CustomExerciseReqeust;
+import team9499.commitbody.domain.exercise.dto.CustomUpdateExerciseReqeust;
 import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
 import team9499.commitbody.domain.exercise.event.ElasticSaveExerciseEvent;
+import team9499.commitbody.domain.exercise.event.ElasticUpdateExerciseEvent;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
@@ -79,6 +81,19 @@ public class ExerciseController {
         eventPublisher.publishEvent(new ElasticSaveExerciseEvent(customExerciseId));
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"저장 성공"));
+
+    }
+
+    @PostMapping(value = "/update-exercise", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateExercise(@Valid @RequestPart(name = "customUpdateExerciseReqeust") CustomUpdateExerciseReqeust customUpdateExerciseReqeust, BindingResult result,
+                                            @RequestPart(name ="file" , required = false) MultipartFile file,
+                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long id = principalDetails.getMember().getId();
+        Long customExerciseId = exerciseService.updateCustomExercise(customUpdateExerciseReqeust.getExerciseName(), customUpdateExerciseReqeust.getExerciseTarget(),
+                customUpdateExerciseReqeust.getExerciseEquipment(), id, customUpdateExerciseReqeust.getCustomExerciseId(),file);
+        eventPublisher.publishEvent(new ElasticUpdateExerciseEvent(customExerciseId));
+
+        return ResponseEntity.ok(new SuccessResponse<>(true,"업데이트 성공"));
 
     }
 }
