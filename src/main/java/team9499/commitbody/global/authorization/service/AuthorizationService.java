@@ -9,7 +9,7 @@ import java.util.Map;
 
 public interface AuthorizationService {
 
-    Map<String,Object> authenticateOrRegisterUser(LoginType loginType,String socialJwt);
+    Map<String,Object> authenticateOrRegisterUser(LoginType loginType,String socialId);
 
     TokenUserInfoResponse additionalInfoSave(String nickName, Gender gender, LocalDate birthday, String height, String weight, Float boneMineralDensity, Float bodyFatPercentage, String jwtToken);
 

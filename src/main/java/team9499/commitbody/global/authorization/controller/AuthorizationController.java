@@ -14,8 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import team9499.commitbody.domain.Member.domain.LoginType;
 import team9499.commitbody.global.authorization.dto.AdditionalInfoReqeust;
+import team9499.commitbody.global.authorization.dto.JoinLoginRequest;
 import team9499.commitbody.global.authorization.dto.RegisterNicknameRequest;
 import team9499.commitbody.global.authorization.dto.TokenUserInfoResponse;
 import team9499.commitbody.global.authorization.service.AuthorizationService;
@@ -34,7 +34,7 @@ public class AuthorizationController {
 
     private final AuthorizationService authorizationService;
 
-    @Operation(summary = "회원가입/로그인", description = "매 요청마다 OpenID를 type에 전달합니다. 최초 로그인 시에는 회원가입이 진행되며, 이후 로그인이 진행됩니다. 로그인 시에만 tokenInfo에 사용자 정보가 포함됩니다.(authMode: [로그인,회원가입])")
+    @Operation(summary = "회원가입/로그인", description = "매 요청마다 소셜 로그인 정보를 전달해야합니다. 최초 로그인 시에는 회원가입이 진행되며, 이후 로그인이 진행됩니다. 로그인 시에만 tokenInfo에 사용자 정보가 포함됩니다.(authMode: [로그인,회원가입])")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",description = "0K", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
             examples = @ExampleObject(value = "{\"success\":true,\"message\":\"성공\",\"data\":{\"refreshToken\":\"sample_refresh_token\",\"accessToken\":\"sample_access_token\",\"authMode\":\"타입 종류\",\"tokenInfo\":{\"memberId\":1}}}"))),
@@ -44,11 +44,8 @@ public class AuthorizationController {
             examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
     @PostMapping("/auth")
-    public ResponseEntity<SuccessResponse> socialLogin(@RequestParam("type")LoginType loginType,
-                                         HttpServletRequest request){
-        String jwtToken = getJwtToken(request);
-
-        Map<String, Object> jwtTokenMap = authorizationService.authenticateOrRegisterUser(loginType, jwtToken);
+    public ResponseEntity<SuccessResponse> socialLogin(@RequestBody JoinLoginRequest joinLoginRequest){
+        Map<String, Object> jwtTokenMap = authorizationService.authenticateOrRegisterUser(joinLoginRequest.getLoginType(), joinLoginRequest.getSocialId());
 
         return ResponseEntity.ok().body(new SuccessResponse<>(true,"성공",jwtTokenMap));
     }

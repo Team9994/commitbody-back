@@ -2,11 +2,7 @@ package team9499.commitbody.global.authorization.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Gender;
@@ -16,13 +12,11 @@ import team9499.commitbody.domain.Member.dto.MemberDto;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.global.Exception.InvalidUsageException;
 import team9499.commitbody.global.Exception.NoSuchException;
-import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.authorization.domain.RefreshToken;
 import team9499.commitbody.global.authorization.dto.TokenInfoDto;
 import team9499.commitbody.global.authorization.dto.TokenUserInfoResponse;
 import team9499.commitbody.global.authorization.repository.RefreshTokenRepository;
 import team9499.commitbody.global.authorization.service.AuthorizationService;
-import team9499.commitbody.global.authorization.service.OpenIdConnectService;
 import team9499.commitbody.global.redis.RedisService;
 import team9499.commitbody.global.utils.JwtUtils;
 
@@ -48,10 +42,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final JwtUtils jwtUtils;
     @Value("${jwt.refresh}")
     private int expired;        // 만료시간
-    @Qualifier("Kakao")
-    private final OpenIdConnectService kakaoOpenIdConnectService;
-    @Qualifier("Google")
-    private final OpenIdConnectService googleOpenIdConnectService;
 
     private final String REFRESH_TOKEN = "refreshToken";
     private final String JOIN = "회원가입";
@@ -59,40 +49,24 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final String NICKNAME ="nickname_";
 
     @Override
-    public Map<String,Object> authenticateOrRegisterUser(LoginType loginType,String socialJwt) {
-        String socialId = "";
-        LoginType socialType = null;
+    public Map<String,Object> authenticateOrRegisterUser(LoginType loginType,String socialId) {
         String joinOrLogin = "";
-
-        if(loginType.equals(LoginType.KAKAO)){
-            socialId = kakaoOpenIdConnectService.getSocialId(socialJwt);
-            socialType = LoginType.KAKAO;
-        }else {
-            socialId = googleOpenIdConnectService.getSocialId(socialJwt);
-            socialType = LoginType.GOOGLE;
-        }
-
-        Long memberId = null;
         Optional<Member> optionalMember = memberRepository.findBySocialId(socialId);
 
         if (!optionalMember.isPresent()){
-            Member member = memberRepository.save(Member.createSocialId(socialId,socialType));
+            Member member = memberRepository.save(Member.createSocialId(socialId,loginType));
             optionalMember = Optional.of(member);
-            memberId = member.getId();
             joinOrLogin = JOIN;
         }
-        else {      //로그인인 경우
-            Member member = optionalMember.get();
-            memberId = member.getId();
-            setSecurityMemberInfo(member);
+        else       //로그인인 경우
             joinOrLogin = LOGIN;
-        }
 
-        Map<String, Object> tokenMap = new LinkedHashMap<>(jwtUtils.generateAuthTokens(MemberDto.builder().memberId(memberId).build()));
+
+        Map<String, Object> tokenMap = new LinkedHashMap<>(jwtUtils.generateAuthTokens(MemberDto.builder().memberId(optionalMember.get().getId()).build()));
         tokenMap.put("authMode",joinOrLogin);       // 로그인 / 회원가입을 구분하기위함
 
-        if (joinOrLogin.equals(LOGIN)) tokenMap.put("tokenInfo",TokenInfoDto.of(memberId));     //로그인일 경우에만 JWT토큰의대한 정보를 담는다
-        SaveRefreshToken(memberId, optionalMember, (String) tokenMap.get(REFRESH_TOKEN));
+        if (joinOrLogin.equals(LOGIN)) tokenMap.put("tokenInfo",TokenInfoDto.of(optionalMember.get().getId()));     //로그인일 경우에만 JWT토큰의대한 정보를 담는다
+        SaveRefreshToken(optionalMember.get().getId(), optionalMember, (String) tokenMap.get(REFRESH_TOKEN));
         return tokenMap;
     }
 
@@ -132,16 +106,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             }
         }
     }
-
-    /*
-    로그인한 사용자의 정보를 시큐리티 컨텍스트의 저장
-     */
-    private static void setSecurityMemberInfo(Member member) {
-        PrincipalDetails principalDetails = new PrincipalDetails(member);
-        Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
-
 
     /*
     레디스의 정보가 서버의 문제로 인해 삭제될수있기때문에 MySQL에 리프레쉬 토큰을 저장
