@@ -1,6 +1,7 @@
 package team9499.commitbody.domain.exercise.service.Impl;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.UpdateRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
     @Value("${cloud.aws.cdn.url}")
     private String cdnUrl;
 
+    private final String INDEX = "exercise_index";
     /**
      * 커스텀 운동 저장
      */
@@ -54,10 +56,23 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
         updateBody.put("doc",doc);
 
         try {
-            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index("exercise_index").id(String.valueOf(customExercise.getId())).doc(doc));
+            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(INDEX).id(String.valueOf(customExercise.getId())).doc(doc));
             elasticsearchClient.update(updateRequest, Map.class);
         }catch (Exception e){
             log.error("엘라스틱 업데이트시 문제 발생");
+        }
+    }
+
+    /**
+     * 엘라스틱 커스텀 운동 삭제 메서드
+     */
+    @Override
+    public void deleteExercise(Long customExerciseId) {
+        DeleteRequest deleteRequest = DeleteRequest.of(u -> u.index(INDEX).id(String.valueOf(customExerciseId)));
+        try {
+            elasticsearchClient.delete(deleteRequest);
+        }catch (Exception e){
+            log.error("엘라스틱 삭제중 오류 발생");
         }
     }
 

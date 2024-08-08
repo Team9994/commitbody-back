@@ -19,12 +19,14 @@ import org.springframework.web.multipart.MultipartFile;
 import team9499.commitbody.domain.exercise.dto.CustomExerciseReqeust;
 import team9499.commitbody.domain.exercise.dto.CustomUpdateExerciseReqeust;
 import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
+import team9499.commitbody.domain.exercise.event.ElasticDeleteExerciseEvent;
 import team9499.commitbody.domain.exercise.event.ElasticSaveExerciseEvent;
 import team9499.commitbody.domain.exercise.event.ElasticUpdateExerciseEvent;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
+
 
 @RestController
 @Tag(name = "운동",description = "운동관련 API")
@@ -110,5 +112,15 @@ public class ExerciseController {
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"업데이트 성공"));
 
+    }
+
+    @DeleteMapping( "/delete-exercise")
+    public ResponseEntity<?> deleteExercise(@RequestParam("id") Long customExerciseId,
+                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = principalDetails.getMember().getId();
+        exerciseService.deleteCustomExercise(customExerciseId,memberId);
+        eventPublisher.publishEvent(new ElasticDeleteExerciseEvent(customExerciseId));
+
+        return ResponseEntity.ok(new SuccessResponse<>(true,"업데이트 성공"));
     }
 }

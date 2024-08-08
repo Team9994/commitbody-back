@@ -12,4 +12,6 @@ public interface ExerciseService {
     Long saveCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, MultipartFile file);
 
     Long updateCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, Long customExerciseId,MultipartFile file);
+
+    void deleteCustomExercise(Long customExerciseId,Long memberId);
 }

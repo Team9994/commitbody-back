@@ -150,10 +150,19 @@ public class ExerciseServiceImpl implements ExerciseService {
      */
     @Override
     public Long updateCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, Long customExerciseId, MultipartFile file) {
-        CustomExercise customExercise = customExerciseRepository.findById(customExerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        CustomExercise customExercise = getCustomExercise(customExerciseId,memberId);
         String updateImage = s3Service.updateImage(file, customExercise.getCustomGifUrl());
         customExercise.update(exerciseName,exerciseTarget,exerciseEquipment,updateImage);
         return customExercise.getId();
+    }
+
+    /**
+     * DB 커스텀 운동 삭제 메서드
+     */
+    @Override
+    public void deleteCustomExercise(Long customExerciseId, Long memberId) {
+        CustomExercise customExercise = getCustomExercise(customExerciseId,memberId);
+        customExerciseRepository.delete(customExercise);
     }
 
 
@@ -165,6 +174,11 @@ public class ExerciseServiceImpl implements ExerciseService {
             optionalMember = Optional.of(member);
         }
         return optionalMember;
+    }
+
+    private CustomExercise getCustomExercise(Long customExerciseId, Long memberId) {
+        CustomExercise customExercise = customExerciseRepository.findByIdAndAndMemberId(customExerciseId,memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        return customExercise;
     }
 
 }
