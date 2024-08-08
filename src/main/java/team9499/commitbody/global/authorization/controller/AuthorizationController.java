@@ -91,6 +91,18 @@ public class AuthorizationController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"사용 가능"));
     }
 
+
+    @Operation(summary = "엑세스 토큰 재발급", description = "엑세스 토큰 만료시 RefreshToken을 통해 AccessToken을 재발급 받습니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"재발급 성공\",\"data\":{\"accessToken\":\"accessToken_value\"}}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "401_2", description = "UNAUTHORIZED - 토큰 만료", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"만료된 토큰 입니다.\"}"))),
+            @ApiResponse(responseCode = "401_1", description = "UNAUTHORIZED - 미존재 토큰 사용", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
+    })
     @PostMapping("/auth-refresh")
     public ResponseEntity<?> refreshAccessToken(HttpServletRequest request){
         String refreshToken = getJwtToken(request);
