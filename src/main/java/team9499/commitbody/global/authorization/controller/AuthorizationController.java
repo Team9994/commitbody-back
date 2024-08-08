@@ -14,6 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import team9499.commitbody.global.Exception.ExceptionStatus;
+import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.authorization.dto.AdditionalInfoReqeust;
 import team9499.commitbody.global.authorization.dto.JoinLoginRequest;
 import team9499.commitbody.global.authorization.dto.RegisterNicknameRequest;
@@ -112,6 +115,7 @@ public class AuthorizationController {
 
     private static String getJwtToken(HttpServletRequest request) {
         String authorization = request.getHeader("Authorization");
+        if (authorization==null) throw new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA);
         return authorization.replace("Bearer ", "");
     }
 }
