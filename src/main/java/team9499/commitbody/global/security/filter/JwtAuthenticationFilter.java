@@ -20,6 +20,7 @@ import team9499.commitbody.global.redis.RedisService;
 import team9499.commitbody.global.utils.JwtUtils;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Optional;
 
 @Slf4j
@@ -45,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Optional<Member> optionalMember = redisService.getMemberDto(accessTokenValid);
         if (optionalMember.isEmpty()){
             Member member = memberRepository.findById(Long.parseLong(accessTokenValid)).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
-            redisService.setMember(member);
+            redisService.setMember(member, Duration.ofHours(2));
             optionalMember = Optional.of(member);
         }
 
