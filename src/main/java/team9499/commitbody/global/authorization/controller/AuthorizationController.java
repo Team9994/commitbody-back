@@ -91,6 +91,13 @@ public class AuthorizationController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"사용 가능"));
     }
 
+    @PostMapping("/auth-refresh")
+    public ResponseEntity<?> refreshAccessToken(HttpServletRequest request){
+        String refreshToken = getJwtToken(request);
+        Map<String, String> map = authorizationService.refreshAccessToken(refreshToken);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"재발급 성공",map));
+    }
+
     private static String getJwtToken(HttpServletRequest request) {
         String authorization = request.getHeader("Authorization");
         return authorization.replace("Bearer ", "");

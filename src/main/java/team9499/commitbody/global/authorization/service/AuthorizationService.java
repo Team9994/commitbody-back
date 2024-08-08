@@ -14,4 +14,6 @@ public interface AuthorizationService {
     TokenUserInfoResponse additionalInfoSave(String nickName, Gender gender, LocalDate birthday, String height, String weight, Float boneMineralDensity, Float bodyFatPercentage, String jwtToken);
 
     void registerNickname(String nickname);
+
+    Map<String,String> refreshAccessToken(String refreshToken);
 }

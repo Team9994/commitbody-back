@@ -107,6 +107,18 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         }
     }
 
+    /**
+     * 리프레쉬 토큰을 통한 엑시스토큰 재발급
+     */
+    @Override
+    public Map<String,String> refreshAccessToken(String refreshToken) {
+        String verifyMemberId = jwtUtils.accessTokenValid(refreshToken);
+        memberRepository.findById(Long.valueOf(verifyMemberId)).orElseThrow(() -> new NoSuchException(BAD_REQUEST, No_SUCH_MEMBER));
+
+        String newAccessToken = jwtUtils.generateAccessToken(MemberDto.builder().memberId(Long.valueOf(verifyMemberId)).build());
+        return Map.of("accessToken",newAccessToken);
+    }
+
     /*
     레디스의 정보가 서버의 문제로 인해 삭제될수있기때문에 MySQL에 리프레쉬 토큰을 저장
      */
