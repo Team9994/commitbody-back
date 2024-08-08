@@ -20,4 +20,9 @@ public class ExerciseHandler {
     public void ElUpdateExercise(ElasticUpdateExerciseEvent elasticUpdateExerciseEvent){
         exerciseService.updateExercise(elasticUpdateExerciseEvent.getCustomExerciseId());
     }
+
+    @EventListener
+    public void ElDeleteExercise(ElasticDeleteExerciseEvent elasticDeleteExerciseEvent){
+        exerciseService.deleteExercise(elasticDeleteExerciseEvent.getCustomExerciseId());
+    }
 }

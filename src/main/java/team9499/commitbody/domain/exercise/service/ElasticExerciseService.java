@@ -5,4 +5,6 @@ public interface ElasticExerciseService {
     void saveExercise(Long customExerciseId);
 
     void updateExercise(Long customExerciseId);
+
+    void deleteExercise(Long customExerciseId);
 }
