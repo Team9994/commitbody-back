@@ -44,8 +44,8 @@ public class RedisServiceImpl implements RedisService{
     }
 
     @Override
-    public void setMember(Member member) {
-        redisTemplate.opsForValue().set(MEMBER_ID+member.getId(),member);
+    public void setMember(Member member,Duration duration) {
+        redisTemplate.opsForValue().set(MEMBER_ID+member.getId(),member,duration);
     }
 
     @Override

@@ -51,7 +51,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorizeRequests ->
                 authorizeRequests
                         .requestMatchers("/api/v1/auth","/actuator/**","/api/v1/swagger-ui/**", "/v3/api-docs/**", "/api/v1/swagger-ui.html","/api-docs/**",
-                                "/api/v1/additional-info","/api/v1/scheduled/**"
+                                "/api/v1/additional-info","/api/v1/scheduled/**","/api/v1/auth-refresh"
                                 ).permitAll()
                         .requestMatchers("/api/v1/**").hasAnyRole("USER"));
         return http.build();

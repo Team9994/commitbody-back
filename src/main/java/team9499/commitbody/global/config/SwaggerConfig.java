@@ -21,10 +21,10 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI openApi(){
 
-        String socialToken ="SocialToken";
+        String jwtToken ="JWT-TOKEN";
 
         SecurityRequirement securityRequirement = new SecurityRequirement()
-                .addList(socialToken);
+                .addList(jwtToken);
 
         SecurityScheme socialTokenSc = new SecurityScheme()
                 .type(SecurityScheme.Type.HTTP)
@@ -34,7 +34,7 @@ public class SwaggerConfig {
                 .name(HttpHeaders.AUTHORIZATION);
 
         Components components = new Components()
-                .addSecuritySchemes(socialToken, socialTokenSc);
+                .addSecuritySchemes(jwtToken, socialTokenSc);
 
         return new OpenAPI()
                 .addSecurityItem(securityRequirement)
