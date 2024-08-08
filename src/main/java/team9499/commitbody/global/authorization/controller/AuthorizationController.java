@@ -101,6 +101,8 @@ public class AuthorizationController {
                     examples = @ExampleObject(value = "{\"success\":true,\"message\":\"재발급 성공\",\"data\":{\"accessToken\":\"accessToken_value\"}}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - Authorization Null",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"해당 정보를 찾을수 없습니다.\"}"))),
             @ApiResponse(responseCode = "401_2", description = "UNAUTHORIZED - 토큰 만료", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"만료된 토큰 입니다.\"}"))),
             @ApiResponse(responseCode = "401_1", description = "UNAUTHORIZED - 미존재 토큰 사용", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
