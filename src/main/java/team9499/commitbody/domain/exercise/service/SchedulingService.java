@@ -71,7 +71,7 @@ public class SchedulingService {
                     }
                 }
             }catch (Exception e){
-                throw new ServerException(ExceptionStatus.SERVER_ERROR, ExceptionType.SERVER_ERROR);
+                throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR, ExceptionType.SERVER_ERROR);
             }
 
         }
@@ -87,13 +87,13 @@ public class SchedulingService {
 
         // 기본 운동 목록
         for (Exercise exercise : exerciseList) {
-            ExerciseDoc aDefault = new ExerciseDoc(String.valueOf(exercise.getId()), exercise.getExerciseName(), exercise.getGifUrl(), exercise.getExerciseTarget().name(),
+            ExerciseDoc aDefault = new ExerciseDoc("default_"+exercise.getId(),exercise.getId(), exercise.getExerciseName(), exercise.getGifUrl(), exercise.getExerciseTarget().name(),
                     exercise.getExerciseType().getDescription(), exercise.getExerciseEquipment().getKoreanName(), null, "default", false);
             exerciseDocList.add(aDefault);
         }
         // 커스텀 운동 목록
         for (CustomExercise customExercise : customExercises) {
-            ExerciseDoc custom = new ExerciseDoc(String.valueOf(customExercise.getId()), customExercise.getCustomExName(), customExercise.getCustomGifUrl(), customExercise.getExerciseTarget().name(), null, customExercise.getExerciseEquipment().getKoreanName(), String.valueOf(customExercise.getMember().getId()), "custom",false);
+            ExerciseDoc custom = new ExerciseDoc("custom_"+customExercise.getId(),customExercise.getId(), customExercise.getCustomExName(), customExercise.getCustomGifUrl(), customExercise.getExerciseTarget().name(), null, customExercise.getExerciseEquipment().getKoreanName(), String.valueOf(customExercise.getMember().getId()), "custom",false);
             exerciseDocList.add(custom);
         }
 

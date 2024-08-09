@@ -21,7 +21,10 @@ import org.springframework.data.elasticsearch.annotations.WriteTypeHint;
 public class ExerciseDoc {
 
     @Id
-    private String exerciseId;                              // 운동 id
+    private String id;
+
+    @Field(type = FieldType.Long, name = "exerciseId")
+    private Long exerciseId;                              // 운동 id
 
     @Field(type = FieldType.Text, name = "exerciseName")        // 운동명
     private String exerciseName;
@@ -50,7 +53,8 @@ public class ExerciseDoc {
 
     public ExerciseDoc customExercise(CustomExercise customExercise,String gifUrl){
         return ExerciseDoc.builder()
-                .exerciseId(String.valueOf(customExercise.getId())).exerciseName(customExercise.getCustomExName()).gifUrl(gifUrl)
+                .id("custom_"+customExercise.getId())
+                .exerciseId(customExercise.getId()).exerciseName(customExercise.getCustomExName()).gifUrl(gifUrl)
                 .exerciseType(null).exerciseEquipment(customExercise.getExerciseEquipment().getKoreanName()).memberId(String.valueOf(customExercise.getMember().getId()))
                 .source("custom").favorites(false).build();
     }

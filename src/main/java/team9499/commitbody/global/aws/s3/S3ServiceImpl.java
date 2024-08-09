@@ -50,7 +50,7 @@ public class S3ServiceImpl implements S3Service{
                 amazonS3.putObject(new PutObjectRequest(bucketImage, storedFileName, inputStream, objectMetadata));
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new ServerException(ExceptionStatus.SERVER_ERROR, SERVER_ERROR);
+                throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR, SERVER_ERROR);
             }
         }
 
@@ -79,7 +79,7 @@ public class S3ServiceImpl implements S3Service{
             amazonS3.deleteObject(bucketImage,fileName);
         }catch (Exception e){
             log.error("이미지 삭제중 오류 발생");
-            throw new ServerException(ExceptionStatus.SERVER_ERROR,SERVER_ERROR);
+            throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR,SERVER_ERROR);
         }
     }
 

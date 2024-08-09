@@ -32,6 +32,7 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
     private String cdnUrl;
 
     private final String INDEX = "exercise_index";
+
     /**
      * 커스텀 운동 저장
      */
@@ -43,7 +44,7 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
     }
 
     @Override
-    public void updateExercise(Long customExerciseId) {
+    public void updateExercise(Long customExerciseId,String source) {
         CustomExercise customExercise = getCustomExercise(customExerciseId);
 
         Map<String,String> doc = new HashMap<>();
@@ -56,7 +57,7 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
         updateBody.put("doc",doc);
 
         try {
-            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(INDEX).id(String.valueOf(customExercise.getId())).doc(doc));
+            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(INDEX).id(source+customExercise.getId()).doc(doc));
             elasticsearchClient.update(updateRequest, Map.class);
         }catch (Exception e){
             log.error("엘라스틱 업데이트시 문제 발생");
@@ -68,7 +69,7 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
      */
     @Override
     public void deleteExercise(Long customExerciseId) {
-        DeleteRequest deleteRequest = DeleteRequest.of(u -> u.index(INDEX).id(String.valueOf(customExerciseId)));
+        DeleteRequest deleteRequest = DeleteRequest.of(u -> u.index(INDEX).id("custom_"+customExerciseId));
         try {
             elasticsearchClient.delete(deleteRequest);
         }catch (Exception e){

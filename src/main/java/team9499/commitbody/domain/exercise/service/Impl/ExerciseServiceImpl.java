@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,10 +27,7 @@ import team9499.commitbody.global.Exception.ServerException;
 import team9499.commitbody.global.aws.s3.S3Service;
 import team9499.commitbody.global.redis.RedisService;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -44,12 +42,16 @@ public class ExerciseServiceImpl implements ExerciseService {
     private final S3Service s3Service;
 
     private final String INDEX_NAME = "exercise_index";
+    private final String EXERCISE_ID = "exerciseId";
     private final String NAME_FIELD = "exerciseName";
     private final String EQUIPMENT_FIELD = "exerciseEquipment";
+    private final String GIF_URL ="gifUrl";
     private final String TARGET_FIELD = "exerciseTarget";
     private final String FAVORITES_FILED = "favorites";
+    private final String EXERCISE_TYPE ="exerciseType";
     private final String MEMBER_FILED = "memberId";
     private final String SCORE_FILED = "_score";
+    private final String SOURCE_FILED = "_source";
 
 
     /**
@@ -110,24 +112,43 @@ public class ExerciseServiceImpl implements ExerciseService {
                 .should(Query.of(S -> S.term(t -> t.field(MEMBER_FILED).value(memberId))));
 
 
+        List<SortOptions> objects = List.of(
+                SortOptions.of(s -> s.field(f -> f.field(SCORE_FILED).order(SortOrder.Asc))),
+                SortOptions.of(s -> s.field(f -> f.field(SOURCE_FILED).field(EXERCISE_ID).order(SortOrder.Asc))),
+                SortOptions.of(s -> s.field(f -> f.field(SCORE_FILED).order(SortOrder.Asc)))
+        );
+
         SearchRequest searchRequest = new SearchRequest.Builder()
                 .index(INDEX_NAME)
                 .query(Query.of(q -> q.bool(boolQueryBuilder.minimumShouldMatch(String.valueOf(1)).build())))       // bool 최소 만족 조건 1 -> or
                 .size(size)
                 .from(from)
-                .sort(SortOptions.of(s -> s.field(f -> f.field(SCORE_FILED).order(SortOrder.Asc)))).build();       // 사용자가 추가한 운동은 맨 아래로
+                .sort(objects)
+                .build();       // 사용자가 추가한 운동은 맨 아래로
 
         try {
             SearchResponse<Object> searchResponse = elasticsearchClient.search(searchRequest, Object.class);
             long value = searchResponse.hits().total().value();     // 검색한 총 데이터 수
 
-            List<Map<String, Object>> values = searchResponse.hits().hits().stream()
-                    .map(hit -> (Map<String, Object>) hit.source())
-                    .collect(Collectors.toList());
+            List<LinkedHashMap<String,Object>> response = new LinkedList<>();
+            List<Hit<Object>> hits = searchResponse.hits().hits();
+            for (Hit<Object> hit : hits) {
+                LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
+                Map<String,String> source = (Map<String,String>)hit.source();
+                linkedHashMap.put(EXERCISE_ID,source.get(EXERCISE_ID));
+                linkedHashMap.put(NAME_FIELD,source.get(NAME_FIELD));
+                linkedHashMap.put(GIF_URL,source.get(GIF_URL));
+                linkedHashMap.put(TARGET_FIELD,source.get(TARGET_FIELD));
+                linkedHashMap.put(EXERCISE_TYPE,source.get(EXERCISE_TYPE));
+                linkedHashMap.put(EQUIPMENT_FIELD,source.get(EQUIPMENT_FIELD));
+                linkedHashMap.put("source",source.get("source"));
+                linkedHashMap.put("favorites",source.get("favorites"));
+                response.add(linkedHashMap);
+            }
 
-            return new SearchExerciseResponse(value,values);
+            return new SearchExerciseResponse(value,response);
         }catch (Exception e){
-            throw new ServerException(ExceptionStatus.SERVER_ERROR, ExceptionType.SERVER_ERROR);
+            throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR, ExceptionType.SERVER_ERROR);
         }
     }
 
