@@ -108,7 +108,7 @@ public class ExerciseController {
         Long id = principalDetails.getMember().getId();
         Long customExerciseId = exerciseService.updateCustomExercise(customUpdateExerciseReqeust.getExerciseName(), customUpdateExerciseReqeust.getExerciseTarget(),
                 customUpdateExerciseReqeust.getExerciseEquipment(), id, customUpdateExerciseReqeust.getCustomExerciseId(),file);
-        eventPublisher.publishEvent(new ElasticUpdateExerciseEvent(customExerciseId));
+        eventPublisher.publishEvent(new ElasticUpdateExerciseEvent(customExerciseId,customUpdateExerciseReqeust.getSource()));
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"업데이트 성공"));
 
@@ -117,7 +117,7 @@ public class ExerciseController {
     @Operation(summary = "커스텀 운동 삭제", description = "등록한 사용자만 커스텀 운동을 삭제 가능합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"업데이트 성공\"}"))),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"삭제 성공\"}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 커스텀 운동 미존재", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
@@ -132,6 +132,6 @@ public class ExerciseController {
         exerciseService.deleteCustomExercise(customExerciseId,memberId);
         eventPublisher.publishEvent(new ElasticDeleteExerciseEvent(customExerciseId));
 
-        return ResponseEntity.ok(new SuccessResponse<>(true,"업데이트 성공"));
+        return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
     }
 }

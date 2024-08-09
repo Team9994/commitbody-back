@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,5 +15,5 @@ public class SearchExerciseResponse {
 
     private Long totalCount;
 
-    private List<Map<String, Object>> exercise;
+    private   List<LinkedHashMap<String,Object>> exercise;
 }

@@ -7,8 +7,10 @@ import lombok.Getter;
 public class ElasticUpdateExerciseEvent {
 
     private Long customExerciseId;
+    private String source;
 
-    public ElasticUpdateExerciseEvent(Long customExerciseId) {
+    public ElasticUpdateExerciseEvent(Long customExerciseId,String source) {
         this.customExerciseId = customExerciseId;
+        this.source = source;
     }
 }

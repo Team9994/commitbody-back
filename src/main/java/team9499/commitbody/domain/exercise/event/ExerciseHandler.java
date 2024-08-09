@@ -18,7 +18,7 @@ public class ExerciseHandler {
 
     @EventListener
     public void ElUpdateExercise(ElasticUpdateExerciseEvent elasticUpdateExerciseEvent){
-        exerciseService.updateExercise(elasticUpdateExerciseEvent.getCustomExerciseId());
+        exerciseService.updateExercise(elasticUpdateExerciseEvent.getCustomExerciseId(),elasticUpdateExerciseEvent.getSource());
     }
 
     @EventListener
