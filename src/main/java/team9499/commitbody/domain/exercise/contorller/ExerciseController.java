@@ -139,6 +139,16 @@ public class ExerciseController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
     }
 
+    @Operation(summary = "관심운동", description = "운동에 관심운동을 등록 해제 합니다. source :[ 기본 제공 운동 : default_, 커스텀 운동 : custom_] 사용합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200-1", description = "관심운동 등록", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"등록\"}"))),
+            @ApiResponse(responseCode = "200-2", description = "관심운동 해제", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"해제\"}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @PostMapping("/interest-exercise")
     public ResponseEntity<?> interestExercise(@RequestBody InterestExerciseRequest interestExerciseRequest,
                                               @AuthenticationPrincipal PrincipalDetails principalDetails){
