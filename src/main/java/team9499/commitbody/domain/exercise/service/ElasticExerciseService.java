@@ -7,4 +7,6 @@ public interface ElasticExerciseService {
     void updateExercise(Long customExerciseId,String source);
 
     void deleteExercise(Long customExerciseId);
+
+    void changeInterest(Long exerciseId,String source,String status);
 }
