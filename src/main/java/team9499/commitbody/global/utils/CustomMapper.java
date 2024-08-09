@@ -26,7 +26,7 @@ public class CustomMapper<T> {
             json = objectMapper.writeValueAsString(ob);
             t = objectMapper.readValue(json, clazz);
         } catch (JsonProcessingException e) {
-            throw new ServerException(ExceptionStatus.SERVER_ERROR, ExceptionType.SERVER_ERROR);
+            throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR, ExceptionType.SERVER_ERROR);
         }
 
         return t;
