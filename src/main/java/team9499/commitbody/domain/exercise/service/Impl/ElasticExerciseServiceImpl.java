@@ -77,6 +77,21 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
         }
     }
 
+    @Override
+    public void changeInterest(Long exerciseId, String source,String status) {
+
+        Map<String,Object> doc = new HashMap<>();
+        doc.put("favorites", status.equals("등록") ? true : false);
+
+        try {
+            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(INDEX).id(source + exerciseId).doc(doc));
+            elasticsearchClient.update(updateRequest,Map.class);
+        }catch (Exception e){
+            log.error("관심 운동 상태 변경시 오류 발생");
+        }
+
+    }
+
     private String getCustomGifUrl(CustomExercise customExercise) {
         return customExercise.getCustomGifUrl() ==null ? "등록된 이미지 파일이 없습니다." : cdnUrl+customExercise.getCustomGifUrl();
     }

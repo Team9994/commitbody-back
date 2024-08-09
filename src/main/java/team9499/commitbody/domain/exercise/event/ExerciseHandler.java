@@ -25,4 +25,9 @@ public class ExerciseHandler {
     public void ElDeleteExercise(ElasticDeleteExerciseEvent elasticDeleteExerciseEvent){
         exerciseService.deleteExercise(elasticDeleteExerciseEvent.getCustomExerciseId());
     }
+
+    @EventListener
+    public void ElInterestExercise(ElasticExerciseInterest exerciseInterest){
+        exerciseService.changeInterest(exerciseInterest.getExerciseId(), exerciseInterest.getSource(),exerciseInterest.getStatus());
+    }
 }
