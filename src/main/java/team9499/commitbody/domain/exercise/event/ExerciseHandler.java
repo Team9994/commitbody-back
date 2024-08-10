@@ -28,6 +28,6 @@ public class ExerciseHandler {
 
     @EventListener
     public void ElInterestExercise(ElasticExerciseInterest exerciseInterest){
-        exerciseService.changeInterest(exerciseInterest.getExerciseId(), exerciseInterest.getSource(),exerciseInterest.getStatus());
+        exerciseService.changeInterest(exerciseInterest.getExerciseId(), exerciseInterest.getSource(),exerciseInterest.getStatus(),exerciseInterest.getMemberId());
     }
 }

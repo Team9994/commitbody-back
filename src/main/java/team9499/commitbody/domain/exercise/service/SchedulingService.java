@@ -12,12 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import team9499.commitbody.domain.exercise.domain.CustomExercise;
-import team9499.commitbody.domain.exercise.domain.Exercise;
-import team9499.commitbody.domain.exercise.domain.ExerciseDoc;
-import team9499.commitbody.domain.exercise.repository.ExerciseElsRepository;
-import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
-import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
+import team9499.commitbody.domain.exercise.domain.*;
+import team9499.commitbody.domain.exercise.repository.*;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.ServerException;
@@ -34,6 +30,8 @@ public class SchedulingService {
     private final ExerciseRepository exerciseRepository;
     private final CustomExerciseRepository customExerciseRepository;
     private final ExerciseElsRepository exerciseElsRepository;
+    private final ExerciseInterestRepository exerciseInterestRepository;
+    private final ExerciseElsInterestRepository exerciseElsInterestRepository;
     private final ObjectMapper objectMapper;
 
     @Value("${api.key}")
@@ -41,6 +39,8 @@ public class SchedulingService {
     @Value("${api.url}")
     private String url;
 
+    private final String DEFAULT = "default_";
+    private final String CUSTOM = "custom_";
     /**
      * gifurl이 새벽 3시마다 초기화 되기때문에 새벽 3시 이후에 서버에서 이미지 url을 새롭게 업데이트 하기위한 메서드
      */
@@ -83,20 +83,32 @@ public class SchedulingService {
     public void updateElData(){
         List<Exercise> exerciseList = exerciseRepository.findAll();
         List<CustomExercise> customExercises = customExerciseRepository.findAll();
+        List<ExerciseInterest> exerciseInterests = exerciseInterestRepository.findAll();
         List<ExerciseDoc> exerciseDocList = new ArrayList<>();
+        List<ExerciseInterestDoc> exerciseInterestDocList = new ArrayList<>();
 
         // 기본 운동 목록
         for (Exercise exercise : exerciseList) {
-            ExerciseDoc aDefault = new ExerciseDoc("default_"+exercise.getId(),exercise.getId(), exercise.getExerciseName(), exercise.getGifUrl(), exercise.getExerciseTarget().name(),
+            ExerciseDoc aDefault = new ExerciseDoc(DEFAULT+exercise.getId(),exercise.getId(), exercise.getExerciseName(), exercise.getGifUrl(), exercise.getExerciseTarget().name(),
                     exercise.getExerciseType().getDescription(), exercise.getExerciseEquipment().getKoreanName(), null, "default", false);
             exerciseDocList.add(aDefault);
         }
         // 커스텀 운동 목록
         for (CustomExercise customExercise : customExercises) {
-            ExerciseDoc custom = new ExerciseDoc("custom_"+customExercise.getId(),customExercise.getId(), customExercise.getCustomExName(), customExercise.getCustomGifUrl(), customExercise.getExerciseTarget().name(), null, customExercise.getExerciseEquipment().getKoreanName(), String.valueOf(customExercise.getMember().getId()), "custom",false);
+            ExerciseDoc custom = new ExerciseDoc(CUSTOM+customExercise.getId(),customExercise.getId(), customExercise.getCustomExName(), customExercise.getCustomGifUrl(), customExercise.getExerciseTarget().name(), null, customExercise.getExerciseEquipment().getKoreanName(), String.valueOf(customExercise.getMember().getId()), "custom",false);
             exerciseDocList.add(custom);
         }
 
+        // 관심 운동 목록 업데이트
+        for (ExerciseInterest exerciseInterest : exerciseInterests) {
+            Long memberId = exerciseInterest.getMember().getId();
+            String id;
+            Long exerciseId = (exerciseInterest.getExercise() != null) ? exerciseInterest.getExercise().getId() : exerciseInterest.getCustomExercise().getId();
+            id = (exerciseInterest.getExercise() != null ? DEFAULT : CUSTOM) + exerciseId + memberId;
+            exerciseInterestDocList.add(new ExerciseInterestDoc(id, memberId, exerciseId, exerciseInterest.isInterested()));
+        }
+
         exerciseElsRepository.saveAll(exerciseDocList);
+        exerciseElsInterestRepository.saveAll(exerciseInterestDocList);
     }
 }

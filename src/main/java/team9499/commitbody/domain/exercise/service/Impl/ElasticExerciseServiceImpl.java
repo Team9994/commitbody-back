@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.ExerciseDoc;
+import team9499.commitbody.domain.exercise.domain.ExerciseInterestDoc;
 import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
+import team9499.commitbody.domain.exercise.repository.ExerciseElsInterestRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseElsRepository;
 import team9499.commitbody.domain.exercise.service.ElasticExerciseService;
 
@@ -25,6 +27,7 @@ import java.util.Map;
 public class ElasticExerciseServiceImpl implements ElasticExerciseService {
 
     private final CustomExerciseRepository customExerciseRepository;
+    private final ExerciseElsInterestRepository exerciseElsInterestRepository;
     private final ElasticsearchClient elasticsearchClient;
     private final ExerciseElsRepository exerciseElsRepository;
 
@@ -78,17 +81,10 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
     }
 
     @Override
-    public void changeInterest(Long exerciseId, String source,String status) {
+    public void changeInterest(Long exerciseId, String source,String status,Long memberId) {
 
-        Map<String,Object> doc = new HashMap<>();
-        doc.put("favorites", status.equals("등록") ? true : false);
-
-        try {
-            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(INDEX).id(source + exerciseId).doc(doc));
-            elasticsearchClient.update(updateRequest,Map.class);
-        }catch (Exception e){
-            log.error("관심 운동 상태 변경시 오류 발생");
-        }
+        ExerciseInterestDoc exerciseInterestDoc = new ExerciseInterestDoc(source + exerciseId+"_"+memberId,memberId, exerciseId, status.equals("등록") ? true : false);
+        exerciseElsInterestRepository.save(exerciseInterestDoc);
 
     }
 

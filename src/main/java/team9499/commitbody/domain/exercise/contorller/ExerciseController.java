@@ -44,18 +44,18 @@ public class ExerciseController {
     @Operation(summary = "운동 검색", description = "운동을 검색합니다. [name: 운동명, target: 부위, equipment: 운동 장비, favorite: 관심운동 여부(true/false), from: 시작 위치, size: 페이지당 표시 데이터 양]")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "EX) - /api/v1/search-exercise?name=인클라인&target=가슴&equipment=맨몸&favorite=false&from=0&size=1", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"성공\", \"data\": {\"totalCount\": 5, \"exercise\": [{\"exerciseId\": \"492\", \"exerciseName\": \"인클라인 푸시업 뎁스 점프\", \"gifUrl\": \"https://EXAMPLE.COM\", \"exerciseTarget\": \"가슴\", \"exerciseType\": \"횟수\", \"exerciseEquipment\": \"맨몸\", \"source\": \"default\", \"favorites\": false}]}}")))
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"성공\", \"data\": {\"totalCount\": 5, \"exercise\": [{\"exerciseId\": \"492\", \"exerciseName\": \"인클라인 푸시업 뎁스 점프\", \"gifUrl\": \"https://EXAMPLE.COM\", \"exerciseTarget\": \"가슴\", \"exerciseType\": \"횟수\", \"exerciseEquipment\": \"맨몸\", \"source\": \"default\", \"interest\": false}]}}")))
     })
     @GetMapping("/search-exercise")
     public ResponseEntity<?> searchExercise(@RequestParam(value = "name",required = false) String name,
                                             @RequestParam(value = "target",required = false) String target,
                                             @RequestParam(value = "equipment",required = false)String equipment,
-                                            @RequestParam(value = "favorite",required = false) Boolean favorite,
+                                            @RequestParam(value = "interest",required = false) Boolean interest,
                                             @RequestParam(value = "from",required = false)Integer from,
                                             @RequestParam(value = "size",required = false)Integer size,
                                             @AuthenticationPrincipal PrincipalDetails principalDetails){
         String memberId = String.valueOf(principalDetails.getMember().getId());
-        SearchExerciseResponse searchExerciseResponse = exerciseService.searchExercise(name, target, equipment,from, size, favorite, memberId);
+        SearchExerciseResponse searchExerciseResponse = exerciseService.searchExercise(name, target, equipment,from, size, interest, memberId);
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"성공",searchExerciseResponse));
     }
@@ -154,7 +154,7 @@ public class ExerciseController {
                                               @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = principalDetails.getMember().getId();
         String interestStatus = exerciseInterestService.updateInterestStatus(interestExerciseRequest.getExerciseId(), memberId, interestExerciseRequest.getSource());
-        eventPublisher.publishEvent(new ElasticExerciseInterest(interestExerciseRequest.getExerciseId(),interestExerciseRequest.getSource(),interestStatus));
+        eventPublisher.publishEvent(new ElasticExerciseInterest(interestExerciseRequest.getExerciseId(),interestExerciseRequest.getSource(),interestStatus,memberId));
         return ResponseEntity.ok(new SuccessResponse<>(true,interestStatus));
     }
 

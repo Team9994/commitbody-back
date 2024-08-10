@@ -1,6 +1,7 @@
 package team9499.commitbody.domain.exercise.service.Impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
@@ -19,6 +20,7 @@ import static team9499.commitbody.global.Exception.ExceptionStatus.*;
 import static team9499.commitbody.global.Exception.ExceptionStatus.INTERNAL_SERVER_ERROR;
 import static team9499.commitbody.global.Exception.ExceptionType.*;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -60,8 +62,13 @@ public class ExerciseInterestServiceImpl implements ExerciseInterestService {
     관심 운동이 저장되어 있지 않을 경우 데이터를 저장하고 저장한 데이터를 반환하는 메서드
      */
     private ExerciseInterest findOrCreateInterest(Long exerciseId, Long memberId, String source, Member member) {
-        return exerciseInterestRepository.findByIdAndMemberId(exerciseId, memberId)
-                .orElseGet(() -> createNewInterest(exerciseId, source, member));
+        if (source.equals(DEFAULT)) {
+            return exerciseInterestRepository.findByExerciseIdAndMemberId(exerciseId, memberId)
+                    .orElseGet(() -> createNewInterest(exerciseId, source, member));
+        }else {
+            return exerciseInterestRepository.findByCustomExerciseIdAndMemberId(exerciseId, memberId)
+                    .orElseGet(() -> createNewInterest(exerciseId, source, member));
+        }
     }
 
     /*
