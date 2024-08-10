@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import team9499.commitbody.domain.routin.dto.response.MyRoutineResponse;
 import team9499.commitbody.domain.routin.dto.rqeust.RoutineRequest;
 import team9499.commitbody.domain.routin.service.RoutineService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
@@ -43,6 +44,13 @@ public class RoutineController {
         Long memberId = principalDetails.getMember().getId();
         routineService.saveRoutine(memberId,routineRequest.getDefaults(),routineRequest.getCustoms(),routineRequest.getRoutineName());
         return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 등록 성공"));
+    }
+
+    @GetMapping("/routine")
+    public ResponseEntity<?> getRoutine(@AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = principalDetails.getMember().getId();
+        MyRoutineResponse myRoutine = routineService.getMyRoutine(memberId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",myRoutine));
     }
 
 }
