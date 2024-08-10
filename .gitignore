@@ -17,7 +17,9 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 application.yml
+application-test.yml
 keystore.p12
+src/main/generated
 
 ### IntelliJ IDEA ###
 .idea
