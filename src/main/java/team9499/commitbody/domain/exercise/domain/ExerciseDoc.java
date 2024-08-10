@@ -47,16 +47,18 @@ public class ExerciseDoc {
     @Field(type = FieldType.Text, name = "source")                  // custom , default
     private String source;
 
-    @Field(type = FieldType.Boolean,name = "favorites")             // 관심운동
-    private Boolean favorites;
+    @Field(type = FieldType.Boolean,name = "interest")             // 관심운동
+    private Boolean interest;
 
 
     public ExerciseDoc customExercise(CustomExercise customExercise,String gifUrl){
         return ExerciseDoc.builder()
                 .id("custom_"+customExercise.getId())
                 .exerciseId(customExercise.getId()).exerciseName(customExercise.getCustomExName()).gifUrl(gifUrl)
-                .exerciseType(null).exerciseEquipment(customExercise.getExerciseEquipment().getKoreanName()).memberId(String.valueOf(customExercise.getMember().getId()))
-                .source("custom").favorites(false).build();
+                .exerciseType(null).exerciseEquipment(customExercise.getExerciseEquipment().getKoreanName())
+                .exerciseTarget(customExercise.getExerciseTarget().name())
+                .memberId(String.valueOf(customExercise.getMember().getId()))
+                .source("custom").interest(false).build();
     }
 
 

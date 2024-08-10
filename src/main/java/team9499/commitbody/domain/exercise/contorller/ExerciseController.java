@@ -154,7 +154,7 @@ public class ExerciseController {
                                               @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = principalDetails.getMember().getId();
         String interestStatus = exerciseInterestService.updateInterestStatus(interestExerciseRequest.getExerciseId(), memberId, interestExerciseRequest.getSource());
-        eventPublisher.publishEvent(new ElasticExerciseInterest(interestExerciseRequest.getExerciseId(),interestExerciseRequest.getSource(),interestStatus));
+        eventPublisher.publishEvent(new ElasticExerciseInterest(interestExerciseRequest.getExerciseId(),interestExerciseRequest.getSource(),interestStatus,memberId));
         return ResponseEntity.ok(new SuccessResponse<>(true,interestStatus));
     }
 
