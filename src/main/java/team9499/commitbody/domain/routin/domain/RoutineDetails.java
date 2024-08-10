@@ -5,6 +5,8 @@ import lombok.*;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
 
+import java.util.List;
+
 @Data
 @Entity
 @AllArgsConstructor
@@ -31,6 +33,9 @@ public class RoutineDetails {
     private Routine routine;
     
     private Integer totalSets;      // 총 세트수
+
+    @OneToMany(mappedBy = "routineDetails")
+    private List<RoutineSets> detailsSets;
 
     public static RoutineDetails of(Object exercise, Routine routine){
         RoutineDetailsBuilder routineDetailsBuilder = RoutineDetails.builder().routine(routine);
