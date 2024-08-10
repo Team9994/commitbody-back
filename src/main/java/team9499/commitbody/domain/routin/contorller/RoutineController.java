@@ -46,6 +46,15 @@ public class RoutineController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 등록 성공"));
     }
 
+    @Operation(summary = "루틴 조회", description = "사용자가 지정한 루틴의 정보를 조회합니다. 커스텀운동의 대한 exerciseType은 무게와 횟수 로 고정됩니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"루틴 등록 성공\",\"data\":{\"routineDtos\":[{\"routineId\":1,\"routineName\":\"루틴제목\",\"targets\":[\"복근\",\"등\"],\"exercises\":[{\"exerciseId\":1,\"exerciseName\":\"3/4 싯업\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"exerciseType\":\"횟수\",\"sets\":4},{\"customExerciseId\":1,\"exerciseName\":\"커스텀운동명\",\"gifUrl\":\"http://example.com/pushup.gif\",\"exerciseType\":\"무게와 횟수\",\"sets\":4}]}]}}"))),
+            @ApiResponse(responseCode = "400-3",description = "BADREQUEST - 사용할수 없는 토큰", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
+    })
     @GetMapping("/routine")
     public ResponseEntity<?> getRoutine(@AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = principalDetails.getMember().getId();
