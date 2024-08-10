@@ -50,12 +50,12 @@ public class ExerciseController {
     public ResponseEntity<?> searchExercise(@RequestParam(value = "name",required = false) String name,
                                             @RequestParam(value = "target",required = false) String target,
                                             @RequestParam(value = "equipment",required = false)String equipment,
-                                            @RequestParam(value = "favorite",required = false) Boolean favorite,
+                                            @RequestParam(value = "interest",required = false) Boolean interest,
                                             @RequestParam(value = "from",required = false)Integer from,
                                             @RequestParam(value = "size",required = false)Integer size,
                                             @AuthenticationPrincipal PrincipalDetails principalDetails){
         String memberId = String.valueOf(principalDetails.getMember().getId());
-        SearchExerciseResponse searchExerciseResponse = exerciseService.searchExercise(name, target, equipment,from, size, favorite, memberId);
+        SearchExerciseResponse searchExerciseResponse = exerciseService.searchExercise(name, target, equipment,from, size, interest, memberId);
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"성공",searchExerciseResponse));
     }
