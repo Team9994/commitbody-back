@@ -21,10 +21,12 @@ public class CustomExerciseDto {
 
     private ExerciseInterest exerciseInterest;
 
+    private String exerciseType;
+
     private Integer sets;
 
-    public static CustomExerciseDto of(Long customExerciseId,String exerciseName,String gifUrl,Integer sets){
-        return CustomExerciseDto.builder().customExerciseId(customExerciseId).exerciseName(exerciseName).gifUrl(gifUrl).sets(sets).build();
+    public static CustomExerciseDto of(Long customExerciseId,String exerciseName,String gifUrl,Integer sets,String exerciseType){
+        return CustomExerciseDto.builder().customExerciseId(customExerciseId).exerciseName(exerciseName).gifUrl(gifUrl).sets(sets).exerciseType(exerciseType).build();
     }
 
 }
