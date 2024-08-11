@@ -95,7 +95,8 @@ public class SchedulingService {
         }
         // 커스텀 운동 목록
         for (CustomExercise customExercise : customExercises) {
-            ExerciseDoc custom = new ExerciseDoc(CUSTOM+customExercise.getId(),customExercise.getId(), customExercise.getCustomExName(), customExercise.getCustomGifUrl(), customExercise.getExerciseTarget().name(), null, customExercise.getExerciseEquipment().getKoreanName(), String.valueOf(customExercise.getMember().getId()), "custom",false);
+            Long memberId = customExercise.getMember().getId();
+            ExerciseDoc custom = new ExerciseDoc(CUSTOM+customExercise.getId()+"-"+memberId,customExercise.getId(), customExercise.getCustomExName(), customExercise.getCustomGifUrl(), customExercise.getExerciseTarget().name(), null, customExercise.getExerciseEquipment().getKoreanName(), String.valueOf(customExercise.getMember().getId()), "custom",false);
             exerciseDocList.add(custom);
         }
 
@@ -104,7 +105,7 @@ public class SchedulingService {
             Long memberId = exerciseInterest.getMember().getId();
             String id;
             Long exerciseId = (exerciseInterest.getExercise() != null) ? exerciseInterest.getExercise().getId() : exerciseInterest.getCustomExercise().getId();
-            id = (exerciseInterest.getExercise() != null ? DEFAULT : CUSTOM) + exerciseId + memberId;
+            id = (exerciseInterest.getExercise() != null ? DEFAULT : CUSTOM) + exerciseId +"-"+ memberId;
             exerciseInterestDocList.add(new ExerciseInterestDoc(id, memberId, exerciseId, exerciseInterest.isInterested()));
         }
 
