@@ -28,6 +28,7 @@ import team9499.commitbody.global.Exception.ServerException;
 import team9499.commitbody.global.aws.s3.S3Service;
 import team9499.commitbody.global.redis.RedisService;
 
+import java.io.IOException;
 import java.util.*;
 
 @Slf4j
@@ -63,13 +64,13 @@ public class ExerciseServiceImpl implements ExerciseService {
      * @param equipment 운동 장비
      * @param from      페이지
      * @param size      페이지 사이즈
-     * @param favorites 관심 운동
      * @param memberId  로그인한 사용자 ID
      */
+    // TODO: 2024-08-12 추후의 코드 리팩토링 진행 너무 가독성이 좋지 않다.
     @Override
     public SearchExerciseResponse searchExercise(String name, String target, String equipment, Integer from, Integer size, Boolean favorites, String memberId) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
-        
+
         // 운동명의 대한 동적 쿼리
         if (name!=null&& !name.isEmpty()) {
             QueryStringQuery queryStringQuery = new QueryStringQuery.Builder()
@@ -94,13 +95,7 @@ public class ExerciseServiceImpl implements ExerciseService {
             boolQueryBuilder.filter(Query.of(q -> q.term(termQuery)));
         }
 
-        // 관심운동의 대한 동적 쿼리
-        if (favorites!=null){
-            TermQuery termQuery = new TermQuery.Builder()
-                    .field(INTEREST_FILED)
-                    .value(favorites).build();
-            boolQueryBuilder.filter(Query.of(builder ->  builder.term(termQuery)));
-        }
+
 
         // 현재 사용자의 대해서만 조회
         boolQueryBuilder.should(Query.of(
@@ -119,6 +114,72 @@ public class ExerciseServiceImpl implements ExerciseService {
                 SortOptions.of(s -> s.field(f -> f.field(SOURCE_FILED).field(EXERCISE_ID).order(SortOrder.Asc))),
                 SortOptions.of(s -> s.field(f -> f.field(SCORE_FILED).order(SortOrder.Asc)))
         );
+
+        // 관심운동의 대한 동적 쿼리
+        if (favorites!=null){
+            BoolQuery favoriteQuery = new BoolQuery.Builder()
+                    .must(m -> m.term(t -> t.field(MEMBER_FILED).value(memberId))).build();
+
+            SearchRequest favoriteRequest = new SearchRequest.Builder()
+                    .index(INTEREST_INDEX_NAME)
+                    .query(q -> q.bool(favoriteQuery))
+                    .build();
+
+            try {
+                SearchResponse<Object> favoriteResponse = elasticsearchClient.search(favoriteRequest, Object.class);
+                List<Hit<Object>> hits = favoriteResponse.hits().hits();
+
+                List<String> exerciseIds = new ArrayList<>();
+                for (Hit<Object> hit : hits) {
+                    Map<String, Object> source = (Map<String, Object>) hit.source();
+                    String id = source.get("id").toString();
+                    exerciseIds.add(id.substring(0, id.indexOf('-')));
+                }
+
+                TermsQueryField exerciseIdTerms = new TermsQueryField.Builder()
+                        .value(exerciseIds.stream().map(FieldValue::of).toList())
+                        .build();
+
+                BoolQuery favoriteFilterQuery = new BoolQuery.Builder()
+                        .must(m -> m.terms(t -> t.field("id").terms(exerciseIdTerms))).build();
+
+                boolQueryBuilder.must(Query.of(q -> q.bool(favoriteFilterQuery)));
+
+                SearchRequest searchRequest = new SearchRequest.Builder()
+                        .index(INDEX_NAME)
+                        .query(Query.of(q -> q.bool(boolQueryBuilder.minimumShouldMatch(String.valueOf(1)).build())))
+                        .size(size)
+                        .from(from)
+                        .sort(objects)
+                        .build();
+
+                SearchResponse<Object> searchResponse = elasticsearchClient.search(searchRequest, Object.class);
+
+                long value = searchResponse.hits().total().value();     // 검색한 총 데이터 수
+
+                List<LinkedHashMap<String,Object>> response = new LinkedList<>();
+                List<Hit<Object>> hits1 = searchResponse.hits().hits();
+                List<Long> ids = new ArrayList<>();
+                for (Hit<Object> hit : hits1) {
+                    LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
+                    Map<String,Object> source = (Map<String,Object>)hit.source();
+                    linkedHashMap.put(EXERCISE_ID,source.get(EXERCISE_ID));
+                    linkedHashMap.put(NAME_FIELD,source.get(NAME_FIELD));
+                    linkedHashMap.put(GIF_URL,source.get(GIF_URL) !=null? source.get(GIF_URL):"등록된 이미지 파일이 없습니다.");
+                    linkedHashMap.put(TARGET_FIELD,source.get(TARGET_FIELD));
+                    linkedHashMap.put(EXERCISE_TYPE,"무게와 횟수");
+                    linkedHashMap.put(EQUIPMENT_FIELD,source.get(EQUIPMENT_FIELD));
+                    linkedHashMap.put("source",source.get("source"));
+                    linkedHashMap.put(INTEREST_FILED,true);
+                    response.add(linkedHashMap);
+                    ids.add(Long.valueOf(source.get(EXERCISE_ID).toString()));
+                }
+
+                return new SearchExerciseResponse(value,response);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         SearchRequest searchRequest = new SearchRequest.Builder()
                 .index(INDEX_NAME)
@@ -156,7 +217,6 @@ public class ExerciseServiceImpl implements ExerciseService {
 
             BoolQuery interestBool = new BoolQuery.Builder()
                     .must(m -> m.term(t -> t.field(MEMBER_FILED).value(memberId)))
-                    .must(m -> m.term(t -> t.field(MEMBER_FILED).value(memberId)))
                     .must(m -> m.terms(t -> t.field(EXERCISE_ID).terms(countryTerms))).build();
 
             SearchRequest interestRequest = new SearchRequest.Builder()
@@ -183,6 +243,7 @@ public class ExerciseServiceImpl implements ExerciseService {
                     }
                 }
             }
+
             return new SearchExerciseResponse(value,response);
         }catch (Exception e){
             e.printStackTrace();
