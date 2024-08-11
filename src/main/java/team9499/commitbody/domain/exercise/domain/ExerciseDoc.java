@@ -53,7 +53,7 @@ public class ExerciseDoc {
 
     public ExerciseDoc customExercise(CustomExercise customExercise,String gifUrl){
         return ExerciseDoc.builder()
-                .id("custom_"+customExercise.getId())
+                .id("custom_"+customExercise.getId()+"-"+customExercise.getMember().getId())
                 .exerciseId(customExercise.getId()).exerciseName(customExercise.getCustomExName()).gifUrl(gifUrl)
                 .exerciseType(null).exerciseEquipment(customExercise.getExerciseEquipment().getKoreanName())
                 .exerciseTarget(customExercise.getExerciseTarget().name())
