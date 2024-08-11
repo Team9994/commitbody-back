@@ -165,7 +165,7 @@ public class ExerciseServiceImpl implements ExerciseService {
                     Map<String,Object> source = (Map<String,Object>)hit.source();
                     linkedHashMap.put(EXERCISE_ID,source.get(EXERCISE_ID));
                     linkedHashMap.put(NAME_FIELD,source.get(NAME_FIELD));
-                    linkedHashMap.put(GIF_URL,source.get(GIF_URL));
+                    linkedHashMap.put(GIF_URL,source.get(GIF_URL) !=null? source.get(GIF_URL):"등록된 이미지 파일이 없습니다.");
                     linkedHashMap.put(TARGET_FIELD,source.get(TARGET_FIELD));
                     linkedHashMap.put(EXERCISE_TYPE,"무게와 횟수");
                     linkedHashMap.put(EQUIPMENT_FIELD,source.get(EQUIPMENT_FIELD));
