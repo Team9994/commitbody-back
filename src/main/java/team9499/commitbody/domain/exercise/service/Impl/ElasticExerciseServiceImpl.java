@@ -83,7 +83,7 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
     @Override
     public void changeInterest(Long exerciseId, String source,String status,Long memberId) {
 
-        ExerciseInterestDoc exerciseInterestDoc = new ExerciseInterestDoc(source + exerciseId+"_"+memberId,memberId, exerciseId, status.equals("등록") ? true : false);
+        ExerciseInterestDoc exerciseInterestDoc = new ExerciseInterestDoc(source + exerciseId+"-"+memberId,memberId, exerciseId, status.equals("등록") ? true : false);
         exerciseElsInterestRepository.save(exerciseInterestDoc);
 
     }
