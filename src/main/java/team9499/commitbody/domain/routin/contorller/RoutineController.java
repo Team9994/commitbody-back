@@ -62,6 +62,18 @@ public class RoutineController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",myRoutine));
     }
 
+
+    @Operation(summary = "루틴 편집", description = "사용자가 등록한 루틴을 편집합니다. 필드 별 변경할 데이터가 있는 경우에만 해당 필드를 작성합니다. 변경할 데이터가 없는 경우에는 해당 필드를 작성하지 않습니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"루틴 수정 완료\"}"))),
+            @ApiResponse(responseCode = "400-1",description = "BADREQUEST - 사용할수 없는 토큰", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400-2",description = "BADREQUEST - 데이터 존재하지 않을시", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"해당 정보를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
+    })
     @PutMapping("/routine/{id}")
     public ResponseEntity<?> updateRoutine(@PathVariable("id")Long id,
                                            @RequestBody UpdateRoutineRequest updateRoutineRequest,
