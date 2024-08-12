@@ -88,6 +88,17 @@ public class RoutineController {
         return principalDetails.getMember().getId();
     }
 
+    @Operation(summary = "루틴 삭제", description = "루탄의 대한 단일 삭제를 지원합니다. 작성자만이 해당 루틴을 삭제 가능합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"삭제 성공\"}"))),
+            @ApiResponse(responseCode = "400-1",description = "BADREQUEST - 사용할수 없는 토큰", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400-2",description = "BADREQUEST - 데이터 존재하지 않을시", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"해당 정보를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
+    })
     @DeleteMapping("/routine/{id}")
     public ResponseEntity<?> deleteRoutine(@PathVariable("id")Long id,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
