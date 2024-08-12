@@ -77,4 +77,13 @@ public class RoutineDetails {
     public void updateOrders(Integer orders){
         this.orders = orders;
     }
+
+    public void updateExercise(Object exercise){
+        if (exercise instanceof Exercise){
+            this.exercise = (Exercise) exercise;
+        }
+        if (exercise instanceof CustomExercise){
+            this.customExercise = (CustomExercise) exercise;
+        }
+    }
 }
