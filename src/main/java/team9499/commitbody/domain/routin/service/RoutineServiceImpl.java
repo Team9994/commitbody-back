@@ -249,6 +249,18 @@ public class RoutineServiceImpl implements RoutineService{
 
     }
 
+    /**
+     * 루틴 삭제
+     * 루틴은 작성자만 삭제 가능합니다.
+     * @param routineId 루틴 아이디
+     * @param memberId  현재 로그인한 사용자 ID
+     */
+    @Override
+    public void deleteRoutine(Long routineId,Long memberId) {
+        routineRepository.findByIdAndMemberId(routineId,memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST,ExceptionType.NO_SUCH_DATA));
+        routineRepository.deleteRoutine(routineId);
+    }
+
     private CustomExercise getCustomExercise(Long exerciseId) {
         return customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
     }
