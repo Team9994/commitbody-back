@@ -24,6 +24,7 @@ import team9499.commitbody.domain.routin.repository.RoutineSetsRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
+import team9499.commitbody.global.Exception.ServerException;
 
 import java.util.*;
 
@@ -87,13 +88,13 @@ public class RoutineServiceImpl implements RoutineService{
      * 주어진 exerciseIds 목록을 순회하면서 루틴 상세 정보를 추가하는 메서드
      */
     private void addRoutineDetails(List<Long> exerciseIds, Routine routine, List<RoutineDetails> routineDetails, boolean isCustom) {
-        for (Long id : exerciseIds) {
+        for(int i =0; i<exerciseIds.size();i++){
             if (isCustom) {         // 커스텀 운동인 경우 처리
-                CustomExercise customExercise = customExerciseRepository.findById(id).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
-                routineDetails.add(RoutineDetails.of(customExercise, routine));
+                CustomExercise customExercise = customExerciseRepository.findById(exerciseIds.get(i)).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+                routineDetails.add(RoutineDetails.of(customExercise, routine,i+1));
             } else {                // 일반 운동인 경우 처리
-                Exercise exercise = exerciseRepository.findById(id).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
-                routineDetails.add(RoutineDetails.of(exercise, routine));
+                Exercise exercise = exerciseRepository.findById(exerciseIds.get(i)).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+                routineDetails.add(RoutineDetails.of(exercise, routine,i+1));
             }
         }
     }
@@ -110,7 +111,30 @@ public class RoutineServiceImpl implements RoutineService{
             routineDtos.add(routineDto);
         }
 
+        // 오름차순 정렬
+        for (RoutineDto routineDto : routineDtos) {
+            List<Object> exercises = routineDto.getExercises();
+            if (exercises != null) {
+                exercises.sort((o1, o2) -> {
+                    Integer orders1 = getOrder(o1);
+                    Integer orders2 = getOrder(o2);
+                    return orders1.compareTo(orders2);
+                });
+            }
+        }
         return new MyRoutineResponse(routineDtos);    // 변환된 루틴 DTO 리스트를 MyRoutineResponse로 반환
+    }
+
+    // orders 기준으로 정렬
+    private Integer getOrder(Object obj) {
+        if (obj instanceof ExerciseDto) {
+            return ((ExerciseDto) obj).getOrders();
+        } else if (obj instanceof CustomExerciseDto) {
+            return ((CustomExerciseDto) obj).getOrders();
+        } else {
+            log.error("정렬증 오류 발생");
+            throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR,ExceptionType.SERVER_ERROR);
+        }
     }
 
     /**
@@ -152,11 +176,11 @@ public class RoutineServiceImpl implements RoutineService{
         if (exercise != null) {             // 기본 운동 정보가 있으면 대상에 추가하고, 운동을 리스트에 추가
 
             targets.add(exercise.getExerciseTarget().name());
-            exercises.add(ExerciseDto.of(routineDetailsId,exercise.getId(), exercise.getExerciseName(), exercise.getGifUrl(), routineDetails.getTotalSets(),exercise.getExerciseType().getDescription(),routineSetsDtos));
+            exercises.add(ExerciseDto.of(routineDetailsId,exercise.getId(), exercise.getExerciseName(), exercise.getGifUrl(), routineDetails.getTotalSets(),exercise.getExerciseType().getDescription(), routineDetails.getOrders(), routineSetsDtos));
         } else {                // 커스텀 운동 정보가 있으면 대상에 추가하고, 커스텀 운동을 리스트에 추가
             CustomExercise customExercise = routineDetails.getCustomExercise();
             targets.add(customExercise.getExerciseTarget().name());
-            exercises.add(CustomExerciseDto.of(routineDetailsId, customExercise.getId(), customExercise.getCustomExName(), customExercise.getCustomGifUrl(), routineDetails.getTotalSets(),"무게와 횟수",routineSetsDtos));
+            exercises.add(CustomExerciseDto.of(routineDetailsId, customExercise.getId(), customExercise.getCustomExName(), customExercise.getCustomGifUrl(), routineDetails.getTotalSets(),"무게와 횟수", routineDetails.getOrders(), routineSetsDtos));
         }
     }
 

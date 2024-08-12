@@ -34,8 +34,21 @@ public class RoutineDetails {
     
     private Integer totalSets;      // 총 세트수
 
-    @OneToMany(mappedBy = "routineDetails")
+    private Integer orders;         // 운동 순서
+
+    @OneToMany(mappedBy = "routineDetails",cascade = CascadeType.REMOVE)
     private List<RoutineSets> detailsSets;
+
+    public static RoutineDetails of(Object exercise, Routine routine,Integer orders){
+        RoutineDetailsBuilder routineDetailsBuilder = RoutineDetails.builder().orders(orders).routine(routine);
+        if (exercise instanceof Exercise){
+            routineDetailsBuilder.exercise((Exercise) exercise).totalSets(calculateTotalSets((Exercise) exercise));
+        }else{
+            routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(4).orders(orders);
+        }
+        return routineDetailsBuilder.build();
+
+    }
 
     public static RoutineDetails of(Object exercise, Routine routine){
         RoutineDetailsBuilder routineDetailsBuilder = RoutineDetails.builder().routine(routine);
@@ -57,4 +70,11 @@ public class RoutineDetails {
         };
     }
 
+    public void updateTotalSets(Integer totalSets){
+        this.totalSets = totalSets;
+    }
+
+    public void updateOrders(Integer orders){
+        this.orders = orders;
+    }
 }
