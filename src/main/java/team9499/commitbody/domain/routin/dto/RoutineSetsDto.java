@@ -1,13 +1,17 @@
 package team9499.commitbody.domain.routin.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import team9499.commitbody.domain.routin.domain.RoutineSets;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class RoutineSetsDto {
 
     private Long setsId;

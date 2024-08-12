@@ -30,10 +30,12 @@ public class CustomExerciseDto {
 
     private Integer sets;
 
+    private Integer orders; // 운동 순서
+
     private List<RoutineSetsDto> routineSets;
 
-    public static CustomExerciseDto of(Long routineDetailId, Long customExerciseId,String exerciseName,String gifUrl,Integer sets,String exerciseType,List<RoutineSetsDto> routineSetsDtos){
-        return CustomExerciseDto.builder().routineDetailId(routineDetailId).customExerciseId(customExerciseId).exerciseName(exerciseName).gifUrl(gifUrl).sets(sets).exerciseType(exerciseType).routineSets(routineSetsDtos).build();
+    public static CustomExerciseDto of(Long routineDetailId, Long customExerciseId,String exerciseName,String gifUrl,Integer sets,String exerciseType,Integer orders, List<RoutineSetsDto> routineSetsDtos){
+        return CustomExerciseDto.builder().routineDetailId(routineDetailId).customExerciseId(customExerciseId).exerciseName(exerciseName).gifUrl(gifUrl).sets(sets).orders(orders).exerciseType(exerciseType).routineSets(routineSetsDtos).build();
     }
 
 }

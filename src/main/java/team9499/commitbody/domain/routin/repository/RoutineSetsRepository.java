@@ -10,4 +10,6 @@ import java.util.List;
 public interface RoutineSetsRepository extends JpaRepository<RoutineSets, Long> {
 
     List<RoutineSets> findAllByRoutineDetailsId(Long routineDetailsId);
+    RoutineSets findByIdAndRoutineDetailsId(Long setsId, Long routineDetailsId);
+    void deleteByIdAndRoutineDetailsId(Long setsId, Long routineDetailsId);
 }

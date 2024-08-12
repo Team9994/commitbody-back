@@ -34,4 +34,8 @@ public class Routine {
         return Routine.builder().member(member).routineName(routineName).build();
     }
 
+    public void updateRoutineName(String routineName){
+        this.routineName = routineName;
+    }
+
 }
