@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface RoutineRepository extends JpaRepository<Routine,Long> {
+public interface RoutineRepository extends JpaRepository<Routine,Long> ,CustomRoutineRepository{
     List<Routine> findAllByMemberId(Long memberId);
     Optional<Routine> findByIdAndMemberId(Long routineId, Long memberId);
 }
