@@ -61,23 +61,6 @@ public class UpdateRoutineRequest {
         @Schema(description = "세트 ID")
         private List<Long> setsIds;
     }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class NewRoutines {
-        private String source;
-        private List<ExerciseDto> newExercises;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class NewExercise {
-        private Long exerciseId;
-        private List<RoutineSetsDto> sets;
-    }
-
     @Schema(name = "운동 변경")
     @Data
     @AllArgsConstructor
@@ -104,6 +87,5 @@ public class UpdateRoutineRequest {
         @Schema(description = "순서")
         private Integer orders;
     }
-
-
+    
 }
