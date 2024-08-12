@@ -41,7 +41,7 @@ public class RoutineController {
     @PostMapping("/routine")
     public ResponseEntity<?> saveRoutine(@RequestBody RoutineRequest routineRequest,
                                       @AuthenticationPrincipal PrincipalDetails principalDetails){
-        Long memberId = principalDetails.getMember().getId();
+        Long memberId = getMemberId(principalDetails);
         routineService.saveRoutine(memberId,routineRequest.getDefaults(),routineRequest.getCustoms(),routineRequest.getRoutineName());
         return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 등록 성공"));
     }
@@ -57,7 +57,7 @@ public class RoutineController {
     })
     @GetMapping("/routine")
     public ResponseEntity<?> getRoutine(@AuthenticationPrincipal PrincipalDetails principalDetails){
-        Long memberId = principalDetails.getMember().getId();
+        Long memberId = getMemberId(principalDetails);
         MyRoutineResponse myRoutine = routineService.getMyRoutine(memberId);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",myRoutine));
     }
@@ -78,9 +78,20 @@ public class RoutineController {
     public ResponseEntity<?> updateRoutine(@PathVariable("id")Long id,
                                            @RequestBody UpdateRoutineRequest updateRoutineRequest,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
-        Long memberId = principalDetails.getMember().getId();
+        Long memberId = getMemberId(principalDetails);
         routineService.updateRoutine(id,memberId,updateRoutineRequest.getUpdateRoutineName(),updateRoutineRequest.getDeleteRoutines(),updateRoutineRequest.getUpdateSets(),
                 updateRoutineRequest.getDeleteSets(),updateRoutineRequest.getNewExercises(),updateRoutineRequest.getChangeExercises(),updateRoutineRequest.getChangeOrders());
         return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 수정 완료"));
+    }
+
+    private static Long getMemberId(PrincipalDetails principalDetails) {
+        return principalDetails.getMember().getId();
+    }
+
+    @DeleteMapping("/routine/{id}")
+    public ResponseEntity<?> deleteRoutine(@PathVariable("id")Long id,
+                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
+        routineService.deleteRoutine(id,getMemberId(principalDetails));
+        return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
     }
 }
