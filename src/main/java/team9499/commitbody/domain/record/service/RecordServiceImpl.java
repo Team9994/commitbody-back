@@ -40,7 +40,7 @@ public class RecordServiceImpl implements RecordService{
     private final CustomExerciseRepository customExerciseRepository;
     private final MemberRepository memberRepository;
 
-    // TODO: 2024-08-14 리팩토링 필요 
+    // TODO: 2024-08-14 리팩토링 필요
     /**
      * 루틴 완료시 루틴의 대한기록을 저장하는 메서드
      * @param memberId 사용자 ID
