@@ -33,6 +33,7 @@ public class Exercise {
     @Convert(converter = ExerciseEquipmentConverter.class)
     private ExerciseEquipment exerciseEquipment;
 
+    private float mets;      // 운동 강도
 
     public void updateGifUrl(String gifUrl){
         this.gifUrl = gifUrl;
