@@ -44,7 +44,7 @@ public class RoutineDetails {
         if (exercise instanceof Exercise){
             routineDetailsBuilder.exercise((Exercise) exercise).totalSets(calculateTotalSets((Exercise) exercise));
         }else{
-            routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(4).orders(orders);
+            routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(5).orders(orders);
         }
         return routineDetailsBuilder.build();
 
@@ -55,7 +55,7 @@ public class RoutineDetails {
         if (exercise instanceof Exercise){
             routineDetailsBuilder.exercise((Exercise) exercise).totalSets(calculateTotalSets((Exercise) exercise));
         }else{
-            routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(4);
+            routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(5);
         }
         return routineDetailsBuilder.build();
 
