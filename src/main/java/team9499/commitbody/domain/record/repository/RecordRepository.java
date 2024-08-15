@@ -5,5 +5,5 @@ import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.record.domain.Record;
 
 @Repository
-public interface RecordRepository extends JpaRepository<Record, Long> {
+public interface RecordRepository extends JpaRepository<Record, Long>, CustomRecordRepository {
 }

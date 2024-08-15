@@ -14,6 +14,7 @@ import team9499.commitbody.domain.record.domain.RecordDetails;
 import team9499.commitbody.domain.record.domain.RecordSets;
 import team9499.commitbody.domain.record.dto.RecordDto;
 import team9499.commitbody.domain.record.dto.RecordSetsDto;
+import team9499.commitbody.domain.record.dto.response.RecordResponse;
 import team9499.commitbody.domain.record.repository.RecordDetailsRepository;
 import team9499.commitbody.domain.record.repository.RecordRepository;
 import team9499.commitbody.domain.record.repository.RecordSetsRepository;
@@ -98,7 +99,7 @@ public class RecordServiceImpl implements RecordService{
                 if (weight !=null && reps!=null){       // 무게+횟수일때
                     recordSets.add(RecordSets.ofWeightAndSets(weight,reps,recordDetail));
                     totalVolume += weight;
-                    detailsVolume += weight;
+                    detailsVolume += (weight*reps);
                     detailsReps += reps;
                     weightValid =true;
                     maxRm += Math.round((float)weight * (float)(1 +0.03333*reps));      // 칼로리 계산
@@ -137,5 +138,11 @@ public class RecordServiceImpl implements RecordService{
         recordRepository.save(record);
         recordDetailsRepository.saveAll(recordDetails);
         recordSetsRepository.saveAll(recordSets);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public RecordResponse getRecord(Long recordId,Long memberId) {
+        return recordRepository.findByRecordId(recordId,memberId);
     }
 }
