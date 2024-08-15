@@ -10,11 +10,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.record.dto.request.RecordRequest;
+import team9499.commitbody.domain.record.dto.response.RecordResponse;
 import team9499.commitbody.domain.record.service.RecordService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
@@ -47,6 +45,14 @@ public class RecordController {
         Long memberId = principalDetails.getMember().getId();
         recordService.saveRecord(memberId, recordRequest.getRecordName(), recordRequest.getStartTime(),recordRequest.getEndTime(),recordRequest.getExercises());
         return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 성공"));
+    }
+
+    @GetMapping("/record/{id}")
+    public ResponseEntity<?> getRecord(@PathVariable("id") Long id,
+                                       @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = principalDetails.getMember().getId();
+        RecordResponse recordResponse = recordService.getRecord(id, memberId);
+        return  ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",recordResponse));
     }
 
 }
