@@ -10,5 +10,5 @@ public interface RecordService {
 
     void saveRecord(Long memberId , String recordName, LocalDateTime startTime, LocalDateTime endTime, List<RecordDto> recordDtos);
 
-    RecordResponse getRecord(Long memberId, Long recordId);
+    RecordResponse getRecord(Long recordId,Long memberId);
 }

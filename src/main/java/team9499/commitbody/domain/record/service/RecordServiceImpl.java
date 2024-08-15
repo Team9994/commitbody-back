@@ -142,7 +142,7 @@ public class RecordServiceImpl implements RecordService{
 
     @Transactional(readOnly = true)
     @Override
-    public RecordResponse getRecord(Long memberId, Long recordId) {
+    public RecordResponse getRecord(Long recordId,Long memberId) {
         return recordRepository.findByRecordId(recordId,memberId);
     }
 }
