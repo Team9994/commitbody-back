@@ -99,7 +99,7 @@ public class RecordServiceImpl implements RecordService{
                 if (weight !=null && reps!=null){       // 무게+횟수일때
                     recordSets.add(RecordSets.ofWeightAndSets(weight,reps,recordDetail));
                     totalVolume += weight;
-                    detailsVolume += weight;
+                    detailsVolume += (weight*reps);
                     detailsReps += reps;
                     weightValid =true;
                     maxRm += Math.round((float)weight * (float)(1 +0.03333*reps));      // 칼로리 계산
