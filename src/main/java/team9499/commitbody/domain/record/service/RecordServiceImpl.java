@@ -14,6 +14,7 @@ import team9499.commitbody.domain.record.domain.RecordDetails;
 import team9499.commitbody.domain.record.domain.RecordSets;
 import team9499.commitbody.domain.record.dto.RecordDto;
 import team9499.commitbody.domain.record.dto.RecordSetsDto;
+import team9499.commitbody.domain.record.dto.response.RecordResponse;
 import team9499.commitbody.domain.record.repository.RecordDetailsRepository;
 import team9499.commitbody.domain.record.repository.RecordRepository;
 import team9499.commitbody.domain.record.repository.RecordSetsRepository;
@@ -137,5 +138,11 @@ public class RecordServiceImpl implements RecordService{
         recordRepository.save(record);
         recordDetailsRepository.saveAll(recordDetails);
         recordSetsRepository.saveAll(recordSets);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public RecordResponse getRecord(Long memberId, Long recordId) {
+        return recordRepository.findByRecordId(recordId,memberId);
     }
 }
