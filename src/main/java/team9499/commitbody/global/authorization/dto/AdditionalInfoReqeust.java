@@ -28,12 +28,12 @@ public class AdditionalInfoReqeust {
     private LocalDate birthday;
 
     @Schema(description = "사용자 키")
-    @NotBlank(message = "키를 입력해주세요")
-    private String height;
+    @NotNull(message = "키를 입력해주세요")
+    private float height;
 
     @Schema(description = "사용자 몸무게")
-    @NotBlank(message = "몸무게를 입력해주세요")
-    private String weight;
+    @NotNull(message = "몸무게를 입력해주세요")
+    private float weight;
 
     @Schema(description = "필수값이 아닙니다.")
     private Float boneMineralDensity;   // 골격근량

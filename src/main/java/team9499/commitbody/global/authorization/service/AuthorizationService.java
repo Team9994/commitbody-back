@@ -11,7 +11,7 @@ public interface AuthorizationService {
 
     Map<String,Object> authenticateOrRegisterUser(LoginType loginType,String socialId);
 
-    TokenUserInfoResponse additionalInfoSave(String nickName, Gender gender, LocalDate birthday, String height, String weight, Float boneMineralDensity, Float bodyFatPercentage, String jwtToken);
+    TokenUserInfoResponse additionalInfoSave(String nickName, Gender gender, LocalDate birthday, float height, float weight, Float boneMineralDensity, Float bodyFatPercentage, String jwtToken);
 
     void registerNickname(String nickname);
 
