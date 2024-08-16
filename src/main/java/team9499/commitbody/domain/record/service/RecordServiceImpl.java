@@ -129,7 +129,7 @@ public class RecordServiceImpl implements RecordService{
 
             recordDetails.add(recordDetail);
         }
-        int totalCalorie = (int) (totalMets / exerciseSize) * Integer.parseInt(member.getWeight()) * (int)Duration.between(startTime, endTime).toHours();
+        int totalCalorie = (int) ((int) (totalMets / exerciseSize) * member.getWeight() * (int)Duration.between(startTime, endTime).toHours());
 
         record.setRecordSets(totalSets);
         record.setRecordVolume(totalVolume);;

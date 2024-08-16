@@ -71,7 +71,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     @Override
-    public TokenUserInfoResponse additionalInfoSave(String nickName, Gender gender, LocalDate birthday, String height, String weight, Float boneMineralDensity, Float bodyFatPercentage, String jwtToken) {
+    public TokenUserInfoResponse additionalInfoSave(String nickName, Gender gender, LocalDate birthday, float height, float weight, Float boneMineralDensity, Float bodyFatPercentage, String jwtToken) {
         String memberId = jwtUtils.accessTokenValid(jwtToken);      // jwt 토큰을 검증후 반환한 memberId
         Member member = memberRepository.findById(Long.parseLong(memberId)).orElseThrow(() -> new NoSuchException(BAD_REQUEST, No_SUCH_MEMBER));
 

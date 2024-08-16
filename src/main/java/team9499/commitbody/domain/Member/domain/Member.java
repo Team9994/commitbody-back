@@ -24,9 +24,9 @@ public class Member extends BaseTime {
 
     private String nickname;    // 닉네임
 
-    private String height;      // 키
+    private float height;      // 키
 
-    private String weight;      // 몸무게
+    private float weight;      // 몸무게
 
     private LocalDate birthday;    // 생년월일
 
@@ -53,7 +53,7 @@ public class Member extends BaseTime {
         return Member.builder().socialId(socialId).loginType(loginType).build();
     }
 
-    public void createAdditionalInfoNotNull(String nickName, Gender gender, LocalDate birthday, String height, String weight,float boneMineralDensity, float bodyFatPercentage){
+    public void createAdditionalInfoNotNull(String nickName, Gender gender, LocalDate birthday, float height, float weight,float boneMineralDensity, float bodyFatPercentage){
         this.nickname = nickName;
         this.gender = gender;
         this.birthday = birthday;
@@ -64,7 +64,7 @@ public class Member extends BaseTime {
         this.weightUnit = WeightUnit.KG;
     }
 
-    public void createAdditionalInfoNull(String nickName, Gender gender, LocalDate birthday, String height, String weight){
+    public void createAdditionalInfoNull(String nickName, Gender gender, LocalDate birthday, float height, float weight){
         this.nickname = nickName;
         this.gender = gender;
         this.birthday = birthday;
