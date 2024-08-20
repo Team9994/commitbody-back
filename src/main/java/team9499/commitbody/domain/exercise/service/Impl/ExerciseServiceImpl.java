@@ -19,7 +19,9 @@ import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseEquipment;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
 import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
+import team9499.commitbody.domain.exercise.dto.response.ExerciseResponse;
 import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
+import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
@@ -39,6 +41,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     
     private final ElasticsearchClient elasticsearchClient;
     private final CustomExerciseRepository customExerciseRepository;
+    private final ExerciseRepository exerciseRepository;
     private final RedisService redisService;
     private final MemberRepository memberRepository;
     private final S3Service s3Service;
@@ -283,6 +286,18 @@ public class ExerciseServiceImpl implements ExerciseService {
     public void deleteCustomExercise(Long customExerciseId, Long memberId) {
         CustomExercise customExercise = getCustomExercise(customExerciseId,memberId);
         customExerciseRepository.delete(customExercise);
+    }
+
+    /**
+     * 상세 운동 조회하는 메서드
+     * @param exerciseId 운동 ID
+     * @param memberId 로그인한 사용자 ID
+     * @param source 운동 정보 타입 [custom,default]
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ExerciseResponse detailsExercise(Long exerciseId, Long memberId, String source) {
+        return exerciseRepository.getExerciseDetailReport(memberId,exerciseId,source);
     }
 
 

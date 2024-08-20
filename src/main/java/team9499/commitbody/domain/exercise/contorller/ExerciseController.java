@@ -20,10 +20,12 @@ import team9499.commitbody.domain.exercise.dto.CustomExerciseReqeust;
 import team9499.commitbody.domain.exercise.dto.CustomUpdateExerciseReqeust;
 import team9499.commitbody.domain.exercise.dto.InterestExerciseRequest;
 import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
+import team9499.commitbody.domain.exercise.dto.response.ExerciseResponse;
 import team9499.commitbody.domain.exercise.event.ElasticDeleteExerciseEvent;
 import team9499.commitbody.domain.exercise.event.ElasticExerciseInterest;
 import team9499.commitbody.domain.exercise.event.ElasticSaveExerciseEvent;
 import team9499.commitbody.domain.exercise.event.ElasticUpdateExerciseEvent;
+import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
 import team9499.commitbody.domain.exercise.service.ExerciseInterestService;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
@@ -158,4 +160,22 @@ public class ExerciseController {
         return ResponseEntity.ok(new SuccessResponse<>(true,interestStatus));
     }
 
+
+    @Operation(summary = "운동 상세조회 - 통계", description = "운동의 해당 운동의 대한 통계및 운동의 대한 순서를 조회할수 있습니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"exerciseId\":1,\"exerciseName\":\"3/4 싯업\",\"exerciseTarget\":\"복근\",\"exerciseEquipment\":\"맨몸\",\"exerciseType\":\"횟수\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"totalValue\":90,\"maxValue\":5,\"weekValue\":72,\"calculateRankPercentage\":0,\"day\":{\"MONDAY\":9,\"THURSDAY\":9,\"SUNDAY\":9,\"TUESDAY\":9},\"exerciseMethods\":[\"등을 대고 눕고 무릎을 구부리며 발은 바닥에 평평하게 붙입니다.\"],\"records\":[{\"date\":\"2024-08-20T08:46:33.368\",\"sets\":[{\"reps\":4},{\"reps\":5}]}]}}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 정보 미존재 시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"해당 정보를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
+    @GetMapping("/exercise/{id}")
+    public ResponseEntity<?> getDetailExercise(@PathVariable("id") Long id, @RequestParam("source")String source,
+                                  @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = principalDetails.getMember().getId();
+        ExerciseResponse exerciseResponse = exerciseService.detailsExercise(memberId, id, source);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",exerciseResponse));
+    }
 }

@@ -28,4 +28,15 @@ public class RecordSetsResponse {
             builder.reps(reps);
         return builder.build();
     }
+
+    public static RecordSetsResponse of(Integer weight, Integer reps, Integer times){
+        RecordSetsResponseBuilder builder = RecordSetsResponse.builder();
+        if (weight!=null && reps !=null){
+            builder.weight(weight).reps(reps);
+        }else if (times!=null){
+            builder.times(times);
+        }else
+            builder.reps(reps);
+        return builder.build();
+    }
 }
