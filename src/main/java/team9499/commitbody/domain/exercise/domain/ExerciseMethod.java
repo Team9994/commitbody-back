@@ -1,10 +1,7 @@
 package team9499.commitbody.domain.exercise.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import team9499.commitbody.domain.exercise.domain.Exercise;
 
 @Data
@@ -12,6 +9,7 @@ import team9499.commitbody.domain.exercise.domain.Exercise;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(exclude = "exercise")
 public class ExerciseMethod {
 
     @Id
