@@ -10,6 +10,8 @@ import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseType;
 import team9499.commitbody.domain.exercise.domain.converter.ExerciseTypeConverter;
 
+import java.util.List;
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -34,6 +36,9 @@ public class Exercise {
     private ExerciseEquipment exerciseEquipment;
 
     private float mets;      // 운동 강도
+
+    @OneToMany(fetch = FetchType.LAZY,mappedBy = "exercise")
+    private List<ExerciseMethod> exerciseMethodList;
 
     public void updateGifUrl(String gifUrl){
         this.gifUrl = gifUrl;
