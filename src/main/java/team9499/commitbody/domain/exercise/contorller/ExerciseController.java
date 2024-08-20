@@ -175,7 +175,7 @@ public class ExerciseController {
     public ResponseEntity<?> getDetailExercise(@PathVariable("id") Long id, @RequestParam("source")String source,
                                   @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = principalDetails.getMember().getId();
-        ExerciseResponse exerciseResponse = exerciseService.detailsExercise(memberId, id, source);
+        ExerciseResponse exerciseResponse = exerciseService.detailsExercise(id,memberId,source);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",exerciseResponse));
     }
 }
