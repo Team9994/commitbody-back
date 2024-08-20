@@ -22,6 +22,7 @@ import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
 import team9499.commitbody.domain.exercise.dto.response.ExerciseResponse;
 import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
+import team9499.commitbody.domain.exercise.service.ExerciseInterestService;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
@@ -41,6 +42,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     
     private final ElasticsearchClient elasticsearchClient;
     private final CustomExerciseRepository customExerciseRepository;
+    private final ExerciseInterestService exerciseInterestService;
     private final ExerciseRepository exerciseRepository;
     private final RedisService redisService;
     private final MemberRepository memberRepository;
@@ -297,7 +299,11 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Transactional(readOnly = true)
     @Override
     public ExerciseResponse detailsExercise(Long exerciseId, Long memberId, String source) {
-        return exerciseRepository.getExerciseDetailReport(memberId,exerciseId,source);
+        ExerciseResponse exerciseDetailReport = exerciseRepository.getExerciseDetailReport(memberId, exerciseId, source);
+        boolean interestStatus = exerciseInterestService.checkInterestStatus(exerciseId, memberId);
+        exerciseDetailReport.setInterestStatus(interestStatus);
+
+        return exerciseDetailReport;
     }
 
 

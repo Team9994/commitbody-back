@@ -22,6 +22,7 @@ public class ExerciseResponse {
     private Long exerciseId;            // 운동 ID
     private String exerciseName;        // 운동명
     private ExerciseTarget exerciseTarget;  // 운동 부위
+    private boolean interestStatus;         // 관심운동 상태
     private String exerciseEquipment;       // 운동 장비
     private String exerciseType;            // 운동 수행 종류
     private String gifUrl;                  // 움짤

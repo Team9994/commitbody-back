@@ -57,12 +57,33 @@ public class ExerciseInterestServiceImpl implements ExerciseInterestService {
         }
     }
 
+    /**
+     * 상세운동 조회시 관심 운동 체크 메서드
+     * @param exerciseId    운동 ID
+     * @param memberId      로그인한 사용자 ID
+     * @return 관심운동시 : true , 비관심 운동시 : false
+     */
+    @Override
+    public boolean checkInterestStatus(Long exerciseId, Long memberId) {
+
+        ExerciseInterest defaultExercise = exerciseInterestRepository.findByExerciseIdAndMemberId(exerciseId, memberId).orElse(null);
+        if (defaultExercise != null && defaultExercise.isInterested()) {
+            return true;
+        }
+        ExerciseInterest customExercise = exerciseInterestRepository.findByCustomExerciseIdAndMemberId(exerciseId, memberId).orElse(null);
+        if (customExercise != null &&  customExercise.isInterested()) {
+            return true;
+        }
+
+        return false;
+    }
+
 
     /*
     관심 운동이 저장되어 있지 않을 경우 데이터를 저장하고 저장한 데이터를 반환하는 메서드
      */
     private ExerciseInterest findOrCreateInterest(Long exerciseId, Long memberId, String source, Member member) {
-        if (source.equals(DEFAULT)) {
+        if (source.equals(DEFAULT)|| source.equals("default")) {
             return exerciseInterestRepository.findByExerciseIdAndMemberId(exerciseId, memberId)
                     .orElseGet(() -> createNewInterest(exerciseId, source, member));
         }else {
