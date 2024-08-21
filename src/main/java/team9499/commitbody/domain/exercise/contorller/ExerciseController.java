@@ -25,7 +25,6 @@ import team9499.commitbody.domain.exercise.event.ElasticDeleteExerciseEvent;
 import team9499.commitbody.domain.exercise.event.ElasticExerciseInterest;
 import team9499.commitbody.domain.exercise.event.ElasticSaveExerciseEvent;
 import team9499.commitbody.domain.exercise.event.ElasticUpdateExerciseEvent;
-import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
 import team9499.commitbody.domain.exercise.service.ExerciseInterestService;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
@@ -34,7 +33,6 @@ import team9499.commitbody.global.payload.SuccessResponse;
 
 
 @RestController
-@Tag(name = "운동",description = "운동관련 API")
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
 public class ExerciseController {
@@ -43,7 +41,8 @@ public class ExerciseController {
     private final ExerciseInterestService exerciseInterestService;
     private final ApplicationEventPublisher eventPublisher;
 
-    @Operation(summary = "운동 검색", description = "운동을 검색합니다. [name: 운동명, target: 부위, equipment: 운동 장비, favorite: 관심운동 여부(true/false), from: 시작 위치, size: 페이지당 표시 데이터 양]")
+    @Tag(name = "운동", description = "운동 관련 API")
+    @Operation(summary = "운동 검색", description = "운동을 검색합니다. [name: 운동명, target: 부위, equipment: 운동 장비, favorite: 관심운동 여부(true/false), from: 시작 위치, size: 페이지당 표시 데이터 양]",tags = "운동")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "EX) - /api/v1/search-exercise?name=인클라인&target=가슴&equipment=맨몸&favorite=false&from=0&size=1", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value = "{\"success\": true, \"message\": \"성공\", \"data\": {\"totalCount\": 5, \"exercise\": [{\"exerciseId\": \"492\", \"exerciseName\": \"인클라인 푸시업 뎁스 점프\", \"gifUrl\": \"https://EXAMPLE.COM\", \"exerciseTarget\": \"가슴\", \"exerciseType\": \"횟수\", \"exerciseEquipment\": \"맨몸\", \"source\": \"default\", \"interest\": false}]}}")))
@@ -63,7 +62,7 @@ public class ExerciseController {
     }
 
 
-    @Operation(summary = "커스텀 운동 등록", description = "사용자는 커스텀 운동을 등록가능하며 단일 사진만 등록 가능합니다.")
+    @Operation(summary = "커스텀 운동 등록", description = "사용자는 커스텀 운동을 등록가능하며 단일 사진만 등록 가능합니다.",tags = "운동")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value = "{\"success\":true,\"message\":\"저장 성공\"}"))),
@@ -92,7 +91,7 @@ public class ExerciseController {
 
     }
 
-    @Operation(summary = "커스텀 운동 수정", description = "사용자는 커스텀 운동을 수정가능합니다.")
+    @Operation(summary = "커스텀 운동 수정", description = "사용자는 커스텀 운동을 수정가능합니다.",tags = "운동")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value = "{\"success\":true,\"message\":\"업데이트 성공\"}"))),
@@ -120,7 +119,7 @@ public class ExerciseController {
 
     }
 
-    @Operation(summary = "커스텀 운동 삭제", description = "등록한 사용자만 커스텀 운동을 삭제 가능합니다.")
+    @Operation(summary = "커스텀 운동 삭제", description = "등록한 사용자만 커스텀 운동을 삭제 가능합니다.",tags = "운동")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value = "{\"success\":true,\"message\":\"삭제 성공\"}"))),
@@ -141,7 +140,7 @@ public class ExerciseController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
     }
 
-    @Operation(summary = "관심운동", description = "운동에 관심운동을 등록 해제 합니다. source :[ 기본 제공 운동 : default_, 커스텀 운동 : custom_] 사용합니다.")
+    @Operation(summary = "관심운동", description = "운동에 관심운동을 등록 해제 합니다. source :[ 기본 제공 운동 : default_, 커스텀 운동 : custom_] 사용합니다.",tags = "운동")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200-1", description = "관심운동 등록", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value = "{\"success\":true,\"message\":\"등록\"}"))),
@@ -161,7 +160,8 @@ public class ExerciseController {
     }
 
 
-    @Operation(summary = "운동 상세조회 - 통계", description = "운동의 해당 운동의 대한 통계및 운동의 대한 순서를 조회할수 있습니다.")
+    @Tag(name = "운동 상세", description = "운동 상세페이지 관련 API")
+    @Operation(summary = "운동 상세조회 - 통계", description = "운동의 해당 운동의 대한 통계및 운동의 대한 순서를 조회할수 있습니다.",tags = "운동 상세")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"exerciseId\":1,\"exerciseName\":\"3/4 싯업\",\"exerciseTarget\":\"복근\",\"interestStatus\":false,\"exerciseEquipment\":\"맨몸\",\"exerciseType\":\"횟수\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"totalValue\":90,\"maxValue\":5,\"weekValue\":72,\"calculateRankPercentage\":0,\"day\":{\"MONDAY\":9,\"THURSDAY\":9,\"SUNDAY\":9,\"TUESDAY\":9},\"exerciseMethods\":[\"등을 대고 눕고 무릎을 구부리며 발은 바닥에 평평하게 붙입니다.\"],\"records\":[{\"date\":\"2024-08-20T08:46:33.368\",\"sets\":[{\"reps\":4},{\"reps\":5}]}]}}"))),
