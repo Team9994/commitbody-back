@@ -1,28 +1,27 @@
 package team9499.commitbody.domain.comment.exercise.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.comment.exercise.dto.ExerciseCommentRequest;
+import team9499.commitbody.domain.comment.exercise.dto.response.ExerciseCommentResponse;
 import team9499.commitbody.domain.comment.exercise.service.ExerciseCommentService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
 
-import java.util.Map;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
@@ -47,5 +46,16 @@ public class ExerciseCommentController {
 
         exerciseCommentService.saveExerciseComment(memberId,exerciseCommentRequest.getExerciseId(), exerciseCommentRequest.getSource(), exerciseCommentRequest.getContent());
         return ResponseEntity.ok(new SuccessResponse<>(true,"등록 성공"));
+    }
+
+    @GetMapping("/comment-exercise/{id}")
+    public ResponseEntity<?> getExerciseComment(@PathVariable("id") Long exerciseId,
+                                                @RequestParam("source") String source,
+                                                @RequestParam(name = "lastId",required = false) Long lastId,
+                                                @AuthenticationPrincipal PrincipalDetails principalDetails,
+                                                @PageableDefault Pageable pageable){
+        Long memberId = principalDetails.getMember().getId();
+        ExerciseCommentResponse exerciseComments = exerciseCommentService.getExerciseComments(memberId, exerciseId, source, pageable, lastId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",exerciseComments));
     }
 }
