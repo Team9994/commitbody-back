@@ -15,6 +15,11 @@ import team9499.commitbody.global.utils.BaseTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(indexes = {
+        @Index(name = "exercise_id_created_at_idx", columnList = "exercise_id, created_at DESC"),
+        @Index(name = "custom_ex_id_created_at_idx", columnList = "custom_ex_id, created_at DESC"),
+        @Index(name = "member_id_idx", columnList = "member_id")
+})
 public class ExerciseComment extends BaseTime {
 
     @Id
@@ -25,21 +30,19 @@ public class ExerciseComment extends BaseTime {
     @Column(length = 1000)
     private String content;
 
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "member_id",foreignKey = @ForeignKey (ConstraintMode.NO_CONSTRAINT))
     @ManyToOne(fetch = FetchType.LAZY)
     private Member member;
 
-    @JoinColumn(name = "exercise_id")
+    @JoinColumn(name = "exercise_id",foreignKey = @ForeignKey (ConstraintMode.NO_CONSTRAINT))
     @ManyToOne(fetch = FetchType.LAZY)
     private Exercise exercise;
 
-    @JoinColumn(name = "custom_ex_id")
+    @JoinColumn(name = "custom_ex_id",foreignKey = @ForeignKey (ConstraintMode.NO_CONSTRAINT))
     @ManyToOne(fetch = FetchType.LAZY)
     private CustomExercise customExercise;
 
-
     private Integer likeCount;
-
 
     public static ExerciseComment of(Member member,Object exercise ,String content){
         ExerciseCommentBuilder exerciseCommentBuilder = ExerciseComment.builder().member(member).content(content).likeCount(0);
@@ -50,6 +53,5 @@ public class ExerciseComment extends BaseTime {
 
         return exerciseCommentBuilder.build();
     }
-
 
 }
