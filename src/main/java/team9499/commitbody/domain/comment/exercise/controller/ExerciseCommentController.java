@@ -1,6 +1,7 @@
 package team9499.commitbody.domain.comment.exercise.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -48,12 +49,20 @@ public class ExerciseCommentController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"등록 성공"));
     }
 
+    @Operation(summary = "운동 댓글 조회", description = "무한 스크롤 방식의 운동 댓글 조회, DEFAULT SIZE : 10,  hastNext: true 시 lastId 사용 , writer : true 일때 수정, 삭제가능",tags = "운동 상세")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"commentList\": [{\"exerciseCommentId\": 1, \"content\": \"운동 댓글\", \"commentedAt\": \"1시간 전\", \"writer\": true, \"likeCount\": 0}]}}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/comment-exercise/{id}")
-    public ResponseEntity<?> getExerciseComment(@PathVariable("id") Long exerciseId,
-                                                @RequestParam("source") String source,
-                                                @RequestParam(name = "lastId",required = false) Long lastId,
+    public ResponseEntity<?> getExerciseComment(@Parameter(description = "운동 ID")@PathVariable("id") Long exerciseId,
+                                                @Parameter(description = "[default, custom]")@RequestParam("source") String source,
+                                                @Parameter(description ="마지막 댓글 ID")@RequestParam(name = "lastId",required = false) Long lastId,
                                                 @AuthenticationPrincipal PrincipalDetails principalDetails,
-                                                @PageableDefault Pageable pageable){
+                                                @Parameter(example = "{\"size\":10}") @PageableDefault Pageable pageable){
         Long memberId = principalDetails.getMember().getId();
         ExerciseCommentResponse exerciseComments = exerciseCommentService.getExerciseComments(memberId, exerciseId, source, pageable, lastId);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",exerciseComments));
