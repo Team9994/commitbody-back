@@ -1,16 +1,18 @@
 package team9499.commitbody.domain.comment.exercise.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.comment.exercise.domain.ExerciseComment;
+import team9499.commitbody.domain.comment.exercise.dto.ExerciseCommentDto;
+import team9499.commitbody.domain.comment.exercise.dto.response.ExerciseCommentResponse;
 import team9499.commitbody.domain.comment.exercise.repository.ExerciseCommentRepository;
 import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
-import team9499.commitbody.global.Exception.ExceptionStatus;
-import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
 
 import static team9499.commitbody.global.Exception.ExceptionStatus.*;
@@ -36,6 +38,16 @@ public class ExerciseCommentServiceImpl implements ExerciseCommentService{
             exercise = customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(BAD_REQUEST,NO_SUCH_DATA));
 
         exerciseCommentRepository.save(ExerciseComment.of(member,exercise,comment));
+    }
+
+    /**
+     * 운동 댓글 무한 스크롤 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ExerciseCommentResponse getExerciseComments(Long memberId, Long exerciseId, String source, Pageable pageable, Long lastId) {
+        Slice<ExerciseCommentDto> exerciseComments = exerciseCommentRepository.getExerciseComments(memberId, exerciseId, source, pageable, lastId);
+        return new ExerciseCommentResponse(exerciseComments.hasNext(),exerciseComments.getContent());
     }
 
 }
