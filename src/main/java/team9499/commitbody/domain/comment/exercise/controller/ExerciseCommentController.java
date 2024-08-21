@@ -22,7 +22,6 @@ import team9499.commitbody.global.payload.SuccessResponse;
 
 import java.util.Map;
 
-@Tag(name = "운동 상세",description = "운동 상세페이지 관련 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
@@ -30,7 +29,7 @@ public class ExerciseCommentController {
 
     private final ExerciseCommentService exerciseCommentService;
 
-    @Operation(summary = "운동 댓글 등록", description = "사용자는 해당 운동 목록에 댓글을 등록 가능합니다.")
+    @Operation(summary = "운동 댓글 등록", description = "사용자는 해당 운동 목록에 댓글을 등록 가능합니다.",tags = "운동 상세")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value = "{\"success\":true,\"message\":\"등록 성공\"}"))),
