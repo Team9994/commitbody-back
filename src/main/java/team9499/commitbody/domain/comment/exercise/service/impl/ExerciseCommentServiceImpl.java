@@ -61,14 +61,33 @@ public class ExerciseCommentServiceImpl implements ExerciseCommentService {
      */
     @Override
     public void deleteExerciseComment(Long memberId, Long exerciseCommentId) {
-        // 운동 댓글 ID를 통해 데이터를 조회 후 현재 로그인한 사용자 작성한 데이터가 403 오류가 발생한다. 
-        exerciseCommentRepository.findById(exerciseCommentId).filter(exerciseComment -> {
-            if (!exerciseComment.getMember().getId().equals(memberId))
-                throw new InvalidUsageException(FORBIDDEN,AUTHOR_ONLY);
-            return true;
-        }).orElseThrow(() -> new NoSuchException(BAD_REQUEST,NO_SUCH_DATA));
+        checkWriter(memberId, exerciseCommentId);
         // 운동 댓글, 운동 좋아요 목록 삭제
         exerciseCommentRepository.deleteByMemberIdAndId(memberId,exerciseCommentId);
+    }
+
+    /**
+     * 운동 댓글의 내용을 업데이트 합니다.
+     * @param memberId  로그인한 사용자 ID
+     * @param exerciseCommentId 댓글을 수정한 댓글 ID
+     * @param content   수정할 댓글 내용
+     */
+    @Override
+    public void updateExerciseComment(Long memberId, Long exerciseCommentId, String content) {
+        ExerciseComment exerciseComment = checkWriter(memberId, exerciseCommentId);
+        exerciseComment.updateContent(content);
+    }
+
+    /*
+    현재 이용하려면 데이터가 작성자가 맞는지 확인하는 메서드
+     */
+    private ExerciseComment checkWriter(Long memberId, Long exerciseCommentId) {
+        // 운동 댓글 ID를 통해 데이터를 조회 후 현재 로그인한 사용자 작성한 데이터가 403 오류가 발생한다.
+        return exerciseCommentRepository.findById(exerciseCommentId).filter(exerciseComment -> {
+            if (!exerciseComment.getMember().getId().equals(memberId))
+                throw new InvalidUsageException(FORBIDDEN, AUTHOR_ONLY);
+            return true;
+        }).orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
     }
 
 }

@@ -10,4 +10,6 @@ public interface ExerciseCommentService {
     ExerciseCommentResponse getExerciseComments(Long memberId, Long exerciseId, String source, Pageable pageable, Long lastId);
 
     void deleteExerciseComment(Long memberId, Long exerciseCommentId);
+
+    void updateExerciseComment(Long memberId, Long exerciseCommentId, String content);
 }

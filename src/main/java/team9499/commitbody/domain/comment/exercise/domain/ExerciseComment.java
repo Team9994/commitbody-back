@@ -64,4 +64,8 @@ public class ExerciseComment extends BaseTime {
        this.likeCount = likeCount;
     }
 
+    public void updateContent(String newContent){
+        this.content = newContent;
+    }
+
 }
