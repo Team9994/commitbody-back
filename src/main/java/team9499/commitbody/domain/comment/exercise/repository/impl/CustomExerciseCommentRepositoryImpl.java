@@ -63,6 +63,7 @@ public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommen
         List<ExerciseCommentDto> commentDtoList = exerciseComments.stream()
                 .map(ec -> ExerciseCommentDto.of(
                         ec.getId(),
+                        ec.getMember().getNickname(),
                         ec.getContent(),
                         converter(ec.getCreatedAt()),
                         checkAuthor(memberId, ec.getMember().getId()),

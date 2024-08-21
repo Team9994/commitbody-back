@@ -10,6 +10,8 @@ public class ExerciseCommentDto {
 
     private Long exerciseCommentId;     // 댓글 Id (pk)
 
+    private String nickName;    // 사용자 닉네임
+
     private String content;     // 댓글 내용
 
     private String commentedAt; // 1분전 하루전
@@ -20,8 +22,8 @@ public class ExerciseCommentDto {
 
     private boolean likeStatus;     // 좋이요 상태
     
-    public static ExerciseCommentDto of(Long exerciseCommentId, String content, String commentedAt, boolean writer, Integer likeCount,boolean likeStatus){
-        return new ExerciseCommentDto(exerciseCommentId,content,commentedAt,writer,likeCount,likeStatus);
+    public static ExerciseCommentDto of(Long exerciseCommentId,String nickName, String content, String commentedAt, boolean writer, Integer likeCount,boolean likeStatus){
+        return new ExerciseCommentDto(exerciseCommentId,nickName,content,commentedAt,writer,likeCount,likeStatus);
     }
 
 }
