@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import team9499.commitbody.domain.comment.exercise.dto.ExerciseCommentRequest;
 import team9499.commitbody.domain.comment.exercise.service.ExerciseCommentService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
@@ -40,11 +41,11 @@ public class ExerciseCommentController {
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @PostMapping("/comment-exercise")
-    public ResponseEntity<?> saveExerciseComment(@Parameter(schema = @Schema(type = "string", example = "{\"content\":\"string\"}"))@RequestBody Map<String,String> commentRequest,
+    public ResponseEntity<?> saveExerciseComment(@RequestBody ExerciseCommentRequest exerciseCommentRequest,
                                                  @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = principalDetails.getMember().getId();
-        String content = commentRequest.get("content");
-        exerciseCommentService.saveExerciseComment(memberId,content);
+
+        exerciseCommentService.saveExerciseComment(memberId,exerciseCommentRequest.getExerciseId(), exerciseCommentRequest.getSource(), exerciseCommentRequest.getContent());
         return ResponseEntity.ok(new SuccessResponse<>(true,"등록 성공"));
     }
 }
