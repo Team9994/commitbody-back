@@ -43,7 +43,7 @@ public class ExerciseComment extends BaseTime {
     @ManyToOne(fetch = FetchType.LAZY)
     private CustomExercise customExercise;
 
-    @OneToMany(mappedBy = "exerciseComment")
+    @OneToMany(mappedBy = "exerciseComment",cascade = CascadeType.REMOVE)
     private List<ExerciseCommentLike> exerciseCommentLikes;
 
     private Integer likeCount;      // 좋아요수

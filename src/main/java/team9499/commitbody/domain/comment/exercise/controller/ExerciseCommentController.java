@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.comment.exercise.dto.request.ExerciseCommentRequest;
 import team9499.commitbody.domain.comment.exercise.dto.response.ExerciseCommentResponse;
 import team9499.commitbody.domain.comment.exercise.service.ExerciseCommentService;
-import team9499.commitbody.domain.like.exercise.service.ExerciseCommentLikeService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
@@ -44,7 +43,7 @@ public class ExerciseCommentController {
     @PostMapping("/comment-exercise")
     public ResponseEntity<?> saveExerciseComment(@RequestBody ExerciseCommentRequest exerciseCommentRequest,
                                                  @AuthenticationPrincipal PrincipalDetails principalDetails){
-        Long memberId = principalDetails.getMember().getId();
+        Long memberId = getMemberId(principalDetails);
 
         exerciseCommentService.saveExerciseComment(memberId,exerciseCommentRequest.getExerciseId(), exerciseCommentRequest.getSource(), exerciseCommentRequest.getContent());
         return ResponseEntity.ok(new SuccessResponse<>(true,"등록 성공"));
@@ -64,8 +63,20 @@ public class ExerciseCommentController {
                                                 @Parameter(description ="마지막 댓글 ID")@RequestParam(name = "lastId",required = false) Long lastId,
                                                 @AuthenticationPrincipal PrincipalDetails principalDetails,
                                                 @Parameter(example = "{\"size\":10}") @PageableDefault Pageable pageable){
-        Long memberId = principalDetails.getMember().getId();
+        Long memberId = getMemberId(principalDetails);
         ExerciseCommentResponse exerciseComments = exerciseCommentService.getExerciseComments(memberId, exerciseId, source, pageable, lastId);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",exerciseComments));
+    }
+
+    @DeleteMapping("/comment-exercise/{id}")
+    public ResponseEntity<?> deleteExerciseComment(@PathVariable("id")Long exerciseCommentId,
+                                                   @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        exerciseCommentService.deleteExerciseComment(memberId,exerciseCommentId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
+    }
+
+    private static Long getMemberId(PrincipalDetails principalDetails) {
+        return  principalDetails.getMember().getId();
     }
 }

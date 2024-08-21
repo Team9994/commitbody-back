@@ -8,4 +8,6 @@ public interface ExerciseCommentService {
     void saveExerciseComment(Long memberId, Long exerciseId, String source,String comment);
 
     ExerciseCommentResponse getExerciseComments(Long memberId, Long exerciseId, String source, Pageable pageable, Long lastId);
+
+    void deleteExerciseComment(Long memberId, Long exerciseCommentId);
 }

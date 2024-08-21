@@ -6,4 +6,6 @@ import team9499.commitbody.domain.comment.exercise.domain.ExerciseComment;
 
 @Repository
 public interface ExerciseCommentRepository extends JpaRepository<ExerciseComment, Long>, CustomExerciseCommentRepository {
+
+    void deleteByMemberIdAndId(Long memberId, Long exerciseCommentId);
 }
