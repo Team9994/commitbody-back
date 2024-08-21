@@ -53,7 +53,7 @@ public class ExerciseCommentController {
     @Operation(summary = "운동 댓글 조회", description = "무한 스크롤 방식의 운동 댓글 조회, DEFAULT SIZE : 10,  hastNext: true 시 lastId 사용 , writer : true 일때 수정, 삭제가능",tags = "운동 상세")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"commentList\": [{\"exerciseCommentId\": 1, \"content\": \"운동 댓글\", \"commentedAt\": \"1시간 전\", \"writer\": true, \"likeCount\": 0,\"likeStatus\" : false}]}}"))),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"commentList\": [{\"exerciseCommentId\": 1, \"nickName\":\"닉네임\",\"content\": \"운동 댓글\", \"commentedAt\": \"1시간 전\", \"writer\": true, \"likeCount\": 0,\"likeStatus\" : false}]}}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
