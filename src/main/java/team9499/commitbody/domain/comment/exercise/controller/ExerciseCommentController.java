@@ -89,6 +89,18 @@ public class ExerciseCommentController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
     }
 
+    @Operation(summary = "운동 댓글 수정", description = "작성자만 작성한 댓글의 대해서 수정 가능합니다.",tags = "운동 상세")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"수정 성공\"}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 데이터 미 존재시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"해당 정보를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}"))),
+            @ApiResponse(responseCode = "403", description = "타 사용자가 삭제시", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"작성자만 이용할 수 있습니다.\"}")))})
     @PutMapping("/comment-exercise")
     public ResponseEntity<?> updateExerciseComment(@RequestBody UpdateExerciseCommentRequest exerciseCommentRequest,
                                                    @AuthenticationPrincipal PrincipalDetails principalDetails){
