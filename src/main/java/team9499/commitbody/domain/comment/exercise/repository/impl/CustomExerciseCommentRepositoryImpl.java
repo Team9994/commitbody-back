@@ -1,4 +1,4 @@
-package team9499.commitbody.domain.comment.exercise.repository;
+package team9499.commitbody.domain.comment.exercise.repository.impl;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -10,6 +10,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.comment.exercise.domain.ExerciseComment;
 import team9499.commitbody.domain.comment.exercise.dto.ExerciseCommentDto;
+import team9499.commitbody.domain.comment.exercise.repository.CustomExerciseCommentRepository;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -21,7 +22,7 @@ import static team9499.commitbody.domain.comment.exercise.domain.QExerciseCommen
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommentRepository{
+public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommentRepository {
 
     private final JPAQueryFactory jpaQueryFactory;
 

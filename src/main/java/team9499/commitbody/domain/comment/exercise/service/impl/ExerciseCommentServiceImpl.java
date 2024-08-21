@@ -1,4 +1,4 @@
-package team9499.commitbody.domain.comment.exercise.service;
+package team9499.commitbody.domain.comment.exercise.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +11,7 @@ import team9499.commitbody.domain.comment.exercise.domain.ExerciseComment;
 import team9499.commitbody.domain.comment.exercise.dto.ExerciseCommentDto;
 import team9499.commitbody.domain.comment.exercise.dto.response.ExerciseCommentResponse;
 import team9499.commitbody.domain.comment.exercise.repository.ExerciseCommentRepository;
+import team9499.commitbody.domain.comment.exercise.service.ExerciseCommentService;
 import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
 import team9499.commitbody.global.Exception.NoSuchException;
@@ -21,7 +22,7 @@ import static team9499.commitbody.global.Exception.ExceptionType.*;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class ExerciseCommentServiceImpl implements ExerciseCommentService{
+public class ExerciseCommentServiceImpl implements ExerciseCommentService {
 
     private final ExerciseCommentRepository exerciseCommentRepository;
     private final ExerciseRepository exerciseRepository;

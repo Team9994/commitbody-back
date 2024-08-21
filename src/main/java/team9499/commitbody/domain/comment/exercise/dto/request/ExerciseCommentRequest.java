@@ -1,4 +1,4 @@
-package team9499.commitbody.domain.comment.exercise.dto;
+package team9499.commitbody.domain.comment.exercise.dto.request;
 
 import lombok.Data;
 

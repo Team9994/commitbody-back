@@ -14,7 +14,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import team9499.commitbody.domain.comment.exercise.dto.ExerciseCommentRequest;
+import team9499.commitbody.domain.comment.exercise.dto.request.ExerciseCommentRequest;
 import team9499.commitbody.domain.comment.exercise.dto.response.ExerciseCommentResponse;
 import team9499.commitbody.domain.comment.exercise.service.ExerciseCommentService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
