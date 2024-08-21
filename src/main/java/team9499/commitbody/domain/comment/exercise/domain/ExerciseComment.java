@@ -1,14 +1,14 @@
 package team9499.commitbody.domain.comment.exercise.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
+import team9499.commitbody.domain.like.exercise.domain.ExerciseCommentLike;
 import team9499.commitbody.global.utils.BaseTime;
+
+import java.util.List;
 
 @Data
 @Entity
@@ -20,6 +20,7 @@ import team9499.commitbody.global.utils.BaseTime;
         @Index(name = "custom_ex_id_created_at_idx", columnList = "custom_ex_id, created_at DESC"),
         @Index(name = "member_id_idx", columnList = "member_id")
 })
+@ToString(exclude = "exerciseCommentLikes")
 public class ExerciseComment extends BaseTime {
 
     @Id
@@ -42,16 +43,25 @@ public class ExerciseComment extends BaseTime {
     @ManyToOne(fetch = FetchType.LAZY)
     private CustomExercise customExercise;
 
-    private Integer likeCount;
+    @OneToMany(mappedBy = "exerciseComment")
+    private List<ExerciseCommentLike> exerciseCommentLikes;
+
+    private Integer likeCount;      // 좋아요수
+
+    private boolean likeStatus;     // 좋아요 상태
 
     public static ExerciseComment of(Member member,Object exercise ,String content){
-        ExerciseCommentBuilder exerciseCommentBuilder = ExerciseComment.builder().member(member).content(content).likeCount(0);
+        ExerciseCommentBuilder exerciseCommentBuilder = ExerciseComment.builder().member(member).content(content).likeCount(0).likeStatus(false);
         if (exercise instanceof Exercise){
             exerciseCommentBuilder.exercise((Exercise) exercise);
         }else
             exerciseCommentBuilder.customExercise((CustomExercise) exercise);
 
         return exerciseCommentBuilder.build();
+    }
+
+    public void updateLikeCount(Integer likeCount){
+       this.likeCount = likeCount;
     }
 
 }

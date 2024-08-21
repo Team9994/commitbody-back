@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static team9499.commitbody.domain.comment.exercise.domain.QExerciseComment.*;
+import static team9499.commitbody.domain.like.exercise.domain.QExerciseCommentLike.exerciseCommentLike;
 
 @Slf4j
 @Repository
@@ -52,15 +53,23 @@ public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommen
         // 쿼리 실행
         List<ExerciseComment> exerciseComments = jpaQueryFactory.select(exerciseComment)
                 .from(exerciseComment)
+                .leftJoin(exerciseComment.exerciseCommentLikes, exerciseCommentLike).fetchJoin()
                 .where(builder)
                 .limit(pageable.getPageSize()+1)
                 .orderBy(exerciseComment.createdAt.desc())      // 최신순을 유지하기 위해 내림차순
                 .fetch();
 
-        List<ExerciseCommentDto>  commentDtoList = exerciseComments.stream()
-                .map(ec -> ExerciseCommentDto.of(ec.getId(), ec.getContent(), converter(ec.getCreatedAt()), checkAuthor(memberId,ec.getMember().getId()),ec.getLikeCount()))
-                .collect(Collectors.toList());
 
+        List<ExerciseCommentDto> commentDtoList = exerciseComments.stream()
+                .map(ec -> ExerciseCommentDto.of(
+                        ec.getId(),
+                        ec.getContent(),
+                        converter(ec.getCreatedAt()),
+                        checkAuthor(memberId, ec.getMember().getId()),
+                        ec.getLikeCount(),
+                        ec.getExerciseCommentLikes().stream().anyMatch(like -> like.getMember().getId().equals(memberId) && like.isLikeStatus()) // 좋아요 여부 확인
+                ))
+                .collect(Collectors.toList());
         // 다음 페이직 존재하는지 검사
         boolean hasNext = false;
         if ( commentDtoList.size() > pageable.getPageSize()){
@@ -71,6 +80,9 @@ public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommen
        return new SliceImpl<>(commentDtoList,pageable,hasNext);
     }
 
+    private boolean checkLikeStatus(Long loginMemberId, Long writer, boolean nowLikeStatus){
+        return checkAuthor(loginMemberId,writer) ? nowLikeStatus : false;
+    }
     /*
     댓글이 현재 로그인한 사용자인지 확인하는 메서드
     로그인한 사용자가 작성자 일시 : true, 아닐시 : false

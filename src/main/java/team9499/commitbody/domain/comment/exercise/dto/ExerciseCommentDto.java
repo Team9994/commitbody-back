@@ -18,8 +18,10 @@ public class ExerciseCommentDto {
 
     private Integer likeCount;      // 좋아요 수
 
-    public static ExerciseCommentDto of(Long exerciseCommentId, String content, String commentedAt, boolean writer, Integer likeCount){
-        return new ExerciseCommentDto(exerciseCommentId,content,commentedAt,writer,likeCount);
+    private boolean likeStatus;     // 좋이요 상태
+    
+    public static ExerciseCommentDto of(Long exerciseCommentId, String content, String commentedAt, boolean writer, Integer likeCount,boolean likeStatus){
+        return new ExerciseCommentDto(exerciseCommentId,content,commentedAt,writer,likeCount,likeStatus);
     }
 
 }

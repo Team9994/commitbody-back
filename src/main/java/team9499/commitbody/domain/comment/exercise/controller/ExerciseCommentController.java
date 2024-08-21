@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.comment.exercise.dto.request.ExerciseCommentRequest;
 import team9499.commitbody.domain.comment.exercise.dto.response.ExerciseCommentResponse;
 import team9499.commitbody.domain.comment.exercise.service.ExerciseCommentService;
+import team9499.commitbody.domain.like.exercise.service.ExerciseCommentLikeService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
