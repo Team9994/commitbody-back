@@ -136,7 +136,7 @@ public class ExerciseController {
                                             @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = principalDetails.getMember().getId();
         exerciseService.deleteCustomExercise(customExerciseId,memberId);
-        eventPublisher.publishEvent(new ElasticDeleteExerciseEvent(customExerciseId));
+        eventPublisher.publishEvent(new ElasticDeleteExerciseEvent(customExerciseId,memberId));
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
     }

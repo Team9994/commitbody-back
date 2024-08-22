@@ -71,8 +71,8 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
      * 엘라스틱 커스텀 운동 삭제 메서드
      */
     @Override
-    public void deleteExercise(Long customExerciseId) {
-        DeleteRequest deleteRequest = DeleteRequest.of(u -> u.index(INDEX).id("custom_"+customExerciseId));
+    public void deleteExercise(Long customExerciseId,Long memberId) {
+        DeleteRequest deleteRequest = DeleteRequest.of(u -> u.index(INDEX).id("custom_"+customExerciseId+"-"+memberId));
         try {
             elasticsearchClient.delete(deleteRequest);
         }catch (Exception e){
