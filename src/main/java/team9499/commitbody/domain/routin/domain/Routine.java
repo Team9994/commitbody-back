@@ -27,7 +27,7 @@ public class Routine {
 
     private String routineName;
 
-    @OneToMany(mappedBy = "routine")
+    @OneToMany(mappedBy = "routine",cascade = CascadeType.REMOVE)
     private List<RoutineDetails> list;
 
     public static Routine create(Member member, String routineName){

@@ -5,8 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import team9499.commitbody.domain.routin.domain.RoutineDetails;
-import team9499.commitbody.domain.routin.domain.RoutineSets;
 
 @Data
 @Entity
@@ -26,7 +24,7 @@ public class RecordSets {
 
     private Integer reps;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "record_details_id")
     private RecordDetails recordDetails;
 

@@ -33,15 +33,15 @@ public class RecordDetails {
     private Integer sumTimes;       // 기록별 총 수행 시간
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exercise_id")
+    @JoinColumn(name = "exercise_id",foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Exercise exercise;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "custom_ex_id")
+    @JoinColumn(name = "custom_ex_id",foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private CustomExercise customExercise;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "record_id")
+    @JoinColumn(name = "record_id",foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Record record;
 
     public static RecordDetails create(Object exercise,Record record){
