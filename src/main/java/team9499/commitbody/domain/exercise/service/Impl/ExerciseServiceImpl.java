@@ -73,7 +73,7 @@ public class ExerciseServiceImpl implements ExerciseService {
      */
     // TODO: 2024-08-12 추후의 코드 리팩토링 진행 너무 가독성이 좋지 않다.
     @Override
-    public SearchExerciseResponse searchExercise(String name, String target, String equipment, Integer from, Integer size, Boolean favorites, String memberId) {
+    public SearchExerciseResponse searchExercise(String name, String target, String equipment, Integer from, Integer size, Boolean favorites, String memberId,String exerciseType) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
         // 운동명의 대한 동적 쿼리
@@ -84,7 +84,8 @@ public class ExerciseServiceImpl implements ExerciseService {
                     .defaultOperator(Operator.And).build();
             boolQueryBuilder.must(Query.of(q -> q.queryString(queryStringQuery)));
         }
-
+        
+        // 운동 장비의 대한 동적 쿼리
         if (equipment!=null && !equipment.isEmpty()){
             TermQuery termQuery = new TermQuery.Builder()
                     .field(EQUIPMENT_FIELD)
@@ -100,6 +101,13 @@ public class ExerciseServiceImpl implements ExerciseService {
             boolQueryBuilder.filter(Query.of(q -> q.term(termQuery)));
         }
 
+        // 운동 제공 타입의 대한 동적 쿼리
+        if (exerciseType!=null && !exerciseType.isEmpty()){
+            TermQuery termQuery = new TermQuery.Builder()
+                    .field("source")
+                    .value(exerciseType).build();
+            boolQueryBuilder.filter(Query.of(q -> q.term(termQuery)));
+        }
 
 
         // 현재 사용자의 대해서만 조회

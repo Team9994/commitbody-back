@@ -8,7 +8,7 @@ import team9499.commitbody.domain.exercise.dto.response.ExerciseResponse;
 
 public interface ExerciseService {
 
-    SearchExerciseResponse searchExercise(String name, String target,String equipment, Integer from, Integer size, Boolean like, String memberId);
+    SearchExerciseResponse searchExercise(String name, String target,String equipment, Integer from, Integer size, Boolean like, String memberId,String exerciseType);
 
     Long saveCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, MultipartFile file);
 
