@@ -23,7 +23,7 @@ public class ExerciseHandler {
 
     @EventListener
     public void ElDeleteExercise(ElasticDeleteExerciseEvent elasticDeleteExerciseEvent){
-        exerciseService.deleteExercise(elasticDeleteExerciseEvent.getCustomExerciseId());
+        exerciseService.deleteExercise(elasticDeleteExerciseEvent.getCustomExerciseId(),elasticDeleteExerciseEvent.getMemberId());
     }
 
     @EventListener

@@ -1,9 +1,9 @@
 package team9499.commitbody.domain.record.repository;
 
 import com.querydsl.core.Tuple;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
@@ -27,7 +27,6 @@ import static team9499.commitbody.domain.record.domain.QRecord.*;
 import static team9499.commitbody.domain.record.domain.QRecordDetails.*;
 import static team9499.commitbody.domain.record.domain.QRecordSets.*;
 
-@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class CustomRecordRepositoryImpl implements CustomRecordRepository{
@@ -121,6 +120,18 @@ public class CustomRecordRepositoryImpl implements CustomRecordRepository{
                     new ArrayList<>(detailsMap.values())
             );
         }).findFirst().orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+    }
+
+    @Override
+    public void deleteCustomExercise(Long customExerciseId) {
+        jpaQueryFactory.delete(recordSets)
+                .where(recordDetails.id.in(
+                        JPAExpressions.select(recordDetails.id)
+                                .from(recordDetails)
+                                .where(recordDetails.customExercise.id.eq(customExerciseId)))
+                ).execute();
+
+        jpaQueryFactory.delete(recordDetails).where(recordDetails.customExercise.id.eq(customExerciseId)).execute();
     }
 
     /*

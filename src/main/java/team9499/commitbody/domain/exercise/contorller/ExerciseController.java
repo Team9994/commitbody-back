@@ -52,11 +52,12 @@ public class ExerciseController {
                                             @RequestParam(value = "target",required = false) String target,
                                             @RequestParam(value = "equipment",required = false)String equipment,
                                             @RequestParam(value = "interest",required = false) Boolean interest,
+                                            @RequestParam(value = "source",required = false)String source,
                                             @RequestParam(value = "from",required = false)Integer from,
                                             @RequestParam(value = "size",required = false)Integer size,
                                             @AuthenticationPrincipal PrincipalDetails principalDetails){
         String memberId = String.valueOf(principalDetails.getMember().getId());
-        SearchExerciseResponse searchExerciseResponse = exerciseService.searchExercise(name, target, equipment,from, size, interest, memberId);
+        SearchExerciseResponse searchExerciseResponse = exerciseService.searchExercise(name, target, equipment,from, size, interest, memberId,source);
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"성공",searchExerciseResponse));
     }
@@ -69,7 +70,7 @@ public class ExerciseController {
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 값 입렵 검증", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
-                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"실패\",\"data\":{\"필드명\": \"오류 내용\"}}"))),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":{\"필드명\": \"오류 내용\"}}"))),
             @ApiResponse(responseCode = "400_3", description = "BADREQUEST - 파일 용량 초과(5MB 이하만 저장가능)",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"저장 가능한 용량을 초과 했습니다.\"}"))),
             @ApiResponse(responseCode = "400_4", description = "BADREQUEST - 불가능한 이미지 파일 저장시(jpeg, jpg, png, gif 저장가능)",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
@@ -98,7 +99,7 @@ public class ExerciseController {
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 값 입렵 검증", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
-                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"실패\",\"data\":{\"필드명\": \"오류 내용\"}}"))),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":{\"필드명\": \"오류 내용\"}}"))),
             @ApiResponse(responseCode = "400_3", description = "BADREQUEST - 파일 용량 초과(5MB 이하만 저장가능)",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"저장 가능한 용량을 초과 했습니다.\"}"))),
             @ApiResponse(responseCode = "400_4", description = "BADREQUEST - 불가능한 이미지 파일 저장시(jpeg, jpg, png, gif 저장가능)",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
@@ -135,7 +136,7 @@ public class ExerciseController {
                                             @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = principalDetails.getMember().getId();
         exerciseService.deleteCustomExercise(customExerciseId,memberId);
-        eventPublisher.publishEvent(new ElasticDeleteExerciseEvent(customExerciseId));
+        eventPublisher.publishEvent(new ElasticDeleteExerciseEvent(customExerciseId,memberId));
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
     }

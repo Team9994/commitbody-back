@@ -21,9 +21,12 @@ import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
 import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
 import team9499.commitbody.domain.exercise.dto.response.ExerciseResponse;
 import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
+import team9499.commitbody.domain.exercise.repository.ExerciseInterestRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
 import team9499.commitbody.domain.exercise.service.ExerciseInterestService;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
+import team9499.commitbody.domain.like.exercise.repository.ExerciseCommentLikeRepository;
+import team9499.commitbody.domain.record.repository.RecordRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
@@ -42,6 +45,9 @@ public class ExerciseServiceImpl implements ExerciseService {
     
     private final ElasticsearchClient elasticsearchClient;
     private final CustomExerciseRepository customExerciseRepository;
+    private final ExerciseCommentLikeRepository exerciseCommentLikeRepository;
+    private final RecordRepository recordRepository;
+    private final ExerciseInterestRepository exerciseInterestRepository;
     private final ExerciseInterestService exerciseInterestService;
     private final ExerciseRepository exerciseRepository;
     private final RedisService redisService;
@@ -73,7 +79,7 @@ public class ExerciseServiceImpl implements ExerciseService {
      */
     // TODO: 2024-08-12 추후의 코드 리팩토링 진행 너무 가독성이 좋지 않다.
     @Override
-    public SearchExerciseResponse searchExercise(String name, String target, String equipment, Integer from, Integer size, Boolean favorites, String memberId) {
+    public SearchExerciseResponse searchExercise(String name, String target, String equipment, Integer from, Integer size, Boolean favorites, String memberId,String exerciseType) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
         // 운동명의 대한 동적 쿼리
@@ -84,7 +90,8 @@ public class ExerciseServiceImpl implements ExerciseService {
                     .defaultOperator(Operator.And).build();
             boolQueryBuilder.must(Query.of(q -> q.queryString(queryStringQuery)));
         }
-
+        
+        // 운동 장비의 대한 동적 쿼리
         if (equipment!=null && !equipment.isEmpty()){
             TermQuery termQuery = new TermQuery.Builder()
                     .field(EQUIPMENT_FIELD)
@@ -100,6 +107,13 @@ public class ExerciseServiceImpl implements ExerciseService {
             boolQueryBuilder.filter(Query.of(q -> q.term(termQuery)));
         }
 
+        // 운동 제공 타입의 대한 동적 쿼리
+        if (exerciseType!=null && !exerciseType.isEmpty()){
+            TermQuery termQuery = new TermQuery.Builder()
+                    .field("source")
+                    .value(exerciseType).build();
+            boolQueryBuilder.filter(Query.of(q -> q.term(termQuery)));
+        }
 
 
         // 현재 사용자의 대해서만 조회
@@ -287,7 +301,10 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Override
     public void deleteCustomExercise(Long customExerciseId, Long memberId) {
         CustomExercise customExercise = getCustomExercise(customExerciseId,memberId);
-        customExerciseRepository.delete(customExercise);
+        recordRepository.deleteCustomExercise(customExercise.getId());                      // 운동 기록 삭제
+        exerciseInterestRepository.deleteAllByCustomExerciseId(customExercise.getId());     // 관심 운동 삭제
+        exerciseCommentLikeRepository.deleteByCustomExerciseId(customExercise.getId());     // 댓글 좋아요 삭제
+        customExerciseRepository.delete(customExercise);                    // 커스텀 운동 삭제
     }
 
     /**

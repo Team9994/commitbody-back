@@ -60,7 +60,7 @@ public class AuthorizationController {
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 값 입렵 검증", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"실패\",\"data\":{\"필드명\": \"오류 내용\"}}"))),
+                            examples = @ExampleObject(value = "{\"success\" : false,\"message\":{\"필드명\": \"오류 내용\"}}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
@@ -78,11 +78,11 @@ public class AuthorizationController {
     @Operation(summary = "회원가입-닉네임 검증", description = "회원가입 시 닉네임을 검증합니다. 조건: 1. 영문+한글+숫자(3~8글자), 2. 영문+숫자(3~8글자), 3. 한글+숫자(3~8글자) 조건을 만족해야 한다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"사용 가능\"}"))),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"멋진 닉네임입니다!\"}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 값 입렵 검증", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
-                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"실패\",\"data\":{\"nickname\": \"닉네임 형식이 맞게 작성해 주세요\"}}"))),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":{\"nickname\": \"닉네임 형식이 맞게 작성해 주세요\"}}"))),
             @ApiResponse(responseCode = "400_3", description = "BADREQUEST - 닉네임 중복 검증", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"중복된 닉네임 입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
@@ -91,7 +91,7 @@ public class AuthorizationController {
     @PostMapping("/register-nickname")
     public ResponseEntity<?> registerNickname(@Valid @RequestBody RegisterNicknameRequest registerNicknameRequest, BindingResult result){
         authorizationService.registerNickname(registerNicknameRequest.getNickname());
-        return ResponseEntity.ok(new SuccessResponse<>(true,"사용 가능"));
+        return ResponseEntity.ok(new SuccessResponse<>(true,"멋진 닉네임입니다!"));
     }
 
 

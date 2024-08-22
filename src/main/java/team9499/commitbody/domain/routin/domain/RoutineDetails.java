@@ -25,7 +25,7 @@ public class RoutineDetails {
     private Exercise exercise;
 
     @ManyToOne(fetch =  FetchType.LAZY)
-    @JoinColumn(name = "custom_ex_id")
+    @JoinColumn(name = "custom_ex_id",foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private CustomExercise customExercise;
 
     @ManyToOne(fetch = FetchType.LAZY)

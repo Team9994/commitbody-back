@@ -12,4 +12,6 @@ public interface ExerciseInterestRepository extends JpaRepository<ExerciseIntere
     Optional<ExerciseInterest> findByExerciseIdAndMemberId(Long exerciseId, Long memberId);
 
     Optional<ExerciseInterest> findByCustomExerciseIdAndMemberId(Long customExerciseId,Long memberId);
+
+    void deleteAllByCustomExerciseId(Long customExerciseId);
 }

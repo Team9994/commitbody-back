@@ -6,8 +6,10 @@ import lombok.Data;
 public class ElasticDeleteExerciseEvent {
 
     private Long customExerciseId;
+    private Long memberId;
 
-    public ElasticDeleteExerciseEvent(Long customExerciseId) {
+    public ElasticDeleteExerciseEvent(Long customExerciseId,Long memberId) {
         this.customExerciseId = customExerciseId;
+        this.memberId = memberId;
     }
 }
