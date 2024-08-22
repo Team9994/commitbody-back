@@ -23,7 +23,7 @@ public class AspectAdvice {
     @Around("team9499.commitbody.global.aop.Pointcuts.executionTime()")
     public Object executionTime(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
-        String methodName = joinPoint.getSignature().toLongString();
+        String methodName = joinPoint.getSignature().toShortString();
 
         try {
             log.info("start method: {}", methodName);
@@ -51,7 +51,7 @@ public class AspectAdvice {
                     for(FieldError error : result.getFieldErrors()){
                         errorMap.put(error.getField(),error.getDefaultMessage());
                     }
-                    return ResponseEntity.status(BAD_REQUEST).body(new ErrorResponse<>(false, "실패", errorMap));
+                    return ResponseEntity.status(BAD_REQUEST).body(new ErrorResponse<>(false, errorMap));
                 }
             }
         }
