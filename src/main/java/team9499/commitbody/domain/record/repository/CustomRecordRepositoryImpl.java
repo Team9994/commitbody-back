@@ -4,6 +4,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
@@ -16,9 +17,7 @@ import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,6 +26,7 @@ import static team9499.commitbody.domain.record.domain.QRecord.*;
 import static team9499.commitbody.domain.record.domain.QRecordDetails.*;
 import static team9499.commitbody.domain.record.domain.QRecordSets.*;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class CustomRecordRepositoryImpl implements CustomRecordRepository{
@@ -134,6 +134,26 @@ public class CustomRecordRepositoryImpl implements CustomRecordRepository{
                 ).execute();
 
         jpaQueryFactory.delete(recordDetails).where(recordDetails.customExercise.id.eq(customExerciseId)).execute();
+    }
+
+    @Override
+    public void deleteRecord(Long recordId, Long memberId) {
+        // 기록 세트 삭제
+        jpaQueryFactory.delete(recordSets)
+                .where(recordSets.recordDetails.id.in(
+                        JPAExpressions.select(recordDetails.id)
+                                .from(recordDetails)
+                                .where(recordDetails.record.id.eq(recordId)))).execute();
+
+        // 기록 상세 삭제
+        jpaQueryFactory.delete(recordDetails)
+                .where(recordDetails.record.id.eq(recordId))
+                .execute();
+
+        // 기록 삭제
+            jpaQueryFactory.delete(record)
+                    .where(record.id.eq(recordId).and(record.member.id.eq(memberId)))
+                    .execute();
     }
 
     /*
