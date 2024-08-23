@@ -93,8 +93,18 @@ public class RecordController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"기록 수정 완료"));
     }
 
+    @Operation(summary = "기록 삭제", description = "작성자만이 해당 기록을 삭제 가능합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"삭제 성공\"}"))),
+            @ApiResponse(responseCode = "400", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}"))),
+            @ApiResponse(responseCode = "403", description = "타 사용자가 삭제시", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"작성자만 이용할 수 있습니다.\"}")))})
     @DeleteMapping("/record/{recordId}")
-    public ResponseEntity<?> deleteRecord(@PathVariable("recordId") Long recordId,
+    public ResponseEntity<?> deleteRecord(@Parameter(description = "기록 ID")@PathVariable("recordId") Long recordId,
                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
         recordService.deleteRecord(memberId,recordId);
