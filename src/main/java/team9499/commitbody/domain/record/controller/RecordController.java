@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.record.dto.request.RecordRequest;
+import team9499.commitbody.domain.record.dto.request.UpdateRecordRequest;
 import team9499.commitbody.domain.record.dto.response.RecordResponse;
 import team9499.commitbody.domain.record.service.RecordService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
@@ -42,7 +43,7 @@ public class RecordController {
     @PostMapping("/record")
     public ResponseEntity<?> saveRecord(@RequestBody RecordRequest recordRequest,
                                      @AuthenticationPrincipal PrincipalDetails principalDetails){
-        Long memberId = principalDetails.getMember().getId();
+        Long memberId = getMemberId(principalDetails);
         Long recordId = recordService.saveRecord(memberId, recordRequest.getRecordName(), recordRequest.getStartTime(), recordRequest.getEndTime(), recordRequest.getExercises());
         return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 성공",recordId));
     }
@@ -63,9 +64,22 @@ public class RecordController {
     @GetMapping("/record/{id}")
     public ResponseEntity<?> getRecord(@PathVariable("id") Long id,
                                        @AuthenticationPrincipal PrincipalDetails principalDetails){
-        Long memberId = principalDetails.getMember().getId();
+        Long memberId = getMemberId(principalDetails);
         RecordResponse recordResponse = recordService.getRecord(id, memberId);
         return  ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",recordResponse));
     }
 
+    @PutMapping("/record/{recordId}")
+    public ResponseEntity<?> updateRoutine(@PathVariable("recordId")Long recordId,
+                                           @RequestBody UpdateRecordRequest updateRecordRequest,
+                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        recordService.updateRecord(memberId,recordId,updateRecordRequest.getUpdateSets(),updateRecordRequest.getNewExercises(),updateRecordRequest.getDeleteSetIds(),updateRecordRequest.getDeleteDetailsIds(),updateRecordRequest.getChangeOrders());
+        return ResponseEntity.ok(new SuccessResponse<>(true,"기록 수정 완료"));
+    }
+
+    private static Long getMemberId(PrincipalDetails principalDetails) {
+        Long memberId = principalDetails.getMember().getId();
+        return memberId;
+    }
 }
