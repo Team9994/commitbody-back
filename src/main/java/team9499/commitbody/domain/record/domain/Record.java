@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import team9499.commitbody.domain.Member.domain.Member;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -38,6 +40,9 @@ public class Record {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    @OneToMany(mappedBy = "record", cascade = CascadeType.ALL)
+    private List<RecordDetails> detailsList = new ArrayList<>();
 
     public static Record create(String recordName, LocalDateTime startTime, LocalDateTime endTime,Integer duration, Member member){
         return Record.builder().recordName(recordName).startTime(startTime).endTime(endTime).duration(duration).member(member).build();
