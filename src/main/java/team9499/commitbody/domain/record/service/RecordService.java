@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface RecordService {
 
-    void saveRecord(Long memberId , String recordName, LocalDateTime startTime, LocalDateTime endTime, List<RecordDto> recordDtos);
+    Long saveRecord(Long memberId , String recordName, LocalDateTime startTime, LocalDateTime endTime, List<RecordDto> recordDtos);
 
     RecordResponse getRecord(Long recordId,Long memberId);
 }

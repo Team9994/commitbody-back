@@ -26,10 +26,10 @@ public class RecordController {
 
     private final RecordService recordService;
 
-    @Operation(summary = "기록 저장", description = "루틴 완료시 수행한 운동의 대해 기록을 저장합니다.")
+    @Operation(summary = "기록 저장", description = "루틴 완료시 수행한 운동의 대해 기록을 저장합니다. 저장시 정장된 recordId를 반환합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"루틴 성공\"}"))),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"루틴 성공\",\"data\":1}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 정보 미존재 시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
@@ -43,8 +43,8 @@ public class RecordController {
     public ResponseEntity<?> saveRecord(@RequestBody RecordRequest recordRequest,
                                      @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = principalDetails.getMember().getId();
-        recordService.saveRecord(memberId, recordRequest.getRecordName(), recordRequest.getStartTime(),recordRequest.getEndTime(),recordRequest.getExercises());
-        return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 성공"));
+        Long recordId = recordService.saveRecord(memberId, recordRequest.getRecordName(), recordRequest.getStartTime(), recordRequest.getEndTime(), recordRequest.getExercises());
+        return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 성공",recordId));
     }
 
     @Operation(summary = "기록 조회", description = "사용자가 완료한 기록의 대한 정보를 조회합니다.")

@@ -50,7 +50,7 @@ public class RecordServiceImpl implements RecordService{
      * @param endTime 마무리 시간
      */
     @Override
-    public void saveRecord(Long memberId, String recordName, LocalDateTime startTime, LocalDateTime endTime, List<RecordDto> recordDtos) {
+    public Long saveRecord(Long memberId, String recordName, LocalDateTime startTime, LocalDateTime endTime, List<RecordDto> recordDtos) {
         Member member = memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(BAD_REQUEST, No_SUCH_MEMBER));
         int totalVolume = 0;        // 투틴 총 수행 볼륨
         int totalSets = 0;          // 루틴 총 진행 세트
@@ -135,9 +135,10 @@ public class RecordServiceImpl implements RecordService{
         record.setRecordVolume(totalVolume);;
         record.setRecordCalorie(totalCalorie);
 
-        recordRepository.save(record);
+        Record save = recordRepository.save(record);
         recordDetailsRepository.saveAll(recordDetails);
         recordSetsRepository.saveAll(recordSets);
+        return save.getId();
     }
 
     @Transactional(readOnly = true)
