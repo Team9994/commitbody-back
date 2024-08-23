@@ -48,4 +48,10 @@ public class Record {
         return Record.builder().recordName(recordName).startTime(startTime).endTime(endTime).duration(duration).member(member).build();
     }
 
+    public void updateRecord(Integer recordVolume,Integer recordCalorie,Integer recordSets){
+        this.recordCalorie = recordCalorie;
+        this.recordVolume = recordVolume;
+        this.recordSets =recordSets;
+    }
+
 }
