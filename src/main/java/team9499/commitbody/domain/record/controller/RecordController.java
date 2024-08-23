@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.record.dto.request.RecordRequest;
 import team9499.commitbody.domain.record.dto.request.UpdateRecordRequest;
 import team9499.commitbody.domain.record.dto.response.RecordResponse;
+import team9499.commitbody.domain.record.repository.RecordRepository;
 import team9499.commitbody.domain.record.service.RecordService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
@@ -27,6 +28,8 @@ import team9499.commitbody.global.payload.SuccessResponse;
 public class RecordController {
 
     private final RecordService recordService;
+    private final RecordRepository recordRepository;
+
 
     @Operation(summary = "기록 저장", description = "루틴 완료시 수행한 운동의 대해 기록을 저장합니다. 저장시 정장된 recordId를 반환합니다.")
     @ApiResponses(value = {
@@ -89,6 +92,15 @@ public class RecordController {
         recordService.updateRecord(memberId,recordId,updateRecordRequest.getUpdateSets(),updateRecordRequest.getNewExercises(),updateRecordRequest.getDeleteSetIds(),updateRecordRequest.getDeleteDetailsIds(),updateRecordRequest.getChangeOrders());
         return ResponseEntity.ok(new SuccessResponse<>(true,"기록 수정 완료"));
     }
+
+    @DeleteMapping("/record/{recordId}")
+    public ResponseEntity<?> deleteRecord(@PathVariable("recordId") Long recordId,
+                                          @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        recordService.deleteRecord(memberId,recordId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
+    }
+
 
     private static Long getMemberId(PrincipalDetails principalDetails) {
         Long memberId = principalDetails.getMember().getId();
