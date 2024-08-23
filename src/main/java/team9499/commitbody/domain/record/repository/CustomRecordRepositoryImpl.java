@@ -45,7 +45,9 @@ public class CustomRecordRepositoryImpl implements CustomRecordRepository{
         List<Tuple> list = jpaQueryFactory.select(record,recordDetails,recordSets).from(record)
                 .join(recordDetails).on(record.id.eq(recordDetails.record.id))
                 .join(recordSets).on(recordSets.recordDetails.id.eq(recordDetails.id))
-                .where(record.id.eq(recordId).and(record.member.id.eq(memberId))).fetch();
+                .where(record.id.eq(recordId).and(record.member.id.eq(memberId)))
+                .orderBy(recordDetails.orders.asc())
+                .fetch();
 
         // Tuple 리스트를 Record를 키로 하고, RecordDetailsResponse 리스트를 값으로 가지는 Map으로 그룹화
         Map<Record, List<RecordDetailsResponse>> groupedDetails = list.stream().collect(Collectors.groupingBy(

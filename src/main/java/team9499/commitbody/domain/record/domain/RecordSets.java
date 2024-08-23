@@ -1,16 +1,14 @@
 package team9499.commitbody.domain.record.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @Entity
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(exclude = "recordDetails")
 public class RecordSets {
 
     @Id
@@ -38,5 +36,18 @@ public class RecordSets {
 
     public static RecordSets ofTimes(Integer times,Integer reps, RecordDetails recordDetails) { // 시간만 기록
         return RecordSets.builder().times(times).reps(reps).recordDetails(recordDetails).build();
+    }
+
+    public void updateWeightAndReps(Integer weight, Integer reps){
+        this.weight = weight;
+        this.reps = reps;
+    }
+
+    public void updateReps(Integer reps){
+        this.reps = reps;
+    }
+
+    public void updateTimes(Integer times){
+        this.times = times;
     }
 }

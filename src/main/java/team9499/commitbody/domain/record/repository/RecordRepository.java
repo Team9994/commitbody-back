@@ -6,4 +6,5 @@ import team9499.commitbody.domain.record.domain.Record;
 
 @Repository
 public interface RecordRepository extends JpaRepository<Record, Long>, CustomRecordRepository {
+    Record findByIdAndMemberId(Long recordId, Long memberId);
 }
