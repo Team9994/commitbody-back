@@ -1,6 +1,7 @@
 package team9499.commitbody.domain.record.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -69,8 +70,19 @@ public class RecordController {
         return  ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",recordResponse));
     }
 
+    @Operation(summary = "기록 수정", description = "사용자가 완료한 기록의 정보를 수정 합니다.(운동 순서, 새 운동 추가,운동 삭제, 세트 추가/삭제/업데이트)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"기록 수정 완료\"}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 정보 미존재 시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"해당 정보를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
+    })
     @PutMapping("/record/{recordId}")
-    public ResponseEntity<?> updateRoutine(@PathVariable("recordId")Long recordId,
+    public ResponseEntity<?> updateRoutine(@Parameter(description = "기록 ID") @PathVariable("recordId")Long recordId,
                                            @RequestBody UpdateRecordRequest updateRecordRequest,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
