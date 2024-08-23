@@ -268,6 +268,7 @@ public class RecordServiceImpl implements RecordService{
 
         // 상세기록 리스트를 순환한다.
         for (RecordDetails details : detailsList) {
+            recordSets++;
             exerciseSize++;
             int max1Rm = 0;     // 최대 1RM
             int count = 0;      // 무게+횟수 기록 운동 갯수
@@ -301,7 +302,6 @@ public class RecordServiceImpl implements RecordService{
                 }
             }
 
-            recordSets += totalSets;
             details.updateSets(totalSets);      // 총 세트수 업데이트
             if (details.getMax1RM()!=null){     // 무게 + 횟수 일때
                 details.updateMax1RM(max1Rm/count); // 최대 1RM 갱신
