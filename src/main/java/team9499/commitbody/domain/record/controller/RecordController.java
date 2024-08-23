@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.record.dto.request.RecordRequest;
 import team9499.commitbody.domain.record.dto.request.UpdateRecordRequest;
 import team9499.commitbody.domain.record.dto.response.RecordResponse;
+import team9499.commitbody.domain.record.repository.RecordRepository;
 import team9499.commitbody.domain.record.service.RecordService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
@@ -27,6 +28,8 @@ import team9499.commitbody.global.payload.SuccessResponse;
 public class RecordController {
 
     private final RecordService recordService;
+    private final RecordRepository recordRepository;
+
 
     @Operation(summary = "기록 저장", description = "루틴 완료시 수행한 운동의 대해 기록을 저장합니다. 저장시 정장된 recordId를 반환합니다.")
     @ApiResponses(value = {
@@ -89,6 +92,25 @@ public class RecordController {
         recordService.updateRecord(memberId,recordId,updateRecordRequest.getUpdateSets(),updateRecordRequest.getNewExercises(),updateRecordRequest.getDeleteSetIds(),updateRecordRequest.getDeleteDetailsIds(),updateRecordRequest.getChangeOrders());
         return ResponseEntity.ok(new SuccessResponse<>(true,"기록 수정 완료"));
     }
+
+    @Operation(summary = "기록 삭제", description = "작성자만이 해당 기록을 삭제 가능합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"삭제 성공\"}"))),
+            @ApiResponse(responseCode = "400", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}"))),
+            @ApiResponse(responseCode = "403", description = "타 사용자가 삭제시", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"작성자만 이용할 수 있습니다.\"}")))})
+    @DeleteMapping("/record/{recordId}")
+    public ResponseEntity<?> deleteRecord(@Parameter(description = "기록 ID")@PathVariable("recordId") Long recordId,
+                                          @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        recordService.deleteRecord(memberId,recordId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
+    }
+
 
     private static Long getMemberId(PrincipalDetails principalDetails) {
         Long memberId = principalDetails.getMember().getId();
