@@ -141,7 +141,7 @@ public class RecordServiceImpl implements RecordService{
 
             recordDetails.add(recordDetail);
         }
-        int totalCalorie = (int) ((int) (totalMets / exerciseSize) * member.getWeight() * (int)Duration.between(startTime, endTime).toHours());
+        int totalCalorie = calculateTotalCalorie(startTime, endTime, member, exerciseSize, totalMets);
 
         record.setRecordSets(totalSets);
         record.setRecordVolume(totalVolume);;
@@ -158,6 +158,7 @@ public class RecordServiceImpl implements RecordService{
     public RecordResponse getRecord(Long recordId,Long memberId) {
         return recordRepository.findByRecordId(recordId,memberId);
     }
+
 
     // TODO: 2024-08-24 리팩토링 필요
     /**
@@ -260,9 +261,14 @@ public class RecordServiceImpl implements RecordService{
 
         // 해당 기록에 저장된 상세기록 리스트를 가져온다.
         List<RecordDetails> detailsList = record.getDetailsList();
+        int recordSets = 0;
+        int exerciseSize = 0;
+        int recordVolume = 0;
+        float totalMets = 0;
 
         // 상세기록 리스트를 순환한다.
         for (RecordDetails details : detailsList) {
+            exerciseSize++;
             int max1Rm = 0;     // 최대 1RM
             int count = 0;      // 무게+횟수 기록 운동 갯수
             int totalTimes = 0;     // 총 운동 시간(시간일때)
@@ -271,6 +277,10 @@ public class RecordServiceImpl implements RecordService{
             int totalSets = 0;      // 총 진행한 세트수
             int totalReps = 0;      // 총 진행한 횟수
 
+            if (details.getExercise()!=null){
+                totalMets += details.getExercise().getMets();
+            }else
+                totalMets += 4;
             // 세트 리스트를 순환한다.
             for (RecordSets recordSet :  details.getSetsList()) {
                 Integer weight = recordSet.getWeight();     // 무게
@@ -280,6 +290,7 @@ public class RecordServiceImpl implements RecordService{
                 if (weight!=null&& reps!=null){     // 무게 + 횟수일 떄
                     max1Rm+= calculate1RM(weight,reps); //1RM 계산
                     totalVolume += reps*weight; // 총 볼륨 계산
+                    recordVolume +=  reps*weight; // 기록 볼륨 누적
                     totalReps += reps;      // 횟수 계싼
                     count++;        // 운동 데이터 수 증가
                 }else if (times!=null){ // 시간일때
@@ -289,6 +300,8 @@ public class RecordServiceImpl implements RecordService{
                     totalReps += reps;
                 }
             }
+
+            recordSets += totalSets;
             details.updateSets(totalSets);      // 총 세트수 업데이트
             if (details.getMax1RM()!=null){     // 무게 + 횟수 일때
                 details.updateMax1RM(max1Rm/count); // 최대 1RM 갱신
@@ -300,14 +313,15 @@ public class RecordServiceImpl implements RecordService{
                 details.updateMaxReps(maxReps);     // 최대 횟수 갱신
                 details.updateDetailsReps(totalReps);       // 운동 상세 갱신
             }
-
         }
 
+        int totalCalorie = calculateTotalCalorie(record.getStartTime(), record.getEndTime(), record.getMember(), exerciseSize, totalMets);  // 수정된 데이터의 칼로리 계산
+        record.updateRecord(recordVolume,totalCalorie,recordSets); // 최종 기록 도메인 데이터 수정
     }
-
     /*
     상세 운동의 대한 횟수를 새롭게 저장하는 메서드
      */
+
     private RecordSets recordSets(RecordDetails recordDetail, RoutineSetsDto newSet) {
         Integer sets = newSet.getSets();        // 세트수
         Integer kg = newSet.getKg();            // kg
@@ -322,19 +336,26 @@ public class RecordServiceImpl implements RecordService{
         return recordSetsRepository.save(recordSets);
     }
 
-
     /*
     최대 1RM 무게를 계산하는 메서드
      */
+
     private int calculate1RM(Integer weight, Integer reps) {
         return Math.round(weight * (1 + 0.03333f * reps));
     }
-
     private CustomExercise getCustomExercise(Long exerciseId) {
         return customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
     }
 
     private Exercise getExercise(Long exerciseId) {
         return exerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+    }
+
+    /*
+    총 소모 칼로리 계산 메서드
+     */
+    private static int calculateTotalCalorie(LocalDateTime startTime, LocalDateTime endTime, Member member, int exerciseSize, float totalMets) {
+        int totalCalorie = (int) ((int) (totalMets / exerciseSize) * member.getWeight() * (int)Duration.between(startTime, endTime).toHours());
+        return totalCalorie;
     }
 }
