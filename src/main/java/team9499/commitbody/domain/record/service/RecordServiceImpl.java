@@ -24,6 +24,7 @@ import team9499.commitbody.domain.record.repository.RecordSetsRepository;
 import team9499.commitbody.domain.routin.dto.RoutineSetsDto;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.InvalidUsageException;
 import team9499.commitbody.global.Exception.NoSuchException;
 
 import java.time.Duration;
@@ -318,10 +319,22 @@ public class RecordServiceImpl implements RecordService{
         int totalCalorie = calculateTotalCalorie(record.getStartTime(), record.getEndTime(), record.getMember(), exerciseSize, totalMets);  // 수정된 데이터의 칼로리 계산
         record.updateRecord(recordVolume,totalCalorie,recordSets); // 최종 기록 도메인 데이터 수정
     }
+
+    /**
+     * 기록 삭제 - 작성자만이 기록을 삭제 가능하다.
+     * @param memberId 로그인한 사용자
+     * @param recordId 삭제할 기록 ID
+     */
+    @Override
+    public void deleteRecord(Long memberId, Long recordId) {
+        Record record = recordRepository.findByIdAndMemberId(recordId, memberId);
+        if (record==null) throw new InvalidUsageException(FORBIDDEN,AUTHOR_ONLY);
+        recordRepository.deleteRecord(recordId,memberId);
+    }
+
     /*
     상세 운동의 대한 횟수를 새롭게 저장하는 메서드
      */
-
     private RecordSets recordSets(RecordDetails recordDetail, RoutineSetsDto newSet) {
         Integer sets = newSet.getSets();        // 세트수
         Integer kg = newSet.getKg();            // kg
