@@ -9,17 +9,22 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.record.dto.request.RecordRequest;
 import team9499.commitbody.domain.record.dto.request.UpdateRecordRequest;
+import team9499.commitbody.domain.record.dto.response.RecordMonthResponse;
 import team9499.commitbody.domain.record.dto.response.RecordResponse;
 import team9499.commitbody.domain.record.repository.RecordRepository;
 import team9499.commitbody.domain.record.service.RecordService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
+
+import java.time.LocalDateTime;
 
 @Tag(name = "기록",description = "운동 기록이 관련 API")
 @RestController
@@ -109,6 +114,15 @@ public class RecordController {
         Long memberId = getMemberId(principalDetails);
         recordService.deleteRecord(memberId,recordId);
         return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
+    }
+
+    @GetMapping("/record")
+    public ResponseEntity<?> get(@RequestParam(value = "lastTime",required = false) LocalDateTime lastTime,
+                                 @PageableDefault(size = 10) Pageable pageable,
+                                 @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        RecordMonthResponse recordForMember = recordService.getRecordForMember(memberId,lastTime,pageable);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",recordForMember));
     }
 
 
