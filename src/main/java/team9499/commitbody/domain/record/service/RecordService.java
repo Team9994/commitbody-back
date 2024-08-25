@@ -1,7 +1,9 @@
 package team9499.commitbody.domain.record.service;
 
+import org.springframework.data.domain.Pageable;
 import team9499.commitbody.domain.exercise.dto.ExerciseDto;
 import team9499.commitbody.domain.record.dto.RecordDto;
+import team9499.commitbody.domain.record.dto.response.RecordMonthResponse;
 import team9499.commitbody.domain.record.dto.response.RecordResponse;
 
 import java.time.LocalDateTime;
@@ -18,4 +20,6 @@ public interface RecordService {
     void updateRecord(Long memberId, Long recordId, List<RecordUpdateSets> updateSets, List<ExerciseDto> newExercises, List<Long> deleteSets, List<Long> deleteExercises, List<ChangeOrders> changeOrders);
 
     void deleteRecord(Long memberId, Long recordId);
+
+    RecordMonthResponse getRecordForMember(Long memberId,LocalDateTime lastTime, Pageable pageable);
 }
