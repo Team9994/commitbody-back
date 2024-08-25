@@ -3,6 +3,8 @@ package team9499.commitbody.domain.record.service;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
@@ -17,6 +19,7 @@ import team9499.commitbody.domain.record.domain.RecordDetails;
 import team9499.commitbody.domain.record.domain.RecordSets;
 import team9499.commitbody.domain.record.dto.RecordDto;
 import team9499.commitbody.domain.record.dto.RecordSetsDto;
+import team9499.commitbody.domain.record.dto.response.RecordMonthResponse;
 import team9499.commitbody.domain.record.dto.response.RecordResponse;
 import team9499.commitbody.domain.record.repository.RecordDetailsRepository;
 import team9499.commitbody.domain.record.repository.RecordRepository;
@@ -31,8 +34,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static team9499.commitbody.domain.record.dto.request.UpdateRecordRequest.*;
+import static team9499.commitbody.domain.record.dto.response.RecordMonthResponse.*;
 import static team9499.commitbody.global.Exception.ExceptionStatus.*;
 import static team9499.commitbody.global.Exception.ExceptionType.*;
 
@@ -330,6 +335,23 @@ public class RecordServiceImpl implements RecordService{
         Record record = recordRepository.findByIdAndMemberId(recordId, memberId);
         if (record==null) throw new InvalidUsageException(FORBIDDEN,AUTHOR_ONLY);
         recordRepository.deleteRecord(recordId,memberId);
+    }
+
+    /**
+     * 해당 사용자의 운동 기록을 달력, 모든 데이터를 조회하여 RecordMonthResponse 적재
+     * @param memberId  로그인한 사용자 ID
+     * @param lastTime  마지막 시간
+     * @param pageable  페이징 저보
+     * @return  RecordMonthResponse반환
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public RecordMonthResponse getRecordForMember(Long memberId, LocalDateTime lastTime, Pageable pageable) {
+        Map<String, RecordData> recordCountAdnDataForMonth = recordRepository.getRecordCountAdnDataForMonth(memberId);  //일별 기록
+        Slice<RecordDay> recordDays = recordRepository.getRecordPage(memberId, lastTime, pageable); // 해당달 전제 데이터
+        RecordPage recordPage = new RecordPage(recordDays.hasNext(),recordDays.getContent());
+        return new RecordMonthResponse(recordCountAdnDataForMonth,recordPage);
+
     }
 
     /*

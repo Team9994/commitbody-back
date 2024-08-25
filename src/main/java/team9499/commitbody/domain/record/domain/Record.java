@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Table(indexes = {
+        @Index(name = "idx_member_id_end_time",columnList = "member_id, end_time ASC")
+})
 @Data
 @Entity
 @Builder
@@ -38,7 +41,7 @@ public class Record {
     private Integer duration;           // 진행시간
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "member_id",foreignKey =  @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Member member;
 
     @OneToMany(mappedBy = "record", cascade = CascadeType.ALL)
