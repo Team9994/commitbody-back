@@ -43,6 +43,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Value("${jwt.refresh}")
     private int expired;        // 만료시간
 
+    @Value("${default.profile}")
+    private String profileUrl;
+
     private final String REFRESH_TOKEN = "refreshToken";
     private final String JOIN = "회원가입";
     private final String LOGIN = "로그인";
@@ -54,7 +57,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         Optional<Member> optionalMember = memberRepository.findBySocialId(socialId);
 
         if (!optionalMember.isPresent()){
-            Member member = memberRepository.save(Member.createSocialId(socialId,loginType));
+            Member member = memberRepository.save(Member.createSocialId(socialId,loginType,profileUrl));
             optionalMember = Optional.of(member);
             joinOrLogin = JOIN;
         }

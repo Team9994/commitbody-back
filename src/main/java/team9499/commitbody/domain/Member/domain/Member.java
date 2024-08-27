@@ -22,6 +22,8 @@ public class Member extends BaseTime {
 
     private String socialId;    // 소셜로그인 사용자 ID
 
+    private String profile; // 사용자 프로필
+
     private String nickname;    // 닉네임
 
     private float height;      // 키
@@ -49,8 +51,11 @@ public class Member extends BaseTime {
 
     private boolean isUserDeactivated; //알림유무(true : 알림 받기, false : 알림 안받기)
 
-    public static Member createSocialId(String socialId,LoginType loginType){
-        return Member.builder().socialId(socialId).loginType(loginType).build();
+    @Enumerated(EnumType.STRING)
+    private AccountStatus accountStatus;        // 계정 상태 - PUBLIC : 공개(기본 값) , PRIVATE : 비공개
+
+    public static Member createSocialId(String socialId,LoginType loginType,String profile){
+        return Member.builder().socialId(socialId).loginType(loginType).profile(profile).accountStatus(AccountStatus.PUBLIC).build();
     }
 
     public void createAdditionalInfoNotNull(String nickName, Gender gender, LocalDate birthday, float height, float weight,float boneMineralDensity, float bodyFatPercentage){
