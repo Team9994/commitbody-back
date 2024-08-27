@@ -9,7 +9,7 @@ import team9499.commitbody.global.annotations.ValidEnum;
 
 @Schema(name = "커스텀 운동 등록 Request")
 @Data
-public class CustomExerciseReqeust {
+public class CustomExerciseRequest {
 
     @Schema(description = "커스텀 운동명")
     @NotBlank(message = "운동명을 입력해주세요")
