@@ -16,7 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import team9499.commitbody.domain.exercise.dto.CustomExerciseReqeust;
+import team9499.commitbody.domain.exercise.dto.CustomExerciseRequest;
 import team9499.commitbody.domain.exercise.dto.CustomUpdateExerciseReqeust;
 import team9499.commitbody.domain.exercise.dto.InterestExerciseRequest;
 import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
@@ -79,12 +79,12 @@ public class ExerciseController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
     @PostMapping(value = "/save-exercise", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> saveExercise(@Valid @RequestPart(name = "customExerciseReqeust") CustomExerciseReqeust customExerciseReqeust, BindingResult result,
+    public ResponseEntity<?> saveExercise(@Valid @RequestPart(name = "customExerciseRequest") CustomExerciseRequest customExerciseRequest, BindingResult result,
                                           @RequestPart(name ="file" , required = false) MultipartFile file,
                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long id = principalDetails.getMember().getId();
-        Long customExerciseId = exerciseService.saveCustomExercise(customExerciseReqeust.getExerciseName(), customExerciseReqeust.getExerciseTarget(),
-                customExerciseReqeust.getExerciseEquipment(), id, file);
+        Long customExerciseId = exerciseService.saveCustomExercise(customExerciseRequest.getExerciseName(), customExerciseRequest.getExerciseTarget(),
+                customExerciseRequest.getExerciseEquipment(), id, file);
 
         eventPublisher.publishEvent(new ElasticSaveExerciseEvent(customExerciseId));
 
