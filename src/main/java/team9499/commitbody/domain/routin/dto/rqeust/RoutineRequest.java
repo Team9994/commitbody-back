@@ -11,10 +11,8 @@ public class RoutineRequest {
 
     @Schema(description = "루틴 명")
     private String routineName;
+    
+    @Schema(description = "추가할 운동")
+    private List<RoutineExercise> routineExercises;
 
-    @Schema(description = "기본 제공 운동 Id")
-    private List<Long> defaults;
-
-    @Schema(description = "커스텀 운동 Id")
-    private List<Long> customs;
 }

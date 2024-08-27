@@ -18,6 +18,7 @@ import team9499.commitbody.domain.routin.domain.RoutineDetails;
 import team9499.commitbody.domain.routin.dto.RoutineDto;
 import team9499.commitbody.domain.routin.dto.RoutineSetsDto;
 import team9499.commitbody.domain.routin.dto.response.MyRoutineResponse;
+import team9499.commitbody.domain.routin.dto.rqeust.RoutineExercise;
 import team9499.commitbody.domain.routin.repository.RoutineDetailsRepository;
 import team9499.commitbody.domain.routin.repository.RoutineRepository;
 import team9499.commitbody.domain.routin.repository.RoutineSetsRepository;
@@ -44,21 +45,24 @@ public class RoutineServiceImpl implements RoutineService{
     private final CustomExerciseRepository customExerciseRepository;
 
     private final String DEFAULT ="default";
+
     @Override
-    public void saveRoutine(Long memberId, List<Long> exerciseIds, List<Long> customExerciseIds, String routineName) {
+    public void saveRoutine(Long memberId, List<RoutineExercise> routineExercises, String routineName) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
 
         Routine routine = routineRepository.save(Routine.create(member, routineName));  // 새로운 루틴 생성 및 저장
         List<RoutineDetails> routineDetails = new ArrayList<>();
 
-        if (exerciseIds != null) {      // exerciseIds가 null이 아닌 경우 처리
-            addRoutineDetails(exerciseIds, routine, routineDetails, false);
+        for (RoutineExercise routineExercise : routineExercises) {
+            String source = routineExercise.getSource();
+            // 일반 운동일 경우
+            if (source.equals(DEFAULT)) {
+                addRoutineDetails(routineExercise.getExerciseId(),routineExercise.getOrder(), routine, routineDetails, false);
+            }else { // 커스컴 운동일 경우
+                addRoutineDetails(routineExercise.getExerciseId(),routineExercise.getOrder(), routine, routineDetails, true);
+            }
         }
-        if (customExerciseIds != null) {        // customExerciseIds가 null이 아닌 경우 처리
-            addRoutineDetails(customExerciseIds, routine, routineDetails, true);
-        }
-
         // 루틴의 상세 목록 설정 및 저장
         routine.setList(routineDetails);
         routineDetailsRepository.saveAll(routineDetails);
@@ -86,23 +90,18 @@ public class RoutineServiceImpl implements RoutineService{
         routineSetsRepository.saveAll(routineSets);
     }
 
-
     /**
      * 주어진 exerciseIds 목록을 순회하면서 루틴 상세 정보를 추가하는 메서드
      */
-    private void addRoutineDetails(List<Long> exerciseIds, Routine routine, List<RoutineDetails> routineDetails, boolean isCustom) {
-        for(int i =0; i<exerciseIds.size();i++){
-            if (isCustom) {         // 커스텀 운동인 경우 처리
-                CustomExercise customExercise = customExerciseRepository.findById(exerciseIds.get(i)).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
-                routineDetails.add(RoutineDetails.of(customExercise, routine,i+1));
-            } else {                // 일반 운동인 경우 처리
-                Exercise exercise = exerciseRepository.findById(exerciseIds.get(i)).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
-                routineDetails.add(RoutineDetails.of(exercise, routine,i+1));
-            }
+    private void addRoutineDetails(Long exerciseId,Integer order, Routine routine, List<RoutineDetails> routineDetails,boolean isCustom) {
+        if (isCustom) {         // 커스텀 운동인 경우 처리
+            CustomExercise customExercise = customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+            routineDetails.add(RoutineDetails.of(customExercise, routine,order));
+        } else {                // 일반 운동인 경우 처리
+            Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+            routineDetails.add(RoutineDetails.of(exercise, routine,order));
         }
     }
-
-
 
     @Override
     public MyRoutineResponse getMyRoutine(Long memberId) {

@@ -42,7 +42,7 @@ public class RoutineController {
     public ResponseEntity<?> saveRoutine(@RequestBody RoutineRequest routineRequest,
                                       @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        routineService.saveRoutine(memberId,routineRequest.getDefaults(),routineRequest.getCustoms(),routineRequest.getRoutineName());
+        routineService.saveRoutine(memberId,routineRequest.getRoutineExercises(),routineRequest.getRoutineName());
         return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 등록 성공"));
     }
 
