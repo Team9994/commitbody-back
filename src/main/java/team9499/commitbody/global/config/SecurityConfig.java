@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -51,7 +52,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorizeRequests ->
                 authorizeRequests
                         .requestMatchers("/api/v1/auth","/actuator/**","/api/v1/swagger-ui/**", "/v3/api-docs/**", "/api/v1/swagger-ui.html","/api-docs/**",
-                                "/api/v1/additional-info","/api/v1/scheduled/**","/api/v1/auth-refresh"
+                                "/api/v1/additional-info","/api/v1/scheduled/**","/api/v1/auth-refresh","/v1"
                                 ).permitAll()
                         .requestMatchers("/api/v1/**").hasAnyRole("USER"));
         return http.build();
@@ -73,5 +74,11 @@ public class SecurityConfig {
 
     private JwtAuthenticationFilter jwtAuthenticationFilter(){
         return new JwtAuthenticationFilter(redisService,memberRepository,jwtUtils);
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.ignoring()
+                .requestMatchers("/firebase-messaging-sw.js"); // 서비스 워커 파일은 보안 필터를 무시하도록 설정
     }
 }

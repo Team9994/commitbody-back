@@ -39,3 +39,5 @@ out/
 
 ### VS Code ###
 .vscode/
+/src/main/resources/firebase/
+commitbody-6773d-firebase-adminsdk-w2bx9-1a603087d1.json

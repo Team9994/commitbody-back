@@ -14,6 +14,9 @@ public interface RedisService {
     void deleteValue(String key);
     void setMember(Member member,Duration duration);
     Optional<Member> getMemberDto(String key);
-
     boolean nicknameLock(String key, String value,Duration duration);
+
+    void setFCM(String memberId, String token);
+
+    String getFCMToken(String key);
 }

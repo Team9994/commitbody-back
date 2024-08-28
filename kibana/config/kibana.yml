@@ -1,0 +1,9 @@
+# Kibana 설정파일 (kibana.yml)
+
+server.name: kibana
+server.host: "0.0.0.0"  # 0.0.0.0으로 수정하여 모든 IP에서 접근 가능하도록 설정
+
+# Elasticsearch 서버 정보
+elasticsearch.hosts: "elasticsearch:9200"  # Docker Compose 서비스 이름을 사용
+elasticsearch.username: "elastic"
+elasticsearch.password: "elastic123!@#"

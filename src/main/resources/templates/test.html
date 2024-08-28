@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase get Token Example</title>
+</head>
+<body>
+</body>
+<script type="module">
+    // Import Firebase modules
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+    import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging.js';
+
+    // Initialize Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBU5ETXhHKgFQ1WdT8rOoxfj0AG0KeJSzw",
+        authDomain: "commitbody-6773d.firebaseapp.com",
+        projectId: "commitbody-6773d",
+        storageBucket: "commitbody-6773d.appspot.com",
+        messagingSenderId: "261021331874",
+        appId: "1:261021331874:web:ac7f61b5f77eec803f02fb",
+        measurementId: "G-DKN1QLNG18"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const messaging = getMessaging(app);
+
+    const vapidKey = 'BNLygwhZu3LWGT4-qRisE9dFuoV5waUUtPNkou5KczQ2PXv_7Ynk9n4i6vZCO455VzU-cEuHYszKyNtDAxohsyw'; // VAPID 키를 여기에 넣습니다.
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+            .then((registration) => {
+                console.log('Service Worker registered with scope:', registration.scope);
+            })
+            .catch((err) => {
+                console.error('Error registering Service Worker:', err);
+            });
+    }
+
+    getToken(messaging, { vapidKey })
+        .then((token) => {
+            console.log('FCM Token:', token);
+
+            // Listen for messages when the app is in the foreground
+            onMessage(messaging, (payload) => {
+                console.log('Message received:', payload);
+
+                // Extract the click_action from the data
+                const clickActionUrl = payload.data.click_action;
+
+                // Redirect to the URL
+                if (clickActionUrl) {
+                    window.location.href = clickActionUrl;
+                }
+            });
+        })
+        .catch((err) => {
+            console.error('Error getting token:', err);
+        });
+</script>
+</html>

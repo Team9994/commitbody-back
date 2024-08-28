@@ -61,8 +61,10 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             optionalMember = Optional.of(member);
             joinOrLogin = JOIN;
         }
-        else       //로그인인 경우
+        else {       //로그인인 경우
             joinOrLogin = LOGIN;
+            redisService.setFCM(String.valueOf(optionalMember.get().getId()),"test");
+        }
 
 
         Map<String, Object> tokenMap = new LinkedHashMap<>(jwtUtils.generateAuthTokens(MemberDto.builder().memberId(optionalMember.get().getId()).build()));

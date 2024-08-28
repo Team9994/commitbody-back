@@ -18,6 +18,7 @@ public class RedisServiceImpl implements RedisService{
 
     private final RedisTemplate<String,Object> redisTemplate;
     private final String MEMBER_ID = "member_";
+    private final String FCM = "fcm_";
 
     @Override
     public void setValue(String key, String value) {
@@ -67,5 +68,20 @@ public class RedisServiceImpl implements RedisService{
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void setFCM(String memberId, String token) {
+        redisTemplate.opsForValue().setIfAbsent(FCM+memberId,"fRybPrZJxYL129qC8m6-oB:APA91bFnEoajd8Q_WjkGuGh66IaxUUSk4wmgZWuBBAxNPNNX_yj4as0-tvyQxht2WFfQeFtizCXs_ZNVar9ubVk5IZJZkEiy-Pd-dS4JgPm3S9-E7P8p-PX_KJrmEx1PoXg6xr9WA9YA");
+    }
+
+    @Override
+    public String getFCMToken(String key) {
+        Object fcm = redisTemplate.opsForValue().get(FCM + key);
+        log.info("ㅁㄴㅇ={}",fcm);
+        if (fcm == null){
+            return "";
+        }
+        return (String) fcm;
     }
 }
