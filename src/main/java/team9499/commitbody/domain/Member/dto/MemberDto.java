@@ -1,5 +1,6 @@
 package team9499.commitbody.domain.Member.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +25,8 @@ public class MemberDto {
     private String socialId;    // 소셜로그인 사용자 ID
 
     private String nickname;    // 닉네임
+    
+    private String profile;     // 사용자 프로필
 
     private String height;      // 키
 
@@ -39,17 +42,23 @@ public class MemberDto {
 
     private Float BodyFatPercentage; // 체지방량
 
-    private boolean notificationEnabled; //알림 유무
-
     private WeightUnit weightUnit; // 무게 타입 (KG, LB)
 
     private LoginType loginType;        //로그인 타입 (KAKAO, GOOGLE)
 
+    @JsonIgnore
+    private boolean notificationEnabled; //알림 유무
+
+    @JsonIgnore
     private boolean isUserDeactivated; //알림유무(true : 알림 받기, false : 알림 안받기)
 
 
     public MemberDto toMemberDTO(Member member){
         return MemberDto.builder()
                 .memberId(member.getId()).nickname(member.getNickname()).build();
+    }
+
+    public static MemberDto createNickname(Long memberId,String profile ,String nickname){
+        return MemberDto.builder().profile(profile).memberId(memberId).nickname(nickname).build();
     }
 }

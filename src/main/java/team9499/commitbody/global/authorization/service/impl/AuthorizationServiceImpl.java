@@ -8,8 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Gender;
 import team9499.commitbody.domain.Member.domain.LoginType;
 import team9499.commitbody.domain.Member.domain.Member;
+import team9499.commitbody.domain.Member.domain.MemberDoc;
 import team9499.commitbody.domain.Member.dto.MemberDto;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
+import team9499.commitbody.domain.Member.service.MemberDocService;
 import team9499.commitbody.global.Exception.InvalidUsageException;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.authorization.domain.RefreshToken;
@@ -38,8 +40,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     private final RedisService redisService;
     private final MemberRepository memberRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final MemberDocService memberDocService;
     private final JwtUtils jwtUtils;
+    private final RefreshTokenRepository refreshTokenRepository;
     @Value("${jwt.refresh}")
     private int expired;        // 만료시간
 
@@ -77,6 +80,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public TokenUserInfoResponse additionalInfoSave(String nickName, Gender gender, LocalDate birthday, float height, float weight, Float boneMineralDensity, Float bodyFatPercentage, String jwtToken) {
         String memberId = jwtUtils.accessTokenValid(jwtToken);      // jwt 토큰을 검증후 반환한 memberId
         Member member = memberRepository.findById(Long.parseLong(memberId)).orElseThrow(() -> new NoSuchException(BAD_REQUEST, No_SUCH_MEMBER));
+
+        memberDocService.saveMemberDocAsync(MemberDoc.create(memberId,nickName,member.getProfile()));
 
         if (boneMineralDensity !=null && bodyFatPercentage !=null){
             member.createAdditionalInfoNotNull(nickName,gender,birthday,height,weight,boneMineralDensity,bodyFatPercentage);
