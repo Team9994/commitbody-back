@@ -22,6 +22,8 @@ public class ExerciseDto {
 
     private Long exerciseId;
 
+    private String source;
+
     private String exerciseName;
 
     private String gifUrl;
@@ -38,9 +40,9 @@ public class ExerciseDto {
 
     private List<RoutineSetsDto> routineSets;
 
-    private String source;
 
-    public static ExerciseDto of(Long routineDetailId, Long exerciseId, String exerciseName, String gifUrl,Integer sets,String exerciseType,Integer orders,List<RoutineSetsDto> routineSets) {
-        return ExerciseDto.builder().routineDetailId(routineDetailId).exerciseId(exerciseId).exerciseName(exerciseName).gifUrl(gifUrl).sets(sets).exerciseType(exerciseType).orders(orders).routineSets(routineSets).build();
+
+    public static ExerciseDto of(Long routineDetailId, Long exerciseId,String exerciseName, String gifUrl,Integer sets,String exerciseType,Integer orders,List<RoutineSetsDto> routineSets) {
+        return ExerciseDto.builder().routineDetailId(routineDetailId).source("default").exerciseId(exerciseId).exerciseName(exerciseName).gifUrl(gifUrl).sets(sets).exerciseType(exerciseType).orders(orders).routineSets(routineSets).build();
     }
 }

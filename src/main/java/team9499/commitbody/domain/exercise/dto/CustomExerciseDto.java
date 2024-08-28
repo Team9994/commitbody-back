@@ -16,7 +16,9 @@ public class CustomExerciseDto {
 
     private Long routineDetailId;
 
-    private Long customExerciseId;
+    private Long exerciseId;
+
+    private String source;
 
     private String exerciseName;
 
@@ -34,8 +36,10 @@ public class CustomExerciseDto {
 
     private List<RoutineSetsDto> routineSets;
 
+
+
     public static CustomExerciseDto of(Long routineDetailId, Long customExerciseId,String exerciseName,String gifUrl,Integer sets,String exerciseType,Integer orders, List<RoutineSetsDto> routineSetsDtos){
-        return CustomExerciseDto.builder().routineDetailId(routineDetailId).customExerciseId(customExerciseId).exerciseName(exerciseName).gifUrl(gifUrl).sets(sets).orders(orders).exerciseType(exerciseType).routineSets(routineSetsDtos).build();
+        return CustomExerciseDto.builder().routineDetailId(routineDetailId).exerciseId(customExerciseId).source("custom").exerciseName(exerciseName).gifUrl(gifUrl).sets(sets).orders(orders).exerciseType(exerciseType).routineSets(routineSetsDtos).build();
     }
 
 }
