@@ -127,6 +127,30 @@ public class RoutineServiceImpl implements RoutineService{
         return new MyRoutineResponse(routineDtos);    // 변환된 루틴 DTO 리스트를 MyRoutineResponse로 반환
     }
 
+    @Override
+    public MyRoutineResponse getDetailMyRoutine(Long memberId, Long routineId) {
+        Optional<Routine> byIdAndMemberId = routineRepository.findByIdAndMemberId(routineId, memberId);
+        List<RoutineDto> routineDtos = new ArrayList<>();
+        if (!byIdAndMemberId.isEmpty()){
+            Routine routine = byIdAndMemberId.get();
+            RoutineDto routineDto = convertToRoutineDto(routine);
+            routineDtos.add(routineDto);
+        }
+
+        // 오름차순 정렬
+        for (RoutineDto routineDto : routineDtos) {
+            List<Object> exercises = routineDto.getExercises();
+            if (exercises != null) {
+                exercises.sort((o1, o2) -> {
+                    Integer orders1 = getOrder(o1);
+                    Integer orders2 = getOrder(o2);
+                    return orders1.compareTo(orders2);
+                });
+            }
+        }
+        return new MyRoutineResponse(routineDtos);    // 변환된 루틴 DTO 리스트를 MyRoutineResponse로 반환
+    }
+
     /**
      * 루틴 편집에 사용되는 메서드
      * 값이 NULL 아닐시에만  사용되도록 작성

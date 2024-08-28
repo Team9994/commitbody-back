@@ -13,6 +13,8 @@ public interface RoutineService {
 
     MyRoutineResponse getMyRoutine(Long memberId);
 
+    MyRoutineResponse getDetailMyRoutine(Long memberId, Long routineId);
+
     void updateRoutine(Long routineId, Long memberId, String routineName, List<Long> deleteRoutines, List<UpdateSets> updateSets,
                        List<DeleteSets> deleteSets, List<ExerciseDto> newExercises, List<ChangeExercise> changeExercises, List<ChangeOrders> changeOrders);
 
