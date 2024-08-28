@@ -62,6 +62,14 @@ public class RoutineController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",myRoutine));
     }
 
+    @GetMapping("/routine/{id}")
+    public ResponseEntity<?> getDetailsRoutine(@PathVariable("id") Long routineId,
+                                        @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        MyRoutineResponse detailMyRoutine = routineService.getDetailMyRoutine(memberId, routineId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",detailMyRoutine));
+    }
+
 
     @Operation(summary = "루틴 편집", description = "사용자가 등록한 루틴을 편집합니다. 필드 별 변경할 데이터가 있는 경우에만 해당 필드를 작성합니다. 변경할 데이터가 없는 경우에는 해당 필드를 작성하지 않습니다.")
     @ApiResponses(value = {
