@@ -30,6 +30,12 @@ public class S3ServiceImpl implements S3Service{
     @Value("${cloud.aws.s3.bucket.image}")
     private String bucketImage;
 
+    @Value("${default.profile}")
+    private String defaultProfile;
+
+    @Value("${cloud.aws.cdn.url}")
+    private String cdnUrl;
+
     /**
      * 파일 업로드
      * 저장된 파일명을 반환한다.
@@ -67,6 +73,30 @@ public class S3ServiceImpl implements S3Service{
             deleteImage(previousFileName);
             previous = uploadImage(file);
         }
+        return previous;
+    }
+
+    /**
+     * 프로필 사진 업데이트
+     * 기본 이미지파일을 경우 이미지파일을 업데이트하고 변경된 프로필 사진을 경우 기존 이미지 파일을 삭제후 새로운 프로플 사진을 업데이트
+     * @param file
+     * @param previousFileName  이전 프로필 파일 이름
+     * @return
+     */
+    @Override
+    public String updateProfile(MultipartFile file, String previousFileName,boolean deleteProfile) {
+        String previous = previousFileName;
+        if (deleteProfile){     // 기본 프로필 적용시
+            previous = defaultProfile;
+            deleteImage(previousFileName.replace(cdnUrl, ""));
+        }
+        if (file!=null) {
+            if (!previous.equals(defaultProfile)){      // 기본 프로필 사진이 아닐 경우 기존 프로필 사진을 삭제
+                deleteImage(previousFileName.replace(cdnUrl, ""));
+            }
+            previous = cdnUrl+uploadImage(file);
+        }
+
         return previous;
     }
 
