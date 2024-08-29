@@ -55,10 +55,12 @@ public class MemberController {
     }
 
     @Tag(name = "프로필",description = "프로필 관련 API")
-    @Operation(summary = "마이페이지 - 사용자 정보 조회", description = "사용자의 정보(닉네임,프로필사진,팔로워/팔로잉)을 조회합니다.")
+    @Operation(summary = "마이페이지 - 사용자 정보 조회", description = "사용자의 정보(닉네임,프로필사진,팔로워/팔로잉)을 조회합니다, pageType[myPage: 마이페이지, theirPage: 상대 페이지], followStatus[FOLLOW_ONLY : 상대방만 팔로워, FOLLOW : 상대방을 팔로우, NEITHER : 서로 팔로워 하지않음]")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"memberId\": 1, \"nickname\": \"첫번쨰닉네임\", \"profile\": \"https://example.com\", \"followerCount\": 0, \"followingCount\": 1}}"))),
+            @ApiResponse(responseCode = "200_1", description = "마이페이지 조회시", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"memberId\": 1, \"pageType\" : \"myPage\",\"nickname\": \"첫번쨰닉네임\", \"profile\": \"https://example.com\", \"followerCount\": 0, \"followingCount\": 1}}"))),
+            @ApiResponse(responseCode = "200_2", description = "상대페이지 조회시", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"memberId\": 1, \"pageType\" : \"theirPage\", \"nickname\": \"첫번쨰닉네임\", \"profile\": \"https://example.com\", \"followerCount\": 0, \"followingCount\": 1,\"followStatus\":\"NEITHER\"}}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 사용자 존재하지 않을시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
