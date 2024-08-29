@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findBySocialId(String socialId);
+    Optional<Member> findByNickname(String nickname);
 
     @Query("select m from Member m where binary(m.nickname) = :nickname")
     Member existsByNickname(@Param("nickname") String nickname);

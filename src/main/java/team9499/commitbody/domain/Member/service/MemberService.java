@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 public interface MemberService{
 
-    MemberMyPageResponse getMyPage(Long memberId);
+    MemberMyPageResponse getMyPage(Long memberId,String nickname);
 
     void updateProfile(Long memberId, String nickname, Gender gender, LocalDate birthDay, Float height, Float weight, Float BoneMineralDensity,
                        Float BodyFatPercentage, boolean deleteProfile,MultipartFile file);

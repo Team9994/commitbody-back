@@ -11,6 +11,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.follow.domain.Follow;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
+import team9499.commitbody.domain.follow.domain.FollowType;
 import team9499.commitbody.domain.follow.dto.FollowerDto;
 import team9499.commitbody.domain.follow.dto.FollowingDto;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static team9499.commitbody.domain.Member.domain.QMember.*;
+import static team9499.commitbody.domain.follow.domain.FollowType.FOLLOW_ONLY;
 import static team9499.commitbody.domain.follow.domain.QFollow.*;
 
 @Repository
@@ -106,6 +108,41 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
                 .join(member).on(member.id.eq(follow.follower.id))  // 올바른 조인 조건
                 .where(follow.following.id.eq(followingId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW))))  // 올바른 조건
                 .fetchOne();
+    }
+
+    /**
+     * 상대 페이지 검색시에 사용되는 팔로우 상태를 검사합니다.
+     * FOLLOW_ONLY - 상대방만 팔로우한상태
+     * NEITHER - 둘다 팔로우를 하지 않았을때
+     * FOLLOW - 둘다 팔로우 상태
+     * @return FollowType을 반환합니다.
+     */
+    @Override
+    public FollowType followStatus(Long followerId, Long followingId) {
+        FollowType type = null;
+        FollowStatus followStatus = jpaQueryFactory.select(follow.status)
+                .from(follow)
+                .where(follow.follower.id.eq(followerId).and(follow.following.id.eq(followingId)))
+                .fetchOne();
+        //팔로우가 되어 있지 않았을때 검증
+        if (followStatus == null || followStatus.equals(FollowStatus.CANCEL) || followStatus.equals(FollowStatus.UNFOLLOW)){
+            FollowStatus followStatus1 = jpaQueryFactory.select(follow.status)
+                    .from(follow)
+                    .where(follow.follower.id.eq(followingId).and(follow.following.id.eq(followerId))).fetchOne();
+            if (followStatus1 == null || followStatus1.equals(FollowStatus.CANCEL)){    // 상대방도 팔로우를 하지않았을경우는 NEITHER
+                type = FollowType.NEITHER;
+            }else if (followStatus1.equals(FollowStatus.FOLLOWING)){        // 상대방만 사용자를 팔로우중이라면 맞팔로우
+                type = FOLLOW_ONLY;
+            }
+        }
+        // 현재 내가 상대방을 팔로워나 맞팔로워 되어있을때
+        if (followStatus.equals(FollowStatus.FOLLOWING)|| followStatus.equals(FollowStatus.MUTUAL_FOLLOW))       // 팔로우 상태
+            type = FollowType.FOLLOW;
+        else if (followStatus.equals(FollowStatus.REQUEST)) {   // 상대방이 팔로우 요청을 보낸 상태라면
+            type = FOLLOW_ONLY;
+        }
+
+        return type;
     }
 
     private static boolean checkFollow(FollowStatus followStatus){

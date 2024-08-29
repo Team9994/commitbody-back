@@ -10,6 +10,7 @@ import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.dto.response.MemberMyPageResponse;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.Member.service.MemberService;
+import team9499.commitbody.domain.follow.domain.FollowType;
 import team9499.commitbody.domain.follow.repository.FollowRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
@@ -34,12 +35,20 @@ public class MemberServiceImpl implements MemberService {
      * @param memberId  현재 로그인한 사용자 정보
      */
     @Override
-    public MemberMyPageResponse getMyPage(Long memberId) {
-        Member member = getMember(memberId);
-        int countFollower = (int) followRepository.getCountFollower(memberId);
-        int countFollowing = (int)followRepository.getCountFollowing(memberId);
-
-        return new MemberMyPageResponse(member.getId(),member.getNickname(),member.getProfile(),countFollower,countFollowing);
+    public MemberMyPageResponse getMyPage(Long memberId,String nickname) {
+        Member member = memberRepository.findByNickname(nickname).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+        int countFollower = (int) followRepository.getCountFollower(member.getId());
+        int countFollowing = (int) followRepository.getCountFollowing(member.getId());
+        MemberMyPageResponse.MemberMyPageResponseBuilder memberMyPageResponseBuilder = MemberMyPageResponse.builder().nickname(member.getNickname()).profile(member.getProfile()).followerCount(countFollower).followingCount((countFollowing));
+        
+        //현재 마이페이지로 접근 시
+        if (member.getId() == memberId) {
+            memberMyPageResponseBuilder.memberId(memberId).pageType("myPage");
+        }else{  // 상대방 페이지 접근시
+            FollowType followStatus = followRepository.followStatus(memberId, member.getId());  // 상대방과 팔로우 관계를 검사
+            memberMyPageResponseBuilder.followStatus(followStatus).memberId(member.getId()).pageType("theirPage");
+        }
+        return memberMyPageResponseBuilder.build();
     }
 
 
