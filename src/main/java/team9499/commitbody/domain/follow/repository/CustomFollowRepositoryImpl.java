@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import static team9499.commitbody.domain.Member.domain.QMember.*;
 import static team9499.commitbody.domain.follow.domain.FollowType.FOLLOW_ONLY;
+import static team9499.commitbody.domain.follow.domain.FollowType.NEITHER;
 import static team9499.commitbody.domain.follow.domain.QFollow.*;
 
 @Repository
@@ -125,7 +126,7 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
                 .where(follow.follower.id.eq(followerId).and(follow.following.id.eq(followingId)))
                 .fetchOne();
         //팔로우가 되어 있지 않았을때 검증
-        if (followStatus == null || followStatus.equals(FollowStatus.CANCEL) || followStatus.equals(FollowStatus.UNFOLLOW)){
+        if (followStatus==null || followStatus.equals(FollowStatus.CANCEL) || followStatus.equals(FollowStatus.UNFOLLOW)){
             FollowStatus followStatus1 = jpaQueryFactory.select(follow.status)
                     .from(follow)
                     .where(follow.follower.id.eq(followingId).and(follow.following.id.eq(followerId))).fetchOne();
@@ -135,8 +136,7 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
                 type = FOLLOW_ONLY;
             }
         }
-        // 현재 내가 상대방을 팔로워나 맞팔로워 되어있을때
-        if (followStatus.equals(FollowStatus.FOLLOWING)|| followStatus.equals(FollowStatus.MUTUAL_FOLLOW))       // 팔로우 상태
+        else if (followStatus.equals(FollowStatus.FOLLOWING)|| followStatus.equals(FollowStatus.MUTUAL_FOLLOW))       // 팔로우 상태
             type = FollowType.FOLLOW;
         else if (followStatus.equals(FollowStatus.REQUEST)) {   // 상대방이 팔로우 요청을 보낸 상태라면
             type = FOLLOW_ONLY;
