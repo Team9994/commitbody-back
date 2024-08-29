@@ -11,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.Member.dto.response.MemberInfoResponse;
+import team9499.commitbody.domain.Member.dto.response.MemberMyPageResponse;
 import team9499.commitbody.domain.Member.service.MemberDocService;
+import team9499.commitbody.domain.Member.service.MemberService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
@@ -22,6 +24,7 @@ import team9499.commitbody.global.payload.SuccessResponse;
 public class MemberController {
 
     private final MemberDocService memberDocService;
+    private final MemberService memberService;
 
     @Operation(summary = "사용자 검색", description = "사용자 닉네임을 통해 회원을 검색합니다. default size : 10, default form : 0",tags = "팔로워")
     @ApiResponses(value = {
@@ -36,12 +39,23 @@ public class MemberController {
                                      @RequestParam(value = "size",required = false) Integer size,
                                      @RequestParam(value = "from",required = false) Integer from,
                                      @AuthenticationPrincipal PrincipalDetails principalDetails){
-        Long memberId = principalDetails.getMember().getId();
+        Long memberId = getMemberId(principalDetails);
         int fromValue = (from != null) ? from : 0; // 기본값 0
         int sizeValue = (size != null) ? size : 10; // 기본값 10
 
         MemberInfoResponse memberForNickname = memberDocService.findMemberForNickname(memberId, nickname, fromValue, sizeValue);
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"검색 성공",memberForNickname));
+    }
+
+    @GetMapping("/myPage")
+    public ResponseEntity<?> myPage(@AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        MemberMyPageResponse myPage = memberService.getMyPage(memberId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",myPage));
+    }
+
+    private static Long getMemberId(PrincipalDetails principalDetails) {
+        return principalDetails.getMember().getId();
     }
 }
