@@ -90,6 +90,24 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
         return new SliceImpl<>(followerDtoList,pageable,hasNext);
     }
 
+    @Override
+    public long getCountFollowing(Long followerId) {
+        return jpaQueryFactory.select(follow.count())
+                .from(follow)
+                .join(member).on(member.id.eq(follow.following.id))
+                .where(follow.follower.id.eq(followerId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW)))).fetchOne();
+    }
+
+    @Override
+    public long getCountFollower(Long followingId) {
+
+        return jpaQueryFactory.select(follow.count())
+                .from(follow)
+                .join(member).on(member.id.eq(follow.follower.id))  // 올바른 조인 조건
+                .where(follow.following.id.eq(followingId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW))))  // 올바른 조건
+                .fetchOne();
+    }
+
     private static boolean checkFollow(FollowStatus followStatus){
         return followStatus.equals(FollowStatus.FOLLOWING) ? false : true;
     }

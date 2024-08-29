@@ -12,4 +12,8 @@ public interface CustomFollowRepository {
     Slice<FollowingDto> getAllFollowings(Long followerId, String nickName, Long lastId, Pageable pageable);
 
     Slice<FollowerDto> getAllFollowers(Long followerId,String nickName,Long lastId, Pageable pageable);
+
+    long getCountFollowing(Long followerId);
+
+    long getCountFollower(Long followingId);
 }
