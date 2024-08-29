@@ -7,10 +7,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import team9499.commitbody.domain.Member.dto.request.ProfileUpdateRequest;
 import team9499.commitbody.domain.Member.dto.response.MemberInfoResponse;
 import team9499.commitbody.domain.Member.dto.response.MemberMyPageResponse;
 import team9499.commitbody.domain.Member.service.MemberDocService;
@@ -65,6 +70,16 @@ public class MemberController {
         Long memberId = getMemberId(principalDetails);
         MemberMyPageResponse myPage = memberService.getMyPage(memberId);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",myPage));
+    }
+
+    @PutMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateProfile(@Valid @RequestPart("profileUpdateRequest") ProfileUpdateRequest profileUpdateRequest, BindingResult result,
+                                           @RequestPart(name = "file",required = false) MultipartFile file,
+                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        memberService.updateProfile(memberId, profileUpdateRequest.getNickname(),profileUpdateRequest.getGender(),profileUpdateRequest.getBirthDay(), profileUpdateRequest.getHeight(),
+                profileUpdateRequest.getWeight(),profileUpdateRequest.getBoneMineralDensity(), profileUpdateRequest.getBodyFatPercentage(),profileUpdateRequest.isDeleteProfile(),file);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"업데이트 성공"));
     }
 
     private static Long getMemberId(PrincipalDetails principalDetails) {
