@@ -5,11 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import team9499.commitbody.global.utils.BaseTime;
 
 import java.time.LocalDate;
 
 @Entity
+@Slf4j
 @Data
 @Builder
 @AllArgsConstructor
@@ -76,5 +78,20 @@ public class Member extends BaseTime {
         this.height = height;
         this.weight = weight;
         this.weightUnit = WeightUnit.KG;
+    }
+
+    public void updateProfile(String nickname, Gender gender, LocalDate birthday, float height, float weight, Float boneMineralDensity, Float bodyFatPercentage,String profile){
+        this.nickname = nickname;
+        this.gender = gender;
+        this.birthday = birthday;
+        this.height = height;
+        this.weight = weight;
+        this.BoneMineralDensity = boneMineralDensity;
+        this.BodyFatPercentage = bodyFatPercentage;
+        if (!this.profile.equals(profile)) {
+            log.info("업데이;트 실행");
+            this.profile = profile;
+        }
+
     }
 }

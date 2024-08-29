@@ -71,7 +71,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         Map<String, Object> tokenMap = new LinkedHashMap<>(jwtUtils.generateAuthTokens(MemberDto.builder().memberId(optionalMember.get().getId()).build()));
         tokenMap.put("authMode",joinOrLogin);       // 로그인 / 회원가입을 구분하기위함
 
-        if (joinOrLogin.equals(LOGIN)) tokenMap.put("tokenInfo",TokenInfoDto.of(optionalMember.get().getId()));     //로그인일 경우에만 JWT토큰의대한 정보를 담는다
+        if (joinOrLogin.equals(LOGIN)) tokenMap.put("tokenInfo",TokenInfoDto.of(optionalMember.get().getId(),optionalMember.get().getNickname()));     //로그인일 경우에만 JWT토큰의대한 정보를 담는다
         SaveRefreshToken(optionalMember.get().getId(), optionalMember, (String) tokenMap.get(REFRESH_TOKEN));
         return tokenMap;
     }

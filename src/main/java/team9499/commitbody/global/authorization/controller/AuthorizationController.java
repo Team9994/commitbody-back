@@ -40,7 +40,7 @@ public class AuthorizationController {
     @Operation(summary = "회원가입/로그인", description = "매 요청마다 소셜 로그인 정보를 전달해야합니다. 최초 로그인 시에는 회원가입이 진행되며, 이후 로그인이 진행됩니다. 로그인 시에만 tokenInfo에 사용자 정보가 포함됩니다.(authMode: [로그인,회원가입])")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",description = "0K", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-            examples = @ExampleObject(value = "{\"success\":true,\"message\":\"성공\",\"data\":{\"refreshToken\":\"sample_refresh_token\",\"accessToken\":\"sample_access_token\",\"authMode\":\"타입 종류\",\"tokenInfo\":{\"memberId\":1}}}"))),
+            examples = @ExampleObject(value = "{\"success\":true,\"message\":\"성공\",\"data\":{\"refreshToken\":\"sample_refresh_token\",\"accessToken\":\"sample_access_token\",\"authMode\":\"타입 종류\",\"tokenInfo\":{\"memberId\":1,\"nickname\":\"닉네임\"}}}"))),
             @ApiResponse(responseCode = "400",description = "BADREQUEST", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401",description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),

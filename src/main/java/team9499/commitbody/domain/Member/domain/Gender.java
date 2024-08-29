@@ -1,5 +1,9 @@
 package team9499.commitbody.domain.Member.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
+import java.util.Arrays;
+
 public enum Gender {
 
     MALE("남성"),
@@ -21,5 +25,15 @@ public enum Gender {
             }
         }
         return null;
+    }
+
+    @JsonCreator
+    public static Gender fromEventStatus(String val) {
+        if (val ==null || val.equals("")){
+            return null;
+        }
+        return Arrays.stream(values())
+                .findFirst()
+                .orElse(null);
     }
 }
