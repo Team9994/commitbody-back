@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,8 @@ import team9499.commitbody.domain.follow.dto.request.FollowRequest;
 import team9499.commitbody.domain.follow.dto.response.FollowResponse;
 import team9499.commitbody.domain.follow.service.FollowService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
+import team9499.commitbody.global.notification.event.DeleteFollowEvent;
+import team9499.commitbody.global.notification.event.FollowingEvent;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
 
@@ -28,6 +31,12 @@ import team9499.commitbody.global.payload.SuccessResponse;
 public class FollowController {
 
     private final FollowService followService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    private final String MUTUAL_FOLLOW = "맞팔로우";
+    private final String REQUEST_FOLLOW = "팔로우 요청";
+    private final String UNFOLLOW = "언팔로우";
+    private final String CANCEL_FOLLOW = "팔로우 취소";
 
     @Operation(summary = "팔로워", description = "하나의 API를 통해 팔로워/팔로잉등 요청을 수행합니다.type의 팔로우요청 , 맞팔로우시 FOLLOW, 언팔시및 팔로우 취소시 UNFOLLOW를 작성합니다.")
     @ApiResponses(value = {
@@ -45,7 +54,15 @@ public class FollowController {
     public ResponseEntity<?> requestFollow(@RequestBody FollowRequest followRequest,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long followerId = getMember(principalDetails);
-        String followStatus = followService.follow(followerId, followRequest.getFollowId(), followRequest.getType());
+        Long followId = followRequest.getFollowId();
+        String followStatus = followService.follow(followerId, followId, followRequest.getType());
+
+        if (followStatus.equals(MUTUAL_FOLLOW)||followStatus.equals(REQUEST_FOLLOW))
+          eventPublisher.publishEvent(new FollowingEvent(followerId,followId));
+        else if (followStatus.equals(UNFOLLOW)||followStatus.equals(CANCEL_FOLLOW)) {
+            eventPublisher.publishEvent(new DeleteFollowEvent(followerId,followId));
+        }
+
         return ResponseEntity.ok(new SuccessResponse<>(true,followStatus));
     }
 

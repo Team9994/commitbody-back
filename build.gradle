@@ -36,6 +36,7 @@ dependencies {
 	implementation 'com.nimbusds:nimbus-jose-jwt:9.15'
 	implementation 'com.auth0:java-jwt:4.4.0'
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+	implementation 'com.google.firebase:firebase-admin:9.2.0'
 	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
 	annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
 	annotationProcessor "jakarta.annotation:jakarta.annotation-api"

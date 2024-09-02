@@ -48,7 +48,9 @@ public class AuthorizationController {
     })
     @PostMapping("/auth")
     public ResponseEntity<SuccessResponse> socialLogin(@RequestBody JoinLoginRequest joinLoginRequest){
-        Map<String, Object> jwtTokenMap = authorizationService.authenticateOrRegisterUser(joinLoginRequest.getLoginType(), joinLoginRequest.getSocialId());
+        Map<String, Object> jwtTokenMap = authorizationService.authenticateOrRegisterUser(
+                joinLoginRequest.getLoginType(), joinLoginRequest.getSocialId(),joinLoginRequest.getFcmToken()
+        );
 
         return ResponseEntity.ok().body(new SuccessResponse<>(true,"성공",jwtTokenMap));
     }
@@ -65,7 +67,8 @@ public class AuthorizationController {
                             examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
     @PostMapping("/additional-info")
-    public ResponseEntity<?> additionalInfo(@Valid @RequestBody AdditionalInfoReqeust additionalInfoReqeust, BindingResult result,HttpServletRequest request){
+    public ResponseEntity<?> additionalInfo(@Valid @RequestBody AdditionalInfoReqeust additionalInfoReqeust, BindingResult result,
+                                            HttpServletRequest request){
         String jwtToken = getJwtToken(request);
 
         TokenUserInfoResponse tokenUserInfoResponse = authorizationService.additionalInfoSave(

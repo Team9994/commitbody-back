@@ -6,8 +6,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
-import team9499.commitbody.domain.exercise.domain.Exercise;
-import team9499.commitbody.domain.exercise.domain.ExerciseMethod;
+import team9499.commitbody.domain.exercise.domain.*;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseType;
 import team9499.commitbody.domain.exercise.dto.response.ExerciseDetailsResponse;
 import team9499.commitbody.domain.exercise.dto.response.ExerciseResponse;
@@ -27,6 +26,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static team9499.commitbody.domain.Member.domain.QMember.*;
+import static team9499.commitbody.domain.exercise.domain.QCustomExercise.*;
+import static team9499.commitbody.domain.exercise.domain.QExercise.*;
 import static team9499.commitbody.domain.record.domain.QRecord.*;
 import static team9499.commitbody.domain.record.domain.QRecordDetails.*;
 import static team9499.commitbody.domain.record.domain.QRecordSets.*;
@@ -97,7 +98,18 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
 
 
         // 첫번째 운동 기록을 조회
-        RecordDetails details = countQuery.get(0).getRecordDetails();
+        RecordDetails details = countQuery.isEmpty() ? null : countQuery.get(0).getRecordDetails();
+
+        // 만약 details가 null이라면, source에 따라 적절한 Exercise 또는 CustomExercise를 가져와서 RecordDetails 생성
+        if (details == null) {
+            if (source.equals("default")) {
+                Exercise exercise1 = jpaQueryFactory.select(exercise).from(exercise).where(exercise.id.eq(exerciseId)).fetchOne();
+                details = new RecordDetails().onlyExercise(exercise1);
+            } else {
+                CustomExercise customExercise1 = jpaQueryFactory.selectFrom(customExercise).where(customExercise.id.eq(exerciseId)).fetchOne();
+                details = new RecordDetails().onlyExercise(customExercise1);
+            }
+        }
 
         // 운동 상세 정보에서 적용된 운동이 뭔지 찾아 Object로 반환
         Object exercise = details.getExercise() != null ? details.getExercise() : details.getCustomExercise();
