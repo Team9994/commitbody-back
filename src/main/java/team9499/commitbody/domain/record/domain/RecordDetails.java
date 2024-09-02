@@ -105,4 +105,13 @@ public class RecordDetails {
         return detailsBuilder.build();
     }
 
+    public RecordDetails onlyExercise(Object exercise) {
+        RecordDetailsBuilder builder = RecordDetails.builder();
+        if (exercise instanceof Exercise)
+            builder.exercise((Exercise) exercise);
+        else
+            builder.customExercise((CustomExercise) exercise);
+
+        return builder.build();
+    }
 }
