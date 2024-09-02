@@ -18,7 +18,6 @@ import team9499.commitbody.domain.record.dto.request.RecordRequest;
 import team9499.commitbody.domain.record.dto.request.UpdateRecordRequest;
 import team9499.commitbody.domain.record.dto.response.RecordMonthResponse;
 import team9499.commitbody.domain.record.dto.response.RecordResponse;
-import team9499.commitbody.domain.record.repository.RecordRepository;
 import team9499.commitbody.domain.record.service.RecordService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
@@ -33,10 +32,9 @@ import java.time.LocalDateTime;
 public class RecordController {
 
     private final RecordService recordService;
-    private final RecordRepository recordRepository;
 
 
-    @Operation(summary = "기록 저장", description = "루틴 완료시 수행한 운동의 대해 기록을 저장합니다. 저장시 정장된 recordId를 반환합니다.")
+    @Operation(summary = "기록 저장", description = "루틴 완료시 수행한 운동의 대해 기록을 저장합니다. 저장시 정장된 recordId를 반환합니다.(exercises 배열안의 'recordId', 'endTime', 'recordName' 필드값은 사용하지 않습니다.)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value = "{\"success\":true,\"message\":\"루틴 성공\",\"data\":1}"))),

@@ -41,7 +41,8 @@ public class ExerciseResponse {
             builder.exerciseId(exercise.getId()).exerciseName(exercise.getExerciseName()).exerciseType(exercise.getExerciseType().getDescription()).exerciseTarget(exercise.getExerciseTarget()).exerciseEquipment(exercise.getExerciseEquipment().getKoreanName()).gifUrl(exercise.getGifUrl());
         }else{
             CustomExercise customExercise = (CustomExercise) obExercise;
-            builder.exerciseId(customExercise.getId()).exerciseName(customExercise.getCustomExName()).exerciseType("무게와 횟수").exerciseTarget(customExercise.getExerciseTarget()).exerciseEquipment(customExercise.getExerciseEquipment().getKoreanName()).gifUrl(customExercise.getCustomGifUrl());
+            if (customExercise!=null)
+                builder.exerciseId(customExercise.getId()).exerciseName(customExercise.getCustomExName()).exerciseType("무게와 횟수").exerciseTarget(customExercise.getExerciseTarget()).exerciseEquipment(customExercise.getExerciseEquipment().getKoreanName()).gifUrl(customExercise.getCustomGifUrl());
         }
         return builder.build();
     }
