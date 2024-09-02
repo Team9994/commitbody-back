@@ -16,12 +16,13 @@ import java.util.List;
 @NoArgsConstructor
 public class ExerciseDetailsResponse {
 
+    private Long recordId;
     private LocalDateTime date;
     private List<RecordSetsResponse> sets;
 
     @JsonIgnore
     private Long recordDetailId;
-    public static ExerciseDetailsResponse of(LocalDateTime localDateTime,Long recordDetailId,List<RecordSetsResponse> test){
-        return ExerciseDetailsResponse.builder().date(localDateTime).recordDetailId(recordDetailId).sets(test).build();
+    public static ExerciseDetailsResponse of(Long recordId, LocalDateTime localDateTime,Long recordDetailId,List<RecordSetsResponse> test){
+        return ExerciseDetailsResponse.builder().recordId(recordId).date(localDateTime).recordDetailId(recordDetailId).sets(test).build();
     }
 }

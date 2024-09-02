@@ -54,7 +54,7 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
         LocalDate today = LocalDate.now();
         LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
         LocalDateTime startOfWeek = weekStart.atStartOfDay();
-        LocalDate weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
+        LocalDate weekEnd = today.with(TemporalAdjusters.lastInMonth(DayOfWeek.SATURDAY));
         LocalDateTime endOfWeek = weekEnd.atTime(23, 59, 59);
 
         // 쿼리 생성
@@ -167,6 +167,7 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
 
                             // `ExerciseDetailsResponse` 객체 생성
                             return ExerciseDetailsResponse.of(
+                                    record1.getId(),
                                     record1.getEndTime(),
                                     recordDetail.getId(),
                                     new ArrayList<>()
