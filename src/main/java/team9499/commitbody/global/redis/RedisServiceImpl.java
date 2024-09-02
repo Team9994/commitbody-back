@@ -6,6 +6,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import team9499.commitbody.domain.Member.domain.Member;
+import team9499.commitbody.domain.Member.repository.MemberRepository;
+import team9499.commitbody.global.Exception.ExceptionStatus;
+import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.utils.CustomMapper;
 
 import java.time.Duration;
@@ -17,7 +21,9 @@ import java.util.Optional;
 public class RedisServiceImpl implements RedisService{
 
     private final RedisTemplate<String,Object> redisTemplate;
+    private final MemberRepository memberRepository;
     private final String MEMBER_ID = "member_";
+    private final String FCM = "fcm_";
 
     @Override
     public void setValue(String key, String value) {
@@ -54,8 +60,11 @@ public class RedisServiceImpl implements RedisService{
         if (o!=null){
             CustomMapper<Member> customMapper = new CustomMapper<>();
             return Optional.of(customMapper.to(o, Member.class));
-        }else
-            return Optional.empty();
+        }else {
+            Member member = memberRepository.findById(Long.valueOf(key)).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+            setMember(member,Duration.ofDays(7));
+            return Optional.of(member);
+        }
 
     }
 
@@ -67,5 +76,19 @@ public class RedisServiceImpl implements RedisService{
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void setFCM(String memberId, String token) {
+        redisTemplate.opsForValue().setIfAbsent(FCM+memberId,token);
+    }
+
+    @Override
+    public String getFCMToken(String key) {
+        Object fcm = redisTemplate.opsForValue().get(FCM + key);
+        if (fcm == null){
+            return "";
+        }
+        return (String) fcm;
     }
 }
