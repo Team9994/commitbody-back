@@ -49,4 +49,10 @@ public class NotificationServiceImpl implements NotificationService {
             fcmService.sendFollowingMessage(String.valueOf(followingMember.getId()),content);
     }
 
+    @Override
+    public void updateRead(Long receiverId) {
+        notificationRepository.updateRead(receiverId);
+    }
+
+
 }
