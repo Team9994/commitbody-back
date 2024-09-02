@@ -13,4 +13,6 @@ public class JoinLoginRequest {
 
     @Schema(description = "회원가입시 필요한 소셜로그인 Id")
     private String socialId;
+
+    private String fcmToken;
 }
