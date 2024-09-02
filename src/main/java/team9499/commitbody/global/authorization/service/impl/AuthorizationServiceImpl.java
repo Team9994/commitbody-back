@@ -55,7 +55,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final String NICKNAME ="nickname_";
 
     @Override
-    public Map<String,Object> authenticateOrRegisterUser(LoginType loginType,String socialId) {
+    public Map<String,Object> authenticateOrRegisterUser(LoginType loginType,String socialId,String fcmToken) {
         String joinOrLogin = "";
         Optional<Member> optionalMember = memberRepository.findBySocialId(socialId);
 
@@ -70,6 +70,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
         Map<String, Object> tokenMap = new LinkedHashMap<>(jwtUtils.generateAuthTokens(MemberDto.builder().memberId(optionalMember.get().getId()).build()));
         tokenMap.put("authMode",joinOrLogin);       // 로그인 / 회원가입을 구분하기위함
+
+        redisService.setFCM(String.valueOf(optionalMember.get().getId()),fcmToken);     // fcm 토큰 레디스에 저장
 
         if (joinOrLogin.equals(LOGIN)) tokenMap.put("tokenInfo",TokenInfoDto.of(optionalMember.get().getId(),optionalMember.get().getNickname()));     //로그인일 경우에만 JWT토큰의대한 정보를 담는다
         SaveRefreshToken(optionalMember.get().getId(), optionalMember, (String) tokenMap.get(REFRESH_TOKEN));
