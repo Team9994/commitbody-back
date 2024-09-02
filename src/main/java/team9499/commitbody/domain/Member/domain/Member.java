@@ -51,8 +51,6 @@ public class Member extends BaseTime {
     @Enumerated(EnumType.STRING)
     private LoginType loginType;        //로그인 타입 (KAKAO, GOOGLE)
 
-    private boolean isUserDeactivated; //알림유무(true : 알림 받기, false : 알림 안받기)
-
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus;        // 계정 상태 - PUBLIC : 공개(기본 값) , PRIVATE : 비공개
 
