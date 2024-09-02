@@ -64,5 +64,15 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.deleteByReceiverIdAndSenderIdAndNotificationType(followingId,followerId,NotificationType.FOLLOW);
     }
 
+    /**
+     * 새로운 알림이 존재하는지 체크하는 메서드
+     * @param memberId  사용자 ID
+     * @return 새로운 알림이 존재서 TURE, 존재하지 않을시 FALSE
+     */
+    @Override
+    public boolean newNotificationCheck(Long memberId) {
+        return notificationRepository.existsByReceiverIdAndIsRead(memberId, 0);
+    }
+
 
 }

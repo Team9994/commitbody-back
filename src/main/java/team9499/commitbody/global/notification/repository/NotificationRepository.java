@@ -14,4 +14,6 @@ public interface NotificationRepository extends JpaRepository<Notification,Long>
     @Query("UPDATE Notification n SET n.isRead = 1 WHERE n.receiver.id IN :receiverId AND n.isRead = 0")
     int updateRead(@Param("receiverId") Long receiverId);
     void deleteByReceiverIdAndSenderIdAndNotificationType(Long receiverId, Long senderId, NotificationType notificationType);
+
+    boolean existsByReceiverIdAndIsRead(Long receiverId, Integer isRead);
 }
