@@ -9,7 +9,7 @@ import team9499.commitbody.global.annotations.ValidEnum;
 
 @Schema(name = "커스텀 운동 수정 Request")
 @Data
-public class CustomUpdateExerciseReqeust {
+public class CustomUpdateExerciseRequest {
 
     private Long customExerciseId;
     
