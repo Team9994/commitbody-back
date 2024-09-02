@@ -162,10 +162,10 @@ public class ExerciseController {
 
 
     @Tag(name = "운동 상세", description = "운동 상세페이지 관련 API")
-    @Operation(summary = "운동 상세조회 - 통계", description = "운동의 해당 운동의 대한 통계및 운동의 대한 순서를 조회할수 있습니다.",tags = "운동 상세")
+    @Operation(summary = "운동 상세조회 - 통계", description = "운동의 해당 운동의 대한 통계및 운동의 대한 순서를 조회할수 있습니다.(운동의 대한 기록이 없으면 빈값(day,records)으로 넘거갑니다.)",tags = "운동 상세")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"exerciseId\":1,\"exerciseName\":\"3/4 싯업\",\"exerciseTarget\":\"복근\",\"interestStatus\":false,\"exerciseEquipment\":\"맨몸\",\"exerciseType\":\"횟수\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"totalValue\":90,\"maxValue\":5,\"weekValue\":72,\"calculateRankPercentage\":0,\"day\":{\"MONDAY\":9,\"THURSDAY\":9,\"SUNDAY\":9,\"TUESDAY\":9},\"exerciseMethods\":[\"등을 대고 눕고 무릎을 구부리며 발은 바닥에 평평하게 붙입니다.\"],\"records\":[{\"date\":\"2024-08-20T08:46:33.368\",\"sets\":[{\"reps\":4},{\"reps\":5}]}]}}"))),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"exerciseId\":1,\"exerciseName\":\"3/4 싯업\",\"exerciseTarget\":\"복근\",\"interestStatus\":false,\"exerciseEquipment\":\"맨몸\",\"exerciseType\":\"횟수\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"totalValue\":90,\"maxValue\":5,\"weekValue\":72,\"calculateRankPercentage\":0,\"day\":{\"MONDAY\":9,\"THURSDAY\":9,\"SUNDAY\":9,\"TUESDAY\":9},\"exerciseMethods\":[\"등을 대고 눕고 무릎을 구부리며 발은 바닥에 평평하게 붙입니다.\"],\"records\":[{\"recordId\":1,\"date\":\"2024-08-20T08:46:33.368\",\"sets\":[{\"reps\":4},{\"reps\":5}]}]}}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 정보 미존재 시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),

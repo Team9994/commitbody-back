@@ -55,7 +55,7 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
         LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
         LocalDateTime startOfWeek = weekStart.atStartOfDay();
         LocalDate weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
-        LocalDateTime endOfWeek = weekEnd.atTime(23, 59, 59);
+        LocalDateTime endOfWeek = weekEnd.atTime(23, 59, 59);;
 
         // 쿼리 생성
         List<Tuple> tupleList = jpaQueryFactory
@@ -95,11 +95,9 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
             totalValue += sum;
         }
 
+
         // 첫번째 운동 기록을 조회
-        RecordDetails details = tupleList.stream()
-                .map(tuple -> tuple.get(recordDetails))
-                .findFirst()
-                .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        RecordDetails details = countQuery.get(0).getRecordDetails();
 
         // 운동 상세 정보에서 적용된 운동이 뭔지 찾아 Object로 반환
         Object exercise = details.getExercise() != null ? details.getExercise() : details.getCustomExercise();
@@ -167,6 +165,7 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
 
                             // `ExerciseDetailsResponse` 객체 생성
                             return ExerciseDetailsResponse.of(
+                                    record1.getId(),
                                     record1.getEndTime(),
                                     recordDetail.getId(),
                                     new ArrayList<>()
