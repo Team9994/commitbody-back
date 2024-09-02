@@ -17,7 +17,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import team9499.commitbody.domain.exercise.dto.CustomExerciseRequest;
-import team9499.commitbody.domain.exercise.dto.CustomUpdateExerciseReqeust;
+import team9499.commitbody.domain.exercise.dto.CustomUpdateExerciseRequest;
 import team9499.commitbody.domain.exercise.dto.InterestExerciseRequest;
 import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
 import team9499.commitbody.domain.exercise.dto.response.ExerciseResponse;
@@ -108,13 +108,13 @@ public class ExerciseController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
     @PostMapping(value = "/update-exercise", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateExercise(@Valid @RequestPart(name = "customUpdateExerciseReqeust") CustomUpdateExerciseReqeust customUpdateExerciseReqeust, BindingResult result,
+    public ResponseEntity<?> updateExercise(@Valid @RequestPart(name = "customUpdateExerciseRequest") CustomUpdateExerciseRequest customUpdateExerciseRequest, BindingResult result,
                                             @RequestPart(name ="file" , required = false) MultipartFile file,
                                             @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long id = principalDetails.getMember().getId();
-        Long customExerciseId = exerciseService.updateCustomExercise(customUpdateExerciseReqeust.getExerciseName(), customUpdateExerciseReqeust.getExerciseTarget(),
-                customUpdateExerciseReqeust.getExerciseEquipment(), id, customUpdateExerciseReqeust.getCustomExerciseId(),file);
-        eventPublisher.publishEvent(new ElasticUpdateExerciseEvent(customExerciseId,customUpdateExerciseReqeust.getSource()));
+        Long customExerciseId = exerciseService.updateCustomExercise(customUpdateExerciseRequest.getExerciseName(), customUpdateExerciseRequest.getExerciseTarget(),
+                customUpdateExerciseRequest.getExerciseEquipment(), id, customUpdateExerciseRequest.getCustomExerciseId(),file);
+        eventPublisher.publishEvent(new ElasticUpdateExerciseEvent(customExerciseId,customUpdateExerciseRequest.getSource()));
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"업데이트 성공"));
 
