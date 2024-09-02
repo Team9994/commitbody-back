@@ -15,4 +15,8 @@ public class NotificationHandler {
     public void Following(FollowingEvent followingEvent){
         notificationService.sendFollowing(followingEvent.getFollower(), followingEvent.getFollowing());
     }
+    @EventListener
+    public void DeleteFollowNotification(DeleteFollowEvent deleteFollowEvent){
+        notificationService.deleteNotification(deleteFollowEvent.getFollowerId(), deleteFollowEvent.getFollowingId());
+    }
 }
