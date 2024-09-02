@@ -54,5 +54,15 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.updateRead(receiverId);
     }
 
+    /**
+     * 팔로우 취소및 언팔 시에 알림 내역 삭제 메서드
+     * @param followerId    발신자
+     * @param followingId   수신자
+     */
+    @Override
+    public void deleteNotification(Long followerId, Long followingId) {
+        notificationRepository.deleteByReceiverIdAndSenderIdAndNotificationType(followingId,followerId,NotificationType.FOLLOW);
+    }
+
 
 }
