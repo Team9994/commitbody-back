@@ -96,7 +96,7 @@ public class RoutineController {
                                            @RequestBody EditRoutineRequest request,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        routineService.editRoutine(id,memberId, request.getRoutineName(),request.getExercises());
+        routineService.updateRoutine(id,memberId, request.getRoutineName(),request.getExercises());
         return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 수정 완료"));
     }
 
