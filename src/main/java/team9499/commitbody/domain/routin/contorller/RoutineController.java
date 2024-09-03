@@ -12,8 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.routin.dto.response.MyRoutineResponse;
+import team9499.commitbody.domain.routin.dto.rqeust.EditRoutineRequest;
 import team9499.commitbody.domain.routin.dto.rqeust.RoutineRequest;
-import team9499.commitbody.domain.routin.dto.rqeust.UpdateRoutineRequest;
 import team9499.commitbody.domain.routin.service.RoutineService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
@@ -49,7 +49,7 @@ public class RoutineController {
     @Operation(summary = "루틴 조회", description = "사용자가 지정한 루틴의 정보를 조회합니다. 커스텀운동의 대한 exerciseType은 무게와 횟수 로 고정됩니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"routineDtos\":[{\"routineId\":1,\"routineName\":\"루틴제목\",\"targets\":[\"복근\",\"등\"],\"exercises\":[{\"exerciseId\":1,\"source\":\"default\",\"exerciseName\":\"3/4 싯업\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"exerciseType\":\"횟수\",\"sets\":1,\"orders\" : 1,\"routineSets\" : [{ \"setsId\" : 105, \"sets\" : 1}]}]}]}}"))),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"routineDtos\":[{\"routineId\":1,\"routineName\":\"루틴제목\",\"targets\":[\"복근\",\"등\"],\"exercises\":[{\"routineDetailId\":1,\"exerciseId\":1,\"source\":\"default\",\"exerciseName\":\"3/4 싯업\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"exerciseType\":\"횟수\",\"sets\":1,\"orders\" : 1}]}]}}"))),
             @ApiResponse(responseCode = "400-3",description = "BADREQUEST - 사용할수 없는 토큰", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
@@ -66,7 +66,7 @@ public class RoutineController {
     @Operation(summary = "루틴 상세 조회", description = "루틴의 대한 상세 정보를 조회합니다. 커스텀운동의 대한 exerciseType은 무게와 횟수 로 고정됩니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"routineDtos\":[{\"routineId\":1,\"routineName\":\"루틴제목\",\"targets\":[\"복근\",\"등\"],\"exercises\":[{\"exerciseId\":1,\"source\":\"default\",\"exerciseName\":\"3/4 싯업\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"exerciseType\":\"횟수\",\"sets\":1,\"orders\" : 1,\"routineSets\" : [{ \"setsId\" : 105, \"sets\" : 1}]}]}]}}"))),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"routineDtos\":[{\"routineId\":1,\"routineName\":\"루틴제목\",\"targets\":[\"복근\",\"등\"],\"exercises\":[{\"routineDetailId\":1,\"exerciseId\":1,\"source\":\"default\",\"exerciseName\":\"3/4 싯업\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"exerciseType\":\"횟수\",\"sets\":1,\"orders\" : 1}]}]}}"))),
             @ApiResponse(responseCode = "400-3",description = "BADREQUEST - 사용할수 없는 토큰", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
@@ -93,11 +93,10 @@ public class RoutineController {
     })
     @PutMapping("/routine/{id}")
     public ResponseEntity<?> updateRoutine(@PathVariable("id")Long id,
-                                           @RequestBody UpdateRoutineRequest updateRoutineRequest,
+                                           @RequestBody EditRoutineRequest request,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        routineService.updateRoutine(id,memberId,updateRoutineRequest.getUpdateRoutineName(),updateRoutineRequest.getDeleteRoutines(),updateRoutineRequest.getUpdateSets(),
-                updateRoutineRequest.getDeleteSets(),updateRoutineRequest.getNewExercises(),updateRoutineRequest.getChangeExercises(),updateRoutineRequest.getChangeOrders());
+        routineService.updateRoutine(id,memberId, request.getRoutineName(),request.getExercises());
         return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 수정 완료"));
     }
 

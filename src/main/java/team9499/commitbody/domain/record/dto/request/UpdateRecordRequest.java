@@ -3,7 +3,7 @@ package team9499.commitbody.domain.record.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import team9499.commitbody.domain.exercise.dto.ExerciseDto;
-import team9499.commitbody.domain.routin.dto.RoutineSetsDto;
+import team9499.commitbody.domain.record.dto.RecordSetsDto;
 
 import java.util.List;
 
@@ -35,10 +35,10 @@ public class UpdateRecordRequest {
         private Long recordDetailsId;
 
         @Schema(description = "새로운 세트")
-        private List<RoutineSetsDto> newSets;
+        private List<RecordSetsDto> newSets;
 
         @Schema(description = "업데이트 세트")
-        private List<RoutineSetsDto> updateSets;
+        private List<RecordSetsDto> updateSets;
     }
 
     @Schema(description = "기록 순서 변경")

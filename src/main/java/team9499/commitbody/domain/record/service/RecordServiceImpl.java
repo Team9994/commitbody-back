@@ -24,7 +24,6 @@ import team9499.commitbody.domain.record.dto.response.RecordResponse;
 import team9499.commitbody.domain.record.repository.RecordDetailsRepository;
 import team9499.commitbody.domain.record.repository.RecordRepository;
 import team9499.commitbody.domain.record.repository.RecordSetsRepository;
-import team9499.commitbody.domain.routin.dto.RoutineSetsDto;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.InvalidUsageException;
@@ -108,7 +107,7 @@ public class RecordServiceImpl implements RecordService{
             boolean weightValid = false;
             boolean timesValid = false;
 
-            for (RecordSetsDto set : recordDto.getSets()) {         // 운동별 기록을 저장하기 위해 순회
+            for (team9499.commitbody.domain.record.dto.RecordSetsDto set : recordDto.getSets()) {         // 운동별 기록을 저장하기 위해 순회
                 Integer reps = set.getReps();       // 세트당 진횅 횟수
                 Integer weight = set.getWeight();       // 세트당 무게
                 Integer times = set.getTimes();         // 운동 시간
@@ -185,10 +184,10 @@ public class RecordServiceImpl implements RecordService{
             for (RecordUpdateSets updateSet : updateSets) {
                 Long recordDetailsId = updateSet.getRecordDetailsId(); // 기록 디테일 ID
                 if (updateSet.getUpdateSets()!=null){       // 수정할 세트수가 있을때
-                    for (RoutineSetsDto set : updateSet.getUpdateSets()) {
+                    for (RecordSetsDto set : updateSet.getUpdateSets()) {
                         RecordSets recordSets = recordSetsRepository.findByIdAndRecordDetailsId(set.getSetsId(), recordDetailsId);
-                        Integer reps = set.getSets();
-                        Integer weight = set.getKg();
+                        Integer reps = set.getReps();
+                        Integer weight = set.getWeight();
                         Integer times = set.getTimes();
 
                         if (reps != null && weight != null) {   // 무게 횟수일때
@@ -204,7 +203,7 @@ public class RecordServiceImpl implements RecordService{
                 // 새롭게 등록할 세트 수 존재시
                 if (updateSet.getNewSets()!=null){
                     RecordDetails details = recordDetailsRepository.findById(recordDetailsId).orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
-                    for (RoutineSetsDto set : updateSet.getNewSets()) {
+                    for (RecordSetsDto set : updateSet.getNewSets()) {
                         recordSets(details,set);        // 새로운 세트 등록
                     }
                 }
@@ -229,7 +228,7 @@ public class RecordServiceImpl implements RecordService{
                 RecordDetails recordDetails = recordDetailsRepository.save(newRecordDetails);
                 // 세트 리스트를 생성
                 List<RecordSets> recordSets = new ArrayList<>();
-                for (RoutineSetsDto set : newExercise.getRoutineSets()) {
+                for (RecordSetsDto set : newExercise.getRoutineSets()) {
                     recordSets.add(recordSets(recordDetails, set)); // 세트 리스트에 담는다.
                 }
                 recordDetailsList.add(recordDetails);       // 기록 리스트에 담는다.
@@ -357,9 +356,9 @@ public class RecordServiceImpl implements RecordService{
     /*
     상세 운동의 대한 횟수를 새롭게 저장하는 메서드
      */
-    private RecordSets recordSets(RecordDetails recordDetail, RoutineSetsDto newSet) {
-        Integer sets = newSet.getSets();        // 세트수
-        Integer kg = newSet.getKg();            // kg
+    private RecordSets recordSets(RecordDetails recordDetail, RecordSetsDto newSet) {
+        Integer sets = newSet.getReps();        // 세트수
+        Integer kg = newSet.getWeight();            // kg
         Integer times = newSet.getTimes();      // 시간수
         RecordSets recordSets;
         if (sets != null & kg != null) {        // 무게-세트 기준

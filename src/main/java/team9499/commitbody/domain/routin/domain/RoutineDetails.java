@@ -36,15 +36,23 @@ public class RoutineDetails {
 
     private Integer orders;         // 운동 순서
 
-    @OneToMany(mappedBy = "routineDetails",cascade = CascadeType.REMOVE)
-    private List<RoutineSets> detailsSets;
-
     public static RoutineDetails of(Object exercise, Routine routine,Integer orders){
         RoutineDetailsBuilder routineDetailsBuilder = RoutineDetails.builder().orders(orders).routine(routine);
         if (exercise instanceof Exercise){
-            routineDetailsBuilder.exercise((Exercise) exercise).totalSets(calculateTotalSets((Exercise) exercise));
+            routineDetailsBuilder.exercise((Exercise) exercise).totalSets(4);
         }else{
-            routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(5).orders(orders);
+            routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(4).orders(orders);
+        }
+        return routineDetailsBuilder.build();
+
+    }
+
+    public static RoutineDetails of(Long id,Object exercise, Routine routine,Integer orders){
+        RoutineDetailsBuilder routineDetailsBuilder = RoutineDetails.builder().id(id).orders(orders).routine(routine);
+        if (exercise instanceof Exercise){
+            routineDetailsBuilder.exercise((Exercise) exercise).totalSets(4);
+        }else{
+            routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(4).orders(orders);
         }
         return routineDetailsBuilder.build();
 
@@ -53,25 +61,11 @@ public class RoutineDetails {
     public static RoutineDetails of(Object exercise, Routine routine){
         RoutineDetailsBuilder routineDetailsBuilder = RoutineDetails.builder().routine(routine);
         if (exercise instanceof Exercise){
-            routineDetailsBuilder.exercise((Exercise) exercise).totalSets(calculateTotalSets((Exercise) exercise));
+            routineDetailsBuilder.exercise((Exercise) exercise).totalSets(4);
         }else{
-            routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(5);
+            routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(4);
         }
         return routineDetailsBuilder.build();
-
-    }
-
-    // 루틴 저장시 기본 세트수 저장
-    private static Integer calculateTotalSets(Exercise exercise) {
-        return switch (exercise.getExerciseType()) {
-            case REPS_ONLY -> 4;
-            case TIME_ONLY -> 1;
-            default -> 5;
-        };
-    }
-
-    public void updateTotalSets(Integer totalSets){
-        this.totalSets = totalSets;
     }
 
     public void updateOrders(Integer orders){
