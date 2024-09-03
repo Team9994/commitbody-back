@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import team9499.commitbody.domain.exercise.dto.ExerciseDto;
-import team9499.commitbody.domain.routin.dto.RoutineSetsDto;
+import team9499.commitbody.domain.record.dto.RecordSetsDto;
 
 import java.util.List;
 
@@ -44,10 +44,10 @@ public class UpdateRoutineRequest {
         private Long routineDetailsId;
 
         @Schema(description = "새로운 세트")
-        private List<RoutineSetsDto> newSets;
+        private List<RecordSetsDto> newSets;
 
         @Schema(description = "업데이트 세트")
-        private List<RoutineSetsDto> updateSets;
+        private List<RecordSetsDto> updateSets;
     }
 
     @Schema(name = "세트 삭제")

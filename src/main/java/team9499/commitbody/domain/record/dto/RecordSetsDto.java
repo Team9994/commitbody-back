@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Schema(name = "기록 운동 세트 Dto")
 public class RecordSetsDto {
 
+    private Long setsId;
     @Schema(description = "무게")
     private Integer weight;
 

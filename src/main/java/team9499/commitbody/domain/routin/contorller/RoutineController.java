@@ -12,8 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.domain.routin.dto.response.MyRoutineResponse;
+import team9499.commitbody.domain.routin.dto.rqeust.EditRoutineRequest;
 import team9499.commitbody.domain.routin.dto.rqeust.RoutineRequest;
-import team9499.commitbody.domain.routin.dto.rqeust.UpdateRoutineRequest;
 import team9499.commitbody.domain.routin.service.RoutineService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
@@ -93,11 +93,10 @@ public class RoutineController {
     })
     @PutMapping("/routine/{id}")
     public ResponseEntity<?> updateRoutine(@PathVariable("id")Long id,
-                                           @RequestBody UpdateRoutineRequest updateRoutineRequest,
+                                           @RequestBody EditRoutineRequest request,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        routineService.updateRoutine(id,memberId,updateRoutineRequest.getUpdateRoutineName(),updateRoutineRequest.getDeleteRoutines(),updateRoutineRequest.getUpdateSets(),
-                updateRoutineRequest.getDeleteSets(),updateRoutineRequest.getNewExercises(),updateRoutineRequest.getChangeExercises(),updateRoutineRequest.getChangeOrders());
+        routineService.editRoutine(id,memberId, request.getRoutineName(),request.getExercises());
         return ResponseEntity.ok(new SuccessResponse<>(true,"루틴 수정 완료"));
     }
 
