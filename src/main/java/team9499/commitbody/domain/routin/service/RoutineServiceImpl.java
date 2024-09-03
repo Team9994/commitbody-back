@@ -23,11 +23,9 @@ import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.Exception.ServerException;
-import team9499.commitbody.global.notification.service.RoutineBatchService;
 
 import java.util.*;
 
-import static team9499.commitbody.domain.routin.dto.rqeust.UpdateRoutineRequest.*;
 
 @Slf4j
 @Service
@@ -133,72 +131,33 @@ public class RoutineServiceImpl implements RoutineService{
      * @param routineId 최상위 루틴 Id
      * @param memberId 로그인한 사용자 Id
      * @param routineName 변경할 루틴 명
-     * @param deleteRoutines 삭제할 상세루틴 아이디 목록
-     * @param updateSets 업데이트할 세트수 목록
-     * @param deleteSets 삭제할 세트수 목록
-     * @param newExercises 새로 추가할 운동 목록
-     * @param changeExercises 운동을 대채할 운동 목록
-     * @param changeOrders 운동의 순서를 변경 목록
+     * @param exercises 변경할 루틴의 상세 루틴 운동종류
      */
     @Override
-    public void updateRoutine(Long routineId, Long memberId, String routineName, List<Long> deleteRoutines, List<UpdateSets> updateSets, List<DeleteSets> deleteSets,
-                              List<ExerciseDto> newExercises, List<ChangeExercise> changeExercises,List<ChangeOrders> changeOrders) {
+    public void updateRoutine(Long routineId, Long memberId, String routineName, List<ExerciseDto> exercises) {
+        Routine routine = routineRepository.findByIdAndMemberId(routineId,memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        // 루틴명 변경
+        routine.updateRoutineName(routineName); 
 
-        // 사용자가 작성한 루틴 조회
-        Routine routine = routineRepository.findByIdAndMemberId(routineId, memberId)
-                .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        // 루틴의 저장된 상세루틴 ID 리스트
+        List<Long> deleteDetailIds = new ArrayList<>();
+        //순회하며 id 적재
+        routine.getList().forEach(routineDetails -> deleteDetailIds.add(routineDetails.getId()));
 
-        // 변경할 루틴명이 존재시
-        if (routineName != null) {
-            routine.updateRoutineName(routineName);
+        //새롭게 저장할 새로운 루틴 운동
+        List<RoutineDetails> newRoutineDetails = new ArrayList<>();
+
+        for (ExerciseDto exercise : exercises) {
+            String source = exercise.getSource();
+            Object obExercise = source.equals(DEFAULT) ? getExercise(exercise.getExerciseId()) : getCustomExercise(exercise.getExerciseId());       // 운동과 커스텀 운동 구분
+            
+            newRoutineDetails.add(RoutineDetails.of(exercise.getRoutineDetailId(), obExercise, routine, exercise.getOrders()));
         }
 
-        // 삭제할 상세 루틴이 존재시
-        if (deleteRoutines != null) {
-            routineDetailsRepository.deleteAllById(deleteRoutines);
-        }
-
-        // 새로운 운동 목록 존재시
-        if (newExercises != null) {
-            for (ExerciseDto newExercise : newExercises) {
-                RoutineDetails newRoutineDetails;
-
-                if (newExercise.getSource().equals(DEFAULT)) {
-                    Exercise exercise = getExercise(newExercise.getExerciseId());       // 운동 객체 조회
-                    newRoutineDetails = RoutineDetails.of(exercise, routine);
-                } else {
-                    CustomExercise customExercise = getCustomExercise(newExercise.getExerciseId());
-                    newRoutineDetails = RoutineDetails.of(customExercise, routine);
-                }
-                routineDetailsRepository.save(newRoutineDetails);
-            }
-        }
-
-        // 대채 운동 존재시
-        if (changeExercises != null) {
-            for (ChangeExercise changeExercise : changeExercises) {
-                RoutineDetails routineDetails = getRoutineDetails(changeExercise.getRoutineDetailsId());
-
-                String source = changeExercise.getSource();
-                Long exerciseId = changeExercise.getExerciseId();
-                Object exercise;
-                if (source.equals(DEFAULT)){      // 기본 운동 일시
-                    exercise = getExercise(exerciseId);
-                }else                               // 커스텀 운동 일시
-                    exercise = getCustomExercise(exerciseId);
-
-                routineDetails.updateExercise(exercise);
-            }
-        }
-
-        // 운동 순서 변경시
-        if (changeOrders!=null){
-            for (ChangeOrders changeOrder : changeOrders) {
-                RoutineDetails routineDetails = getRoutineDetails(changeOrder.getRoutineDetailsId());
-                routineDetails.updateOrders(changeOrder.getOrders());
-            }
-        }
-
+        // 배치를 통해 삭제
+        routineDetailsRepository.deleteAllByInQuery(deleteDetailIds);
+        // 배치를 통해 저장
+        routineBatchService.saveRoutineDetailInBatch(newRoutineDetails);
     }
 
     /**
@@ -219,13 +178,6 @@ public class RoutineServiceImpl implements RoutineService{
 
     private Exercise getExercise(Long exerciseId) {
         return exerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
-    }
-
-    /**
-     * 상세 루틴의 정보를 조회
-     */
-    private RoutineDetails getRoutineDetails(Long  routineDetailsId) {
-        return routineDetailsRepository.findById(routineDetailsId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
     }
 
     // orders 기준으로 정렬
