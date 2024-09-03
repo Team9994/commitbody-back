@@ -49,7 +49,7 @@ public class RoutineController {
     @Operation(summary = "루틴 조회", description = "사용자가 지정한 루틴의 정보를 조회합니다. 커스텀운동의 대한 exerciseType은 무게와 횟수 로 고정됩니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"routineDtos\":[{\"routineId\":1,\"routineName\":\"루틴제목\",\"targets\":[\"복근\",\"등\"],\"exercises\":[{\"exerciseId\":1,\"source\":\"default\",\"exerciseName\":\"3/4 싯업\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"exerciseType\":\"횟수\",\"sets\":1,\"orders\" : 1,\"routineSets\" : [{ \"setsId\" : 105, \"sets\" : 1}]}]}]}}"))),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"routineDtos\":[{\"routineId\":1,\"routineName\":\"루틴제목\",\"targets\":[\"복근\",\"등\"],\"exercises\":[{\"routineDetailId\":1,\"exerciseId\":1,\"source\":\"default\",\"exerciseName\":\"3/4 싯업\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"exerciseType\":\"횟수\",\"sets\":1,\"orders\" : 1}]}]}}"))),
             @ApiResponse(responseCode = "400-3",description = "BADREQUEST - 사용할수 없는 토큰", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
@@ -66,7 +66,7 @@ public class RoutineController {
     @Operation(summary = "루틴 상세 조회", description = "루틴의 대한 상세 정보를 조회합니다. 커스텀운동의 대한 exerciseType은 무게와 횟수 로 고정됩니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"routineDtos\":[{\"routineId\":1,\"routineName\":\"루틴제목\",\"targets\":[\"복근\",\"등\"],\"exercises\":[{\"exerciseId\":1,\"source\":\"default\",\"exerciseName\":\"3/4 싯업\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"exerciseType\":\"횟수\",\"sets\":1,\"orders\" : 1,\"routineSets\" : [{ \"setsId\" : 105, \"sets\" : 1}]}]}]}}"))),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"routineDtos\":[{\"routineId\":1,\"routineName\":\"루틴제목\",\"targets\":[\"복근\",\"등\"],\"exercises\":[{\"routineDetailId\":1,\"exerciseId\":1,\"source\":\"default\",\"exerciseName\":\"3/4 싯업\",\"gifUrl\":\"https://v2.exercisedb.io/image/oAVJS-wlSfNhXd\",\"exerciseType\":\"횟수\",\"sets\":1,\"orders\" : 1}]}]}}"))),
             @ApiResponse(responseCode = "400-3",description = "BADREQUEST - 사용할수 없는 토큰", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
