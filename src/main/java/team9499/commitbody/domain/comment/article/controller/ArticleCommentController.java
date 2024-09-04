@@ -1,6 +1,7 @@
 package team9499.commitbody.domain.comment.article.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,16 +54,24 @@ public class ArticleCommentController {
         return ResponseEntity.ok(new SuccessResponse<>(true,commentType));
     }
 
+    @Operation(summary = "운동 게시글 - 댓글 조회", description = "운동 게시글의 작성된 댓글을 조회합니다. sortOrder:[RECENT,LIKE] 이며, LIKE 정렬시 마지막 조회 데이터의 likeCount가 0일경우 lastLikeCount와 lastId를 사용하며, 0이 아닐시에는 lastLikeCount만 사용합니다.)",tags = "게시글")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"댓글 조회\", \"data\": {\"hasNext\": true, \"comments\": [{\"commentId\": 82, \"content\": \"댓글\", \"nickname\": \"세번쨰닉네임\", \"profile\": \"https://d12ryzjapybmlj.cloudfront.net/default.PNG\", \"time\": \"25분 전\", \"likeCount\": 0, \"replyCount\": 0, \"writer\": false}]}}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/article/comment/{id}")
     public ResponseEntity<?> all(@PathVariable("id") Long id,
                                  @RequestParam(name = "lastId",required = false) Long lastId,
                                  @RequestParam(name = "lastLikeCount",required = false) Integer lastLikeCount,
                                  @RequestParam(name = "sortOrder",required = false,defaultValue = "RECENT") OrderType orderType,
                                  @AuthenticationPrincipal PrincipalDetails principalDetails,
-                                 @PageableDefault Pageable pageable){
+                                 @Parameter(example = "{\"size\":10}")@PageableDefault Pageable pageable){
         Long memberId = getMemberId(principalDetails);
         ArticleCommentResponse comments = articleCommentService.getComments(id, memberId, lastId, lastLikeCount,orderType, pageable);
-
+        
         return ResponseEntity.ok(new SuccessResponse<>(true,"댓글 조회",comments));
     }
 
