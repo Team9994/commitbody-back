@@ -2,18 +2,24 @@ package team9499.commitbody.domain.comment.article.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.article.domain.Article;
 import team9499.commitbody.domain.article.repository.ArticleRepository;
 import team9499.commitbody.domain.comment.article.domain.ArticleComment;
+import team9499.commitbody.domain.comment.article.domain.OrderType;
+import team9499.commitbody.domain.comment.article.dto.ArticleCommentDto;
+import team9499.commitbody.domain.comment.article.dto.response.ArticleCommentResponse;
 import team9499.commitbody.domain.comment.article.repository.ArticleCommentRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.notification.service.NotificationService;
 import team9499.commitbody.global.redis.RedisService;
+
 
 
 @Slf4j
@@ -68,5 +74,23 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
         }
         return commentType;
     }
-    
+
+    /**
+     * 게시글의 작성된 댓글 조회
+     * @param articleId 게시글 아이디
+     * @param memberId  사용자 id
+     * @param lastId    마지막 댓글 id
+     * @param lastLikeCount 마지막 댓글 좋아요 수 
+     * @param orderType 정렬 타입
+     * @param pageable  페이징 정보
+     * @return
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ArticleCommentResponse getComments(Long articleId, Long memberId, Long lastId,Integer lastLikeCount,OrderType orderType, Pageable pageable) {
+
+        Slice<ArticleCommentDto> allCommentByArticle = articleCommentRepository.getAllCommentByArticle(articleId, memberId, lastId,lastLikeCount,orderType,pageable);
+
+        return new ArticleCommentResponse(allCommentByArticle.hasNext(),allCommentByArticle.getContent());
+    }
 }
