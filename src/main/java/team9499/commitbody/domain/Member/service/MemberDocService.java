@@ -1,6 +1,7 @@
 package team9499.commitbody.domain.Member.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -14,6 +15,7 @@ import team9499.commitbody.domain.Member.domain.MemberDoc;
 import team9499.commitbody.domain.Member.dto.MemberDto;
 import team9499.commitbody.domain.Member.dto.response.MemberInfoResponse;
 import team9499.commitbody.domain.Member.repository.MemberDocRepository;
+import team9499.commitbody.domain.block.servcice.ElsBlockMemberService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,7 @@ public class MemberDocService {
 
     private final MemberDocRepository memberDocRepository;
     private final ElasticsearchClient elasticsearchClient;
+    private final ElsBlockMemberService elsBlockMemberService;
 
     private final String NICKNAME_FIELD = "nickname";
     private final String MEMBER_INDEX = "member_index";
@@ -59,11 +62,14 @@ public class MemberDocService {
             builder.must(Query.of(q -> q.queryString(query)));
         }
 
-        // 현재 검색할 사용자는 제외 해야한다.
-        TermQuery termQuery = new TermQuery.Builder()
-                .field("_"+ID)
-                .value(memberId).build();
-        builder.mustNot(Query.of(q -> q.term(termQuery)));
+        List<Long> blockerIds = elsBlockMemberService.getBlockerIds(memberId);
+        blockerIds.add(memberId);
+
+        // 현재 검색할 사용자와 차단한 사용자는 검색에서 제외해야한다.
+        TermsQueryField termsQueryField = new TermsQueryField.Builder()
+                .value(blockerIds.stream().map(FieldValue::of).toList()).build();
+
+        builder.mustNot(Query.of(q -> q.terms(t -> t.field("_"+ID).terms(termsQueryField))));
 
         // 검색 요청 빌더 생성
         SearchRequest searchRequest = new SearchRequest.Builder()
