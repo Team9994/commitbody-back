@@ -145,6 +145,19 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
         return type;
     }
 
+    @Override
+    public void cancelFollow(Long followerId, Long followingId) {
+        jpaQueryFactory.update(follow)
+                .set(follow.status,FollowStatus.CANCEL)
+                .where(follow.follower.id.eq(followerId).and(follow.following.id.eq(followingId)))
+                .execute();
+
+        jpaQueryFactory.update(follow)
+                .set(follow.status,FollowStatus.CANCEL)
+                .where(follow.follower.id.eq(followingId).and(follow.following.id.eq(followerId)))
+                .execute();
+    }
+
     private static boolean checkFollow(FollowStatus followStatus){
         return followStatus.equals(FollowStatus.FOLLOWING) ? false : true;
     }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
@@ -102,6 +103,15 @@ public class FollowServiceImpl implements FollowService{
     public FollowResponse getFollowings(Long followerId,String nickName,Long lastId, Pageable pageable) {
         Slice<FollowingDto> allFollowings = followRepository.getAllFollowings(followerId, nickName, lastId, pageable);
         return new FollowResponse(allFollowings.hasNext(),allFollowings.getContent());
+    }
+
+    /**
+     * 사용자 차단시 서로 팔로우 취소상태로 변경
+     */
+    @Async
+    @Override
+    public void cancelFollow(Long followerId, Long followingId) {
+        followRepository.cancelFollow(followerId,followingId);
     }
 
     /*

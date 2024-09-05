@@ -20,4 +20,6 @@ public interface CustomFollowRepository {
     long getCountFollower(Long followingId);
 
     FollowType followStatus(Long followerId, Long followingId);
+
+    void cancelFollow(Long followerId, Long followingId);
 }
