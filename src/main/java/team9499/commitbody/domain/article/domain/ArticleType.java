@@ -34,6 +34,7 @@ public enum ArticleType {
             return null;
         }
         return Arrays.stream(values())
+                .filter(articleType -> articleType.name().equalsIgnoreCase(val))
                 .findFirst()
                 .orElse(null);
     }
