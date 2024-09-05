@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.block.domain.BlockMember;
 
 @Repository
-public interface BlockMemberRepository extends JpaRepository<BlockMember,Long>{
+public interface BlockMemberRepository extends JpaRepository<BlockMember,Long>,CustomBlockMemberRepository {
 
     BlockMember findByBlockerIdAndBlockedId(Long blockerId, Long blockedId);
 }
