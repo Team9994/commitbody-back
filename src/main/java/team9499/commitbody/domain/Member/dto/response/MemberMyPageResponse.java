@@ -27,4 +27,6 @@ public class MemberMyPageResponse {
     private int followingCount;     // 팔로잉 수
     
     private FollowType followStatus;    // 현재 팔로우 상태
+    
+    private boolean blockStatus;    // 차단 상태
 }
