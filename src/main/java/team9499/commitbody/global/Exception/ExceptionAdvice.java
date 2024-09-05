@@ -42,4 +42,11 @@ public class ExceptionAdvice {
         ErrorResponse er = new ErrorResponse(false,"저장 가능한 용량을 초과 했습니다.");
         return ResponseEntity.status(400).body(er);
     }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> BlockMemberException(BlockException e){
+        ErrorResponse er = new ErrorResponse<>(false, e.getMessage());
+        e.printStackTrace();
+        return ResponseEntity.status(e.getExceptionStatus()).body(er);
+    }
 }
