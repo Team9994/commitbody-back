@@ -6,6 +6,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
+import team9499.commitbody.domain.Member.repository.MemberRepository;
+import team9499.commitbody.global.Exception.ExceptionStatus;
+import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.notification.domain.Notification;
 import team9499.commitbody.global.notification.domain.NotificationType;
 import team9499.commitbody.global.notification.repository.NotificationRepository;
@@ -22,6 +26,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final FcmService fcmService;
     private final NotificationRepository notificationRepository;
     private final RedisService redisService;
+    private final MemberRepository memberRepository;
 
     /**
      * 비동기를 통한 알림 데이터 저장
@@ -36,6 +41,7 @@ public class NotificationServiceImpl implements NotificationService {
      * @param followerId    발신자
      * @param followingId   수신자
      */
+    @Async
     @Override
     public void sendFollowing(Long followerId, Long followingId) {
         Member followerMember = redisService.getMemberDto(String.valueOf(followerId)).get();        // 발신자
@@ -74,5 +80,35 @@ public class NotificationServiceImpl implements NotificationService {
         return notificationRepository.existsByReceiverIdAndIsRead(memberId, 0);
     }
 
+    @Async
+    @Override
+    public void sendReplyComment(Member member, String replyNickname,String articleTitle,String commentContent,String commentId) {
+        Member replyMember = getReplyMember(replyNickname);     // 댓글 알림 수신자
+        String content = member.getNickname()+"님이 회원님의 댓글에 답급을 남겼어요:"+commentContent;
+        // 알림 기능을 사용하며, 만약 자신에게 담긴 답글의 경우 알림 이전송되지 않도록
+        if (replyMember.isNotificationEnabled() && member.getId() != replyMember.getId()) {
+
+            fcmService.sendReplyComment(String.valueOf(replyMember.getId()), articleTitle, content,commentId);
+            Notification notification = Notification.of(content, NotificationType.REPLY_COMMENT, replyMember, member);
+            asyncSave(notification);
+        }
+    }
+
+    @Override
+    public void sendComment(Member member,Long receiverId,String articleTitle, String commentContent,String commentId) {
+        Member receiverMember = redisService.getMemberDto(String.valueOf(receiverId)).get();// 댓글 알림 수신자.
+        String content = member.getNickname()+"님이 회원님의 게시글에 댓글을 남겼어요: "+commentContent;
+
+        if (receiverMember.isNotificationEnabled() && member.getId() != receiverMember.getId()) {
+            fcmService.sendComment(String.valueOf(receiverMember.getId()),articleTitle,content,commentId);
+            Notification notification = Notification.of(content, NotificationType.COMMENT,receiverMember, member);
+            asyncSave(notification);
+        }
+    }
+
+    private Member getReplyMember(String replyNickname) {
+        Member replyMember = memberRepository.findByNickname(replyNickname).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+        return replyMember;
+    }
 
 }
