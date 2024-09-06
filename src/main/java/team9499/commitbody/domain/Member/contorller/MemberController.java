@@ -59,8 +59,8 @@ public class MemberController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200_1", description = "마이페이지 조회시", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"memberId\": 1, \"pageType\" : \"myPage\",\"nickname\": \"첫번쨰닉네임\", \"profile\": \"https://example.com\", \"followerCount\": 0, \"followingCount\": 1}}"))),
-            @ApiResponse(responseCode = "200_2", description = "상대페이지 조회시", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"memberId\": 1, \"pageType\" : \"theirPage\", \"nickname\": \"첫번쨰닉네임\", \"profile\": \"https://example.com\", \"followerCount\": 0, \"followingCount\": 1,\"followStatus\":\"NEITHER\"}}"))),
+            @ApiResponse(responseCode = "200_2", description = "상대페이지 조회시 : blockStatus : 상대방 차단 여부, accountStatus : [PRIVATE,PUBLIC] 상대방의 계정 공개 여부", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"memberId\": 1, \"pageType\" : \"theirPage\", \"nickname\": \"첫번쨰닉네임\", \"profile\": \"https://example.com\", \"followerCount\": 0, \"followingCount\": 1,\"followStatus\":\"NEITHER\",\"blockStatus\":false,\"accountStatus\":\"PRIVATE\"}}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 사용자 존재하지 않을시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
