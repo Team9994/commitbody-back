@@ -12,15 +12,15 @@ import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.follow.domain.Follow;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
 import team9499.commitbody.domain.follow.domain.FollowType;
-import team9499.commitbody.domain.follow.dto.FollowerDto;
-import team9499.commitbody.domain.follow.dto.FollowingDto;
+import team9499.commitbody.domain.follow.domain.QFollow;
+import team9499.commitbody.domain.follow.dto.FollowDto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static team9499.commitbody.domain.Member.domain.QMember.*;
 import static team9499.commitbody.domain.follow.domain.FollowType.FOLLOW_ONLY;
-import static team9499.commitbody.domain.follow.domain.FollowType.NEITHER;
 import static team9499.commitbody.domain.follow.domain.QFollow.*;
 
 @Repository
@@ -31,29 +31,31 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
     private final JPAQueryFactory jpaQueryFactory;
 
     private final String FULL_TEXT_INDEX ="function('match',{0},{1})";
+    private final String FOLLOWING = "following";
 
     /**
      * 해당 사용자가 팔로잉한 사용자의 목록을 조회합니다.
      * @param followerId 조회할 사용자
      */
     @Override
-    public Slice<FollowingDto> getAllFollowings(Long followerId, String nickName,Long lastId, Pageable pageable) {
+    public Slice<FollowDto> getAllFollowings(Long followerId, Long followingId, String nickName, Long lastId, Pageable pageable) {
         BooleanBuilder builder = lastIdBuilder(lastId);
         nicknameBuilder(nickName, builder);
 
         List<Follow> followList = jpaQueryFactory.select(follow)
                 .from(follow)
-                .join(member).on(member.id.eq(follow.following.id))
-                .where(builder,follow.follower.id.eq(followerId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW))))
+                .join(follow.following,member).fetchJoin()
+                .where(builder,follow.follower.id.eq(followingId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW))))
                 .limit(pageable.getPageSize()+1)
                 .orderBy(follow.id.asc())
                 .fetch();
 
-        List<FollowingDto> followingDtoList = followList.stream()
-                .map(follow -> new FollowingDto(
-                        follow.getId(),follow.getFollowing().getId(), follow.getFollowing().getNickname(),follow.getFollowing().getProfile())
-                )
-                .collect(Collectors.toList());
+        List<FollowDto> followingDtoList = new ArrayList<>();
+        if (followerId != followingId) {
+            followingDtoList = getFriendFollows(followerId, followList,FOLLOWING);
+        }else {
+            followingDtoList = getMyFollows(followList,FOLLOWING);
+        }
 
         boolean hasNext = false;
         if (followingDtoList.size() > pageable.getPageSize()){
@@ -68,22 +70,22 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
      * @param followerId 조회할 사용자
      */
     @Override
-    public Slice<FollowerDto> getAllFollowers(Long followerId, String nickName, Long lastId, Pageable pageable) {
+    public Slice<FollowDto> getAllFollowers(Long followerId, Long followId, String nickName, Long lastId, Pageable pageable) {
         BooleanBuilder builder = lastIdBuilder(lastId);
         nicknameBuilder(nickName,builder);
 
-        List<Follow> followList = jpaQueryFactory.select(follow)
+        List<Follow> followList= jpaQueryFactory.select(follow)
                 .from(follow)
-                .join(member).on(member.id.eq(follow.follower.id))  // 올바른 조인 조건
-                .where(builder,follow.following.id.eq(followerId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW))))  // 올바른 조건
+                .join(follow.follower, member).fetchJoin()
+                .where(builder,follow.following.id.eq(followId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW))))  // 올바른 조건
                 .orderBy(follow.id.asc())
                 .fetch();
-
-        List<FollowerDto> followerDtoList = followList.stream()
-                .map(follow -> new FollowerDto(
-                        follow.getId(), follow.getFollower().getId(), follow.getFollower().getNickname(), follow.getFollower().getProfile(),checkFollow(follow.getStatus()))
-                )
-                .collect(Collectors.toList());
+        List<FollowDto> followerDtoList = new ArrayList<>();
+        if (followerId != followId) {
+            followerDtoList = getFriendFollows(followerId, followList,"follower");
+        }else {
+            followerDtoList = getMyFollows(followList,"follower");
+        }
 
         boolean hasNext = false;
         if (followerDtoList.size() > pageable.getPageSize()){
@@ -158,10 +160,6 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
                 .execute();
     }
 
-    private static boolean checkFollow(FollowStatus followStatus){
-        return followStatus.equals(FollowStatus.FOLLOWING) ? false : true;
-    }
-
     private static BooleanBuilder lastIdBuilder(Long lastId) {
         BooleanBuilder builder = new BooleanBuilder();
         if (lastId !=null){
@@ -169,11 +167,86 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
         }
         return builder;
     }
+
     private void nicknameBuilder(String nickName, BooleanBuilder builder) {
         if (nickName != null) {
             NumberTemplate<Double> doubleNumberTemplate = Expressions.numberTemplate(Double.class,
                     FULL_TEXT_INDEX, member.nickname,"+"+ nickName +"+");
             builder.and(doubleNumberTemplate.gt(0));
         }
+    }
+
+    /**
+     * 팔로워 목록에서 현재 사용자가 조회된사용자를 팔로워 하는지 체크
+     * @param follow  현재 조호된 객체
+     * @param followerId    현재 로그인한 사용자
+     */
+    private boolean checkFollow(Follow follow, Long followerId,String type) {
+        BooleanBuilder builder = new BooleanBuilder();
+        if (type.equals(FOLLOWING)){
+            builder.and(QFollow.follow.follower.id.eq(followerId).and(QFollow.follow.following.id.eq(follow.getFollowing().getId())));
+        }else{
+            builder.and(QFollow.follow.following.id.eq(follow.getFollower().getId()).and(QFollow.follow.follower.id.eq(followerId)));
+        }
+        FollowStatus followStatus = jpaQueryFactory.select(QFollow.follow.status)
+                .from(QFollow.follow)
+                .where(builder).fetchOne();
+        if (followStatus!=null && (followStatus.equals(FollowStatus.FOLLOWING)|| followStatus.equals(FollowStatus.MUTUAL_FOLLOW))){
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean checkFollow(FollowStatus followStatus){
+        return followStatus.equals(FollowStatus.FOLLOWING) || followStatus.equals(FollowStatus.MUTUAL_FOLLOW)? true : false;
+    }
+
+    /**
+     * 현재 사용자의 팔로워/팔로잉 목록을조회합니다.
+     * @param followList 조회된 팔로워/팔로잉 목록
+     * @param type  following/ follower
+     */
+    private List<FollowDto> getMyFollows(List<Follow> followList, String type) {
+        return followList.stream()
+                .map(follow -> new FollowDto(
+                        follow.getId(),
+                        type.equals(FOLLOWING) ? follow.getFollowing().getId() :follow.getFollower().getId(),
+                        type.equals(FOLLOWING) ? follow.getFollowing().getNickname() :follow.getFollower().getNickname(),
+                        type.equals(FOLLOWING) ? follow.getFollowing().getProfile() :follow.getFollower().getProfile(),
+                        checkFollow(follow.getStatus()))
+                )
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 상대방의 팔로워/팔로잉 목록을 조회합니다.
+     * @param followerId    현재 사용자 id
+     * @param followList    조회된 팔러워/팔로잉 목록
+     * @param type  following/ follower
+     */
+    private List<FollowDto> getFriendFollows(Long followerId, List<Follow> followList, String type) {
+        return followList.stream()
+                .sorted((f1, f2) -> {
+                    // 현재 사용자가 아닌 경우 기본 정렬 유지
+                    if (type.equals(FOLLOWING)){
+                        // 현재 사용자의 ID와 비교하여 정렬: 현재 사용자는 맨 위로
+                        if (f1.getFollowing().getId().equals(followerId)) return -1;  // 현재 사용자는 -1로 반환하여 맨 위로
+                        if (f2.getFollowing().getId().equals(followerId)) return 1;   // 비교하는 대상은 아래로
+                    }else {
+                        // 현재 사용자의 ID와 비교하여 정렬: 현재 사용자는 맨 위로
+                        if (f1.getFollower().getId().equals(followerId)) return -1;  // 현재 사용자는 -1로 반환하여 맨 위로
+                        if (f2.getFollower().getId().equals(followerId)) return 1;   // 비교하는 대상은 아래로
+                    }
+                    return 0;
+                })
+                .map(follow -> new FollowDto(
+                        follow.getId(),
+                        type.equals(FOLLOWING) ? follow.getFollowing().getId() :follow.getFollower().getId(),
+                        type.equals(FOLLOWING) ? follow.getFollowing().getNickname() :follow.getFollower().getNickname(),
+                        type.equals(FOLLOWING) ? follow.getFollowing().getProfile() :follow.getFollower().getProfile(),
+                        type.equals(FOLLOWING) ? follow.getFollowing().getId() == followerId ? null: checkFollow(follow, followerId,type) : follow.getFollower().getId() == followerId ? null:checkFollow(follow, followerId,type) ,
+                        type.equals(FOLLOWING) ? follow.getFollowing().getId().equals(followerId) ? true : null : follow.getFollower().getId().equals(followerId) ? true : null )
+                )
+                .collect(Collectors.toList());
     }
 }

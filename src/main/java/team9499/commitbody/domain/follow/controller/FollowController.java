@@ -74,14 +74,15 @@ public class FollowController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
-    @GetMapping("/followers")
-    public ResponseEntity<?> getFollowers(@RequestParam(value = "lastId",required = false) Long lastId,
+    @GetMapping("/followers/{id}")
+    public ResponseEntity<?> getFollowers(@PathVariable("id") Long followerId,
+                                          @RequestParam(value = "lastId",required = false) Long lastId,
                                           @RequestParam(value = "nickname",required = false) String nickname,
                                           @AuthenticationPrincipal PrincipalDetails principalDetails,
                                           @Parameter(example = "{\"size\":10}") @PageableDefault Pageable pageable){
 
-        Long followId = getMember(principalDetails);
-        FollowResponse followers = followService.getFollowers(followId,nickname,lastId,pageable);
+        Long followId = getMember(principalDetails);    //현재 로그인한 사용자 ID
+        FollowResponse followers = followService.getFollowers(followId,followerId,nickname,lastId,pageable);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",followers));
     }
 
@@ -93,13 +94,14 @@ public class FollowController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
-    @GetMapping("/followings")
-    public ResponseEntity<?> getFollows(@RequestParam(value = "lastId",required = false) Long lastId,
+    @GetMapping("/followings/{id}")
+    public ResponseEntity<?> getFollows(@PathVariable("id")Long id,
+                                        @RequestParam(value = "lastId",required = false) Long lastId,
                                         @RequestParam(value = "nickname",required = false) String nickname,
                                         @AuthenticationPrincipal PrincipalDetails principalDetails,
                                         @Parameter(example = "{\"size\":10}") @PageableDefault Pageable pageable){
         Long followId = getMember(principalDetails);
-        FollowResponse followings = followService.getFollowings(followId, nickname, lastId, pageable);
+        FollowResponse followings = followService.getFollowings(followId,id,nickname, lastId, pageable);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공", followings));
     }
 
