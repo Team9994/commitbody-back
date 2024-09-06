@@ -72,6 +72,8 @@ public class FollowController {
                     examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"follows\": [{\"followId\": 1, \"memberId\": 1, \"nickname\": \"닉네임\", \"profile\": \"http://www.example.com\", \"isCurrentUser\": true},{\"followId\": 2, \"memberId\": 2, \"nickname\": \"두번째닉네임\", \"profile\": \"http://www.example.com\", \"followStatus\": true}]}}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 비공개 계정 맞팔로잉 상태가 아닌 사용자가 팔로워/팔로잉 목록 조회시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"비공개 계정입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/followers/{id}")
@@ -92,6 +94,8 @@ public class FollowController {
                     examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"follows\": [{\"followId\": 1, \"memberId\": 1, \"nickname\": \"닉네임\", \"profile\": \"http://www.example.com\", \"isCurrentUser\": true},{\"followId\": 2, \"memberId\": 2, \"nickname\": \"두번째닉네임\", \"profile\": \"http://www.example.com\", \"followStatus\": true}]}}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 비공개 계정 맞팔로잉 상태가 아닌 사용자가 팔로워/팔로잉 목록 조회시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"비공개 계정입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/followings/{id}")
