@@ -5,15 +5,20 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberTemplate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
+import team9499.commitbody.domain.Member.domain.AccountStatus;
 import team9499.commitbody.domain.follow.domain.Follow;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
 import team9499.commitbody.domain.follow.domain.FollowType;
 import team9499.commitbody.domain.follow.domain.QFollow;
 import team9499.commitbody.domain.follow.dto.FollowDto;
+import team9499.commitbody.global.Exception.ExceptionStatus;
+import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.InvalidUsageException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +28,7 @@ import static team9499.commitbody.domain.Member.domain.QMember.*;
 import static team9499.commitbody.domain.follow.domain.FollowType.FOLLOW_ONLY;
 import static team9499.commitbody.domain.follow.domain.QFollow.*;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class CustomFollowRepositoryImpl implements CustomFollowRepository{
@@ -51,7 +57,8 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
                 .fetch();
 
         List<FollowDto> followingDtoList = new ArrayList<>();
-        if (followerId != followingId) {
+        if (followerId != followingId) {// 상대방 계정 조회시
+            validPrivateAccount(followerId,followingId,followList.get(0).getFollower().getAccountStatus()); // 해당 사용자가 팔로우 상태인지 확인
             followingDtoList = getFriendFollows(followerId, followList,FOLLOWING);
         }else {
             followingDtoList = getMyFollows(followList,FOLLOWING);
@@ -67,7 +74,8 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
 
     /**
      * 해당 사용자를 팔로워 하는 목록을 조회
-     * @param followerId 조회할 사용자
+     * @param followerId 현재 로그인한 사용자
+     * @param followId 조회할 사용자 Id
      */
     @Override
     public Slice<FollowDto> getAllFollowers(Long followerId, Long followId, String nickName, Long lastId, Pageable pageable) {
@@ -78,10 +86,12 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
                 .from(follow)
                 .join(follow.follower, member).fetchJoin()
                 .where(builder,follow.following.id.eq(followId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW))))  // 올바른 조건
+                .limit(pageable.getPageSize()+1)
                 .orderBy(follow.id.asc())
                 .fetch();
         List<FollowDto> followerDtoList = new ArrayList<>();
-        if (followerId != followId) {
+        if (followerId != followId) {       // 상대방 계정 조회시
+            validPrivateAccount(followerId, followId,followList.get(0).getFollowing().getAccountStatus());  // 해당 사용자가 팔로우 상태인지 확인
             followerDtoList = getFriendFollows(followerId, followList,"follower");
         }else {
             followerDtoList = getMyFollows(followList,"follower");
@@ -248,5 +258,13 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
                         type.equals(FOLLOWING) ? follow.getFollowing().getId().equals(followerId) ? true : null : follow.getFollower().getId().equals(followerId) ? true : null )
                 )
                 .collect(Collectors.toList());
+    }
+
+    /*
+    현재 조회할 사용자가 비공개 계정일때 맞팔로우 상태가 아니라면 예외 발생
+     */
+    private void validPrivateAccount(Long followerId, Long followId,AccountStatus accountStatus) {
+        FollowStatus followStatus = jpaQueryFactory.select(follow.status).from(follow).where(follow.following.id.eq(followerId).and(follow.follower.id.eq(followId))).fetchOne();
+        if (!followStatus.equals(FollowStatus.MUTUAL_FOLLOW) && accountStatus.equals(AccountStatus.PRIVATE)) throw new InvalidUsageException(ExceptionStatus.BAD_REQUEST,ExceptionType.PRIVATE_ACCOUNT);
     }
 }
