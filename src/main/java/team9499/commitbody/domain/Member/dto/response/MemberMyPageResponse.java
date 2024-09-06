@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import team9499.commitbody.domain.Member.domain.AccountStatus;
 import team9499.commitbody.domain.follow.domain.FollowType;
 
 @Data
@@ -29,4 +30,6 @@ public class MemberMyPageResponse {
     private FollowType followStatus;    // 현재 팔로우 상태
     
     private boolean blockStatus;    // 차단 상태
+    
+    private AccountStatus accountStatus; // 계정상태
 }

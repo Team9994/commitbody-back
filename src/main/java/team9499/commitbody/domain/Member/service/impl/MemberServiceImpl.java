@@ -53,7 +53,7 @@ public class MemberServiceImpl implements MemberService {
             memberMyPageResponseBuilder.memberId(memberId).pageType("myPage");
         }else{  // 상대방 페이지 접근시
             FollowType followStatus = followRepository.followStatus(memberId, member.getId());  // 상대방과 팔로우 관계를 검사
-            memberMyPageResponseBuilder.followStatus(followStatus).memberId(member.getId()).pageType("theirPage");
+            memberMyPageResponseBuilder.followStatus(followStatus).accountStatus(member.getAccountStatus()).memberId(member.getId()).pageType("theirPage");
         }
         return memberMyPageResponseBuilder.build();
     }
