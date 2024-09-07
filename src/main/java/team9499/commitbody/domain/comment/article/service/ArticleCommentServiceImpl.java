@@ -72,6 +72,7 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
             commentType ="댓글 작성 성공";
             notificationService.sendComment(member,article.getMember().getId(),article.getTitle(),content,String.valueOf(save.getId()));    // 댓글 알림 전송
         }
+        article.updateCommentCount(article.getCommentCount()+1);
         return commentType;
     }
 

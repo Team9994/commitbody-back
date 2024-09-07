@@ -54,5 +54,7 @@ public class Article extends BaseTime {
         }
         return articleBuilder.build();
     }
-
+    public void updateCommentCount(Integer count){
+        this.commentCount = count;
+    }
 }
