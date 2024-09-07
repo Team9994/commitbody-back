@@ -2,6 +2,8 @@ package team9499.commitbody.domain.article.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,6 +12,8 @@ import team9499.commitbody.domain.article.domain.Article;
 import team9499.commitbody.domain.article.domain.ArticleCategory;
 import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.article.domain.Visibility;
+import team9499.commitbody.domain.article.dto.ArticleDto;
+import team9499.commitbody.domain.article.dto.response.ExerciseArticleResponse;
 import team9499.commitbody.domain.article.repository.ArticleRepository;
 import team9499.commitbody.domain.file.service.FileService;
 import team9499.commitbody.global.redis.RedisService;
@@ -32,5 +36,12 @@ public class ArticleServiceImpl implements ArticleService{
         articleRepository.save(article);
         fileService.saveArticleFile(article,file);
         return article.getId();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public ExerciseArticleResponse getAllExerciseArticle(Long memberId, Long findMemberId, Long lastId, Pageable pageable) {
+        Slice<ArticleDto> articles = articleRepository.getAllExerciseArticle(memberId, findMemberId, lastId, pageable);
+        return new ExerciseArticleResponse(articles.hasNext(),articles.getContent());
     }
 }
