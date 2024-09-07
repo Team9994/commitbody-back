@@ -27,7 +27,7 @@ import static team9499.commitbody.domain.comment.article.domain.QArticleComment.
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class CustomArticleRepositoryImpl implements CustomArticleRepository{
+public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentRepository {
 
     private final JPAQueryFactory jpaQueryFactory;
 
