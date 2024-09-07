@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ExerciseArticleResponse {
+public class ProfileArticleResponse {
 
     private boolean hasNext;
 

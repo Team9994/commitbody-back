@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +18,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.article.dto.request.ArticleSaveRequest;
-import team9499.commitbody.domain.article.dto.response.ExerciseArticleResponse;
+import team9499.commitbody.domain.article.dto.response.ProfileArticleResponse;
 import team9499.commitbody.domain.article.service.ArticleService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
@@ -68,13 +68,14 @@ public class ArticleController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
-    @GetMapping("/my-page/exercise/{nickname}")
-    public ResponseEntity<?> getAllExerciseArticle(@PathVariable("nickname") String nickname,
-                                                   @RequestParam(value = "lastId",required = false) Long lastId,
-                                                   @AuthenticationPrincipal PrincipalDetails principalDetails,
-                                                   @Parameter(example = "{\"size\":12}") @PageableDefault(size = 12) Pageable pageable){
-        String loginNickname = principalDetails.getMember().getNickname();
-        ExerciseArticleResponse articles = articleService.getAllExerciseArticle(loginNickname, nickname, lastId, pageable);
+    @GetMapping("/my-page/articles/{id}")
+    public ResponseEntity<?> getAllProfileArticle(@PathVariable("id") Long findMemberId,
+                                                  @RequestParam("type")ArticleType articleType,
+                                                  @RequestParam(value = "lastId",required = false) Long lastId,
+                                                  @AuthenticationPrincipal PrincipalDetails principalDetails,
+                                                  @Parameter(example = "{\"size\":12}") @PageableDefault(size = 12) Pageable pageable){
+        Long memberId = getMemberId(principalDetails);
+        ProfileArticleResponse articles = articleService.getAllProfileArticle(memberId, findMemberId, articleType,lastId, pageable);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",articles));
     }
 
