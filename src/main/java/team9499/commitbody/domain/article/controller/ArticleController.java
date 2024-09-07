@@ -9,16 +9,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import team9499.commitbody.domain.article.dto.request.ArticleSaveRequest;
+import team9499.commitbody.domain.article.dto.response.ExerciseArticleResponse;
 import team9499.commitbody.domain.article.service.ArticleService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
@@ -52,8 +53,23 @@ public class ArticleController {
     public ResponseEntity<?> saveArticle(@Valid @RequestPart("articleSaveRequest") ArticleSaveRequest request, BindingResult result,
                                          @RequestPart("file")MultipartFile file,
                                          @AuthenticationPrincipal PrincipalDetails principalDetails){
-        Long memberId = principalDetails.getMember().getId();
+        Long memberId = getMemberId(principalDetails);
         Long articleId = articleService.saveArticle(memberId, request.getTitle(), request.getContent(), request.getArticleType(), request.getArticleCategory(), request.getVisibility(), file);
         return ResponseEntity.ok(new SuccessResponse<>(true,"둥록 성공",articleId));
+    }
+
+    @GetMapping("/my-page/exercise/{id}")
+    public ResponseEntity<?> getAllExerciseArticle(@PathVariable("id") Long memberId,
+                                                   @RequestParam(value = "lastId",required = false) Long lastId,
+                                                   @AuthenticationPrincipal PrincipalDetails principalDetails,
+                                                   @PageableDefault(size = 12) Pageable pageable){
+        Long loginMemberId = getMemberId(principalDetails);
+        ExerciseArticleResponse articles = articleService.getAllExerciseArticle(loginMemberId, memberId, lastId, pageable);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",articles));
+    }
+
+    private static Long getMemberId(PrincipalDetails principalDetails) {
+        Long memberId = principalDetails.getMember().getId();
+        return memberId;
     }
 }
