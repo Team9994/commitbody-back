@@ -8,7 +8,9 @@ public interface FollowService {
 
     String follow(Long followerId, Long followingId, FollowType type);
 
-    FollowResponse getFollowers(Long followingId, String nickName, Long lastId, Pageable pageable);
+    FollowResponse getFollowers(Long followingId, Long followerId,String nickName, Long lastId, Pageable pageable);
 
-    FollowResponse getFollowings(Long followerId,String nickName, Long lastId, Pageable pageable);
+    FollowResponse getFollowings(Long followerId,Long followingId ,String nickName, Long lastId, Pageable pageable);
+
+    void cancelFollow(Long followerId, Long followingId);
 }

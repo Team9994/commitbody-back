@@ -10,6 +10,7 @@ import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.dto.response.MemberMyPageResponse;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.Member.service.MemberService;
+import team9499.commitbody.domain.block.servcice.BlockMemberService;
 import team9499.commitbody.domain.follow.domain.FollowType;
 import team9499.commitbody.domain.follow.repository.FollowRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
@@ -27,6 +28,7 @@ public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
     private final FollowRepository followRepository;
+    private final BlockMemberService blockMemberService;
     private final S3Service s3Service;
 
 
@@ -37,16 +39,21 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public MemberMyPageResponse getMyPage(Long memberId,String nickname) {
         Member member = memberRepository.findByNickname(nickname).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+
+        // 마이페이지 존재시 차단 상태 유무체크 상대방이 사용자를 차단된 상태일경우 예외 발생 
+        boolean blockStatus = blockMemberService.checkBlock(member.getId(),memberId);   
+
         int countFollower = (int) followRepository.getCountFollower(member.getId());
         int countFollowing = (int) followRepository.getCountFollowing(member.getId());
-        MemberMyPageResponse.MemberMyPageResponseBuilder memberMyPageResponseBuilder = MemberMyPageResponse.builder().nickname(member.getNickname()).profile(member.getProfile()).followerCount(countFollower).followingCount((countFollowing));
+        MemberMyPageResponse.MemberMyPageResponseBuilder memberMyPageResponseBuilder =
+                MemberMyPageResponse.builder().nickname(member.getNickname()).profile(member.getProfile()).followerCount(countFollower).followingCount((countFollowing)).blockStatus(blockStatus);
         
         //현재 마이페이지로 접근 시
         if (member.getId() == memberId) {
             memberMyPageResponseBuilder.memberId(memberId).pageType("myPage");
         }else{  // 상대방 페이지 접근시
             FollowType followStatus = followRepository.followStatus(memberId, member.getId());  // 상대방과 팔로우 관계를 검사
-            memberMyPageResponseBuilder.followStatus(followStatus).memberId(member.getId()).pageType("theirPage");
+            memberMyPageResponseBuilder.followStatus(followStatus).accountStatus(member.getAccountStatus()).memberId(member.getId()).pageType("theirPage");
         }
         return memberMyPageResponseBuilder.build();
     }

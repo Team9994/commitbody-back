@@ -68,38 +68,44 @@ public class FollowController {
 
     @Operation(summary = "팔로워 목록(무한 스크롤)", description = "팔로워 목록을 조회하며, 사용자 닉네임을통해 나를 팔로워한 사용자를 찾을수 있습니다.[2글자이상]")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공 - mutualFollow - ture 맞팔로워,  mutualFollow - false 팔로워 ", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"follows\": [{\"followId\": 1, \"memberId\": 1, \"nickname\": \"닉네임\", \"profile\": \"http://www.example.com\", \"mutualFollow\": true}]}}"))),
+            @ApiResponse(responseCode = "200", description = "조회 성공 - followStatus - ture 팔로워상태,false 미 팔로워 상태 ,isCurrentUser - true 현재 사용자 ", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"follows\": [{\"followId\": 1, \"memberId\": 1, \"nickname\": \"닉네임\", \"profile\": \"http://www.example.com\", \"isCurrentUser\": true},{\"followId\": 2, \"memberId\": 2, \"nickname\": \"두번째닉네임\", \"profile\": \"http://www.example.com\", \"followStatus\": true}]}}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 비공개 계정 맞팔로잉 상태가 아닌 사용자가 팔로워/팔로잉 목록 조회시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"비공개 계정입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
-    @GetMapping("/followers")
-    public ResponseEntity<?> getFollowers(@RequestParam(value = "lastId",required = false) Long lastId,
+    @GetMapping("/followers/{id}")
+    public ResponseEntity<?> getFollowers(@Parameter(description = "조회할 사용자의 ID를 사용합니다.")@PathVariable("id") Long followerId,
+                                          @RequestParam(value = "lastId",required = false) Long lastId,
                                           @RequestParam(value = "nickname",required = false) String nickname,
                                           @AuthenticationPrincipal PrincipalDetails principalDetails,
-                                          @Parameter(example = "{\"size\":10}") @PageableDefault Pageable pageable){
+                                          @Parameter(example = "{\"size\":10}",description = "default - 10") @PageableDefault Pageable pageable){
 
-        Long followId = getMember(principalDetails);
-        FollowResponse followers = followService.getFollowers(followId,nickname,lastId,pageable);
+        Long followId = getMember(principalDetails);    //현재 로그인한 사용자 ID
+        FollowResponse followers = followService.getFollowers(followId,followerId,nickname,lastId,pageable);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",followers));
     }
 
     @Operation(summary = "팔로잉 목록(무한 스크롤)", description = "팔로잉 목록을 조회하며, 사용자 닉네임을통해 내가 팔로잉한 사용자를 찾을수 있습니다.[2글자이상]")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"follows\": [{\"followId\": 1, \"memberId\": 1, \"nickname\": \"닉네임\", \"profile\": \"http://www.example.com\"}]}}"))),
+            @ApiResponse(responseCode = "200", description = "조회 성공 - followStatus - ture 팔로워상태,false 미 팔로워 상태 ,isCurrentUser - true 현재 사용자 ", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"follows\": [{\"followId\": 1, \"memberId\": 1, \"nickname\": \"닉네임\", \"profile\": \"http://www.example.com\", \"isCurrentUser\": true},{\"followId\": 2, \"memberId\": 2, \"nickname\": \"두번째닉네임\", \"profile\": \"http://www.example.com\", \"followStatus\": true}]}}"))),
             @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 비공개 계정 맞팔로잉 상태가 아닌 사용자가 팔로워/팔로잉 목록 조회시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"비공개 계정입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
-    @GetMapping("/followings")
-    public ResponseEntity<?> getFollows(@RequestParam(value = "lastId",required = false) Long lastId,
+    @GetMapping("/followings/{id}")
+    public ResponseEntity<?> getFollows(@Parameter(description = "조회할 사용자의 ID를 사용합니다.")@PathVariable("id")Long id,
+                                        @RequestParam(value = "lastId",required = false) Long lastId,
                                         @RequestParam(value = "nickname",required = false) String nickname,
                                         @AuthenticationPrincipal PrincipalDetails principalDetails,
-                                        @Parameter(example = "{\"size\":10}") @PageableDefault Pageable pageable){
+                                        @Parameter(example = "{\"size\":10}",description = "default - 10") @PageableDefault Pageable pageable){
         Long followId = getMember(principalDetails);
-        FollowResponse followings = followService.getFollowings(followId, nickname, lastId, pageable);
+        FollowResponse followings = followService.getFollowings(followId,id,nickname, lastId, pageable);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공", followings));
     }
 

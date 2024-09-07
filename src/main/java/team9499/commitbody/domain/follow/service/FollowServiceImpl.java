@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
@@ -11,8 +12,7 @@ import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.follow.domain.Follow;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
 import team9499.commitbody.domain.follow.domain.FollowType;
-import team9499.commitbody.domain.follow.dto.FollowerDto;
-import team9499.commitbody.domain.follow.dto.FollowingDto;
+import team9499.commitbody.domain.follow.dto.FollowDto;
 import team9499.commitbody.domain.follow.dto.response.FollowResponse;
 import team9499.commitbody.domain.follow.repository.FollowRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
@@ -84,8 +84,8 @@ public class FollowServiceImpl implements FollowService{
      */
     @Transactional(readOnly = true)
     @Override
-    public FollowResponse getFollowers(Long followingId, String nickName,Long lastId, Pageable pageable) {
-        Slice<FollowerDto> allFollowers = followRepository.getAllFollowers(followingId, nickName,lastId, pageable);
+    public FollowResponse getFollowers(Long followingId, Long followerId,String nickName,Long lastId, Pageable pageable) {
+        Slice<FollowDto> allFollowers = followRepository.getAllFollowers(followingId,followerId, nickName,lastId, pageable);
         return new FollowResponse(allFollowers.hasNext(),allFollowers.getContent());
     }
 
@@ -99,9 +99,18 @@ public class FollowServiceImpl implements FollowService{
      */
     @Transactional(readOnly = true)
     @Override
-    public FollowResponse getFollowings(Long followerId,String nickName,Long lastId, Pageable pageable) {
-        Slice<FollowingDto> allFollowings = followRepository.getAllFollowings(followerId, nickName, lastId, pageable);
+    public FollowResponse getFollowings(Long followerId,Long followingId,String nickName,Long lastId, Pageable pageable) {
+        Slice<FollowDto> allFollowings = followRepository.getAllFollowings(followerId,followingId ,nickName, lastId, pageable);
         return new FollowResponse(allFollowings.hasNext(),allFollowings.getContent());
+    }
+
+    /**
+     * 사용자 차단시 서로 팔로우 취소상태로 변경
+     */
+    @Async
+    @Override
+    public void cancelFollow(Long followerId, Long followingId) {
+        followRepository.cancelFollow(followerId,followingId);
     }
 
     /*

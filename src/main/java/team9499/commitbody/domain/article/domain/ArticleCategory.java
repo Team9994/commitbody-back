@@ -6,7 +6,9 @@ import java.util.Arrays;
 
 public enum ArticleCategory {
 
-    information("정보");
+    INFORMATION("정보"),
+    FEEDBACK("피드백"),
+    BODY_REVIEW("몸평");
 
     private final String description;
 
@@ -33,6 +35,7 @@ public enum ArticleCategory {
             return null;
         }
         return Arrays.stream(values())
+                .filter(articleCategory -> articleCategory.name().equalsIgnoreCase(val))
                 .findFirst()
                 .orElse(null);
     }

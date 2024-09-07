@@ -5,5 +5,5 @@ import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.article.domain.Article;
 
 @Repository
-public interface ArticleRepository extends JpaRepository<Article, Long> {
+public interface ArticleRepository extends JpaRepository<Article, Long>, CustomArticleRepository {
 }
