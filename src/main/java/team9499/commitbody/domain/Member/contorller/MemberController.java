@@ -67,7 +67,7 @@ public class MemberController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 찾을수 없습니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
-    @GetMapping("/myPage/{nickname}")
+    @GetMapping("/my-page/{nickname}")
     public ResponseEntity<?> myPage(@PathVariable("nickname") String nickname,
                                     @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
