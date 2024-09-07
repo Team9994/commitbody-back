@@ -60,16 +60,18 @@ public class ArticleController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"둥록 성공",articleId));
     }
 
-    @Operation(summary = "프로필 페이지 - 운동 인증 게시글 조회", description = "프로필 사용자가 작성한 운동인증 게시글을 조회합니다. Default Size = 12",tags = "프로필")
+    @Operation(summary = "프로필 페이지 - 작성한 게시글 조회", description = "프로필 사용자가 작성한 게시글을 조회합니다. Default Size = 12 ",tags = "프로필")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+            @ApiResponse(responseCode = "200_1", description = "운동 인증 게시글 조회시", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value = "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"articles\": [{\"articleId\": 1, \"imageUrl\": \"https://d12ryzjapybmlj.cloudfront.net/images/7280c2c8-8b6b-4eeb-a2e7-55d15162fb06.png\"}]}}"))),
+            @ApiResponse(responseCode = "200_2", description = "정보&질문 게시글 조회시", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"articles\": [{\"articleId\": 21, \"title\": \"제목\", \"articleCategory\": \"INFORMATION\", \"time\": \"2시간 전\", \"likeCount\": 0, \"commentCount\": 0, \"imageUrl\": \"등록된 이미지가 없습니다.\"}, {\"articleId\": 14, \"title\": \"운동 게시글\", \"articleCategory\": \"BODY_REVIEW\", \"time\": \"2일 전\", \"likeCount\": 0, \"commentCount\": 0, \"imageUrl\": \"https://d12ryzjapybmlj.cloudfront.net/images/925bf666-2787-4f31-89ab-ef24bd26d1d5.png\"}]}}"))),
             @ApiResponse(responseCode = "400", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/my-page/articles/{id}")
-    public ResponseEntity<?> getAllProfileArticle(@PathVariable("id") Long findMemberId,
+    public ResponseEntity<?> getAllProfileArticle(@Parameter(description = "조회할 사용자 ID")@PathVariable("id") Long findMemberId,
                                                   @RequestParam("type")ArticleType articleType,
                                                   @RequestParam(value = "lastId",required = false) Long lastId,
                                                   @AuthenticationPrincipal PrincipalDetails principalDetails,
