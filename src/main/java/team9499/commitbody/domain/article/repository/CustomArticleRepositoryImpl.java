@@ -32,25 +32,25 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
 
     /**
      * 프로필 접근시 운동 관련 게시글 조회
-     * @param loginMemberId 현재 로그인한 사용자 ID
-     * @param findMemberId  조회할 사용자 ID
+     * @param loginNickname 현재 로그인한 사용자 ID
+     * @param findNickname  조회할 사용자 ID
      * @param lastId    조회된 마지막 게시글 ID
      * @param pageable
      * @return
      */
     @Override
-    public Slice<ArticleDto> getAllExerciseArticle(Long loginMemberId, Long findMemberId, Long lastId, Pageable pageable) {
+    public Slice<ArticleDto> getAllExerciseArticle(String loginNickname, String findNickname, Long lastId, Pageable pageable) {
         BooleanBuilder builder = new BooleanBuilder();
         if (lastId!=null){
             builder.and(article.id.lt(lastId));
         }
         // 조회할 사용자가 로그인한 사용자일경우와 아닐경우의 따른 memberId
-        Long memberId = loginMemberId == findMemberId ? loginMemberId: findMemberId;
+        String nickname = loginNickname == findNickname ? loginNickname: findNickname;
 
         List<Tuple> articleList = jpaQueryFactory.select(article, file)
                 .from(article)
                 .join(file).on(article.id.eq(file.article.id)).fetchJoin()
-                .where(builder, article.member.id.eq(memberId).and(article.articleType.eq(ArticleType.EXERCISE)))
+                .where(builder, article.member.nickname.eq(nickname).and(article.articleType.eq(ArticleType.EXERCISE)))
                 .limit(pageable.getPageSize() + 1)
                 .orderBy(article.createdAt.desc())
                 .fetch();

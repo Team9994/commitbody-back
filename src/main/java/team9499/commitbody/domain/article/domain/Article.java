@@ -12,6 +12,9 @@ import team9499.commitbody.global.utils.BaseTime;
 @Data
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Table(indexes = {
+        @Index(name = "idx_article_exercise", columnList = "article_type,created_at,member_id"),
+})
 @NoArgsConstructor
 public class Article extends BaseTime {
 

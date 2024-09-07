@@ -58,13 +58,13 @@ public class ArticleController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"둥록 성공",articleId));
     }
 
-    @GetMapping("/my-page/exercise/{id}")
-    public ResponseEntity<?> getAllExerciseArticle(@PathVariable("id") Long memberId,
+    @GetMapping("/my-page/exercise/{nickname}")
+    public ResponseEntity<?> getAllExerciseArticle(@PathVariable("nickname") String nickname,
                                                    @RequestParam(value = "lastId",required = false) Long lastId,
                                                    @AuthenticationPrincipal PrincipalDetails principalDetails,
                                                    @PageableDefault(size = 12) Pageable pageable){
-        Long loginMemberId = getMemberId(principalDetails);
-        ExerciseArticleResponse articles = articleService.getAllExerciseArticle(loginMemberId, memberId, lastId, pageable);
+        String loginNickname = principalDetails.getMember().getNickname();
+        ExerciseArticleResponse articles = articleService.getAllExerciseArticle(loginNickname, nickname, lastId, pageable);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",articles));
     }
 

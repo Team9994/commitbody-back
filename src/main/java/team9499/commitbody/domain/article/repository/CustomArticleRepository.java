@@ -6,5 +6,5 @@ import team9499.commitbody.domain.article.dto.ArticleDto;
 
 public interface CustomArticleRepository {
 
-    Slice<ArticleDto> getAllExerciseArticle(Long loginMemberId, Long findMemberId, Long lastId, Pageable pageable);
+    Slice<ArticleDto> getAllExerciseArticle(String loginNickname, String findNickname, Long lastId, Pageable pageable);
 }

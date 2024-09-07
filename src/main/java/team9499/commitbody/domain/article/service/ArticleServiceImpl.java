@@ -40,8 +40,8 @@ public class ArticleServiceImpl implements ArticleService{
 
     @Transactional(readOnly = true)
     @Override
-    public ExerciseArticleResponse getAllExerciseArticle(Long memberId, Long findMemberId, Long lastId, Pageable pageable) {
-        Slice<ArticleDto> articles = articleRepository.getAllExerciseArticle(memberId, findMemberId, lastId, pageable);
+    public ExerciseArticleResponse getAllExerciseArticle(String loginNickname, String findNickname, Long lastId, Pageable pageable) {
+        Slice<ArticleDto> articles = articleRepository.getAllExerciseArticle(loginNickname, findNickname, lastId, pageable);
         return new ExerciseArticleResponse(articles.hasNext(),articles.getContent());
     }
 }

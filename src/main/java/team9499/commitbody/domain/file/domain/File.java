@@ -7,6 +7,9 @@ import team9499.commitbody.global.utils.BaseTime;
 
 @Entity
 @Data
+@Table(indexes = {
+        @Index(name = "idx_file_article",columnList = "article_id")
+})
 @Builder(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor

@@ -12,5 +12,5 @@ public interface ArticleService {
 
     Long saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file);
 
-    ExerciseArticleResponse getAllExerciseArticle(Long loginMemberId, Long findMemberId, Long lastId, Pageable pageable);
+    ExerciseArticleResponse getAllExerciseArticle(String loginNickname, String findNickname, Long lastId, Pageable pageable);
 }
