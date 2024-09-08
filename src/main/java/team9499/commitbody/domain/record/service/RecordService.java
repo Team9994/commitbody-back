@@ -17,7 +17,7 @@ public interface RecordService {
 
     RecordResponse getRecord(Long recordId,Long memberId);
 
-    void updateRecord(Long memberId, Long recordId, List<RecordUpdateSets> updateSets, List<ExerciseDto> newExercises, List<Long> deleteSets, List<Long> deleteExercises, List<ChangeOrders> changeOrders);
+    void updateRecord(Long memberId, Long recordId, String recordName , List<RecordDto> recordDtos);
 
     void deleteRecord(Long memberId, Long recordId);
 

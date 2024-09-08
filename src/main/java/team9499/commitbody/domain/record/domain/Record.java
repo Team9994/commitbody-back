@@ -57,4 +57,7 @@ public class Record {
         this.recordSets =recordSets;
     }
 
+    public void updateRecordName(String recordName){
+        this.recordName = recordName;
+    }
 }

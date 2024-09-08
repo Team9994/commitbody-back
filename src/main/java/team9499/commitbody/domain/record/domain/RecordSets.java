@@ -23,7 +23,7 @@ public class RecordSets {
     private Integer reps;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "record_details_id")
+    @JoinColumn(name = "record_details_id",foreignKey =  @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private RecordDetails recordDetails;
 
     public static RecordSets ofWeightAndSets(Integer weight, Integer reps, RecordDetails recordDetails) { // 무게와 세트를 기록

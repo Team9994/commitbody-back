@@ -11,7 +11,6 @@ import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
-import team9499.commitbody.domain.exercise.dto.ExerciseDto;
 import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
 import team9499.commitbody.domain.record.domain.Record;
@@ -24,18 +23,16 @@ import team9499.commitbody.domain.record.dto.response.RecordResponse;
 import team9499.commitbody.domain.record.repository.RecordDetailsRepository;
 import team9499.commitbody.domain.record.repository.RecordRepository;
 import team9499.commitbody.domain.record.repository.RecordSetsRepository;
-import team9499.commitbody.global.Exception.ExceptionStatus;
-import team9499.commitbody.global.Exception.ExceptionType;
-import team9499.commitbody.global.Exception.InvalidUsageException;
-import team9499.commitbody.global.Exception.NoSuchException;
+import team9499.commitbody.global.Exception.*;
+import team9499.commitbody.global.redis.RedisService;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import static team9499.commitbody.domain.record.dto.request.UpdateRecordRequest.*;
 import static team9499.commitbody.domain.record.dto.response.RecordMonthResponse.*;
 import static team9499.commitbody.global.Exception.ExceptionStatus.*;
 import static team9499.commitbody.global.Exception.ExceptionType.*;
@@ -52,6 +49,8 @@ public class RecordServiceImpl implements RecordService{
     private final ExerciseRepository exerciseRepository;
     private final CustomExerciseRepository customExerciseRepository;
     private final MemberRepository memberRepository;
+    private final RecordBatchService recordBatchService;
+    private final RedisService redisService;
 
     private final EntityManager em;
 
@@ -164,164 +163,105 @@ public class RecordServiceImpl implements RecordService{
         return recordRepository.findByRecordId(recordId,memberId);
     }
 
-
-    // TODO: 2024-08-24 리팩토링 필요
     /**
-     * 루틴 완료시 기록된 데이터를 수정하기 위한 메서드
+     * 기록 수정시 한번 기록의 관련된 데이터를 일괄(배치) 삭제후 새롭게 저장
+     * 기록 명은 변경시에만 업데이트
      * @param memberId 로그인한 사용자 ID
-     * @param recordId 변경할 recordID
-     * @param updateSets  변경및 추가할 세트 클래스
-     * @param newExercises 새롭게 추가할 운동 클래스
-     * @param deleteSets 삭제할 세트 클래스
-     * @param deleteExercises 삭제할 운동 클래스
-     * @param changeOrders 상세 기록 순서를 변경할 클래스
+     * @param recordId  수정할 기록 ID
+     * @param recordName 변경할 기록명
+     * @param recordDtos 변경할 기록 데이터 리스트
      */
     @Override
-    public void updateRecord(Long memberId, Long recordId, List<RecordUpdateSets> updateSets, List<ExerciseDto> newExercises, List<Long> deleteSets, List<Long> deleteExercises, List<ChangeOrders> changeOrders) {
+    public void updateRecord(Long memberId, Long recordId, String recordName , List<RecordDto> recordDtos) {
         Record record = recordRepository.findByIdAndMemberId(recordId, memberId);
-        // 수정 할 세트수가 존재시
-        if (updateSets!=null){
-            for (RecordUpdateSets updateSet : updateSets) {
-                Long recordDetailsId = updateSet.getRecordDetailsId(); // 기록 디테일 ID
-                if (updateSet.getUpdateSets()!=null){       // 수정할 세트수가 있을때
-                    for (RecordSetsDto set : updateSet.getUpdateSets()) {
-                        RecordSets recordSets = recordSetsRepository.findByIdAndRecordDetailsId(set.getSetsId(), recordDetailsId);
-                        Integer reps = set.getReps();
-                        Integer weight = set.getWeight();
-                        Integer times = set.getTimes();
 
-                        if (reps != null && weight != null) {   // 무게 횟수일때
-                            recordSets.updateWeightAndReps(weight, reps);
-                        } else if (times != null) {     // 시간일떄
-                            recordSets.updateTimes(times);
-                        } else {        // 횟수 일때
-                            recordSets.updateReps(reps);
-                        }
-                    }
-                }
+        Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
 
-                // 새롭게 등록할 세트 수 존재시
-                if (updateSet.getNewSets()!=null){
-                    RecordDetails details = recordDetailsRepository.findById(recordDetailsId).orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
-                    for (RecordSetsDto set : updateSet.getNewSets()) {
-                        recordSets(details,set);        // 새로운 세트 등록
-                    }
-                }
-            }
+        // 만약 레코드 명이 변경됬다면 변경
+        if (!record.getRecordName().equals(recordName)){
+            record.updateRecordName(recordName);
         }
 
-        // 추가 할 운동이 존재시
-        if (newExercises!=null){
-            List<RecordDetails> recordDetailsList = new ArrayList<>();
-            for (ExerciseDto newExercise : newExercises) {
-                RecordDetails newRecordDetails;
-                Integer orders = newExercise.getOrders();
+        List<Long> deleteDetailsIds = record.getDetailsList().stream().map(RecordDetails::getId).collect(Collectors.toList());// 삭제할 디테일 루틴 id 리스트
 
-                if (newExercise.getSource().equals(DEFAULT)) {      // 일반 운동일 떄
-                    Exercise exercise = getExercise(newExercise.getExerciseId());       // 운동 객체 조회
-                    newRecordDetails = RecordDetails.of(exercise, record,orders);
-                } else {        // 커스텀 운동일 때
-                    CustomExercise customExercise = getCustomExercise(newExercise.getExerciseId());
-                    newRecordDetails = RecordDetails.of(customExercise, record, orders);
-                }
-                // 기록 상세 저장
-                RecordDetails recordDetails = recordDetailsRepository.save(newRecordDetails);
-                // 세트 리스트를 생성
-                List<RecordSets> recordSets = new ArrayList<>();
-                for (RecordSetsDto set : newExercise.getRoutineSets()) {
-                    recordSets.add(recordSets(recordDetails, set)); // 세트 리스트에 담는다.
-                }
-                recordDetailsList.add(recordDetails);       // 기록 리스트에 담는다.
-                newRecordDetails.setSetsList(recordSets);   // 양방향 세트 매핑에 사용할 리스트를 담는다.
-            }
-            record.setDetailsList(recordDetailsList);      // 양방향 레코드 매핑에 사용할 리스트를 담는다.
-        }
+        List<RecordDetails> newDetails = new ArrayList<>();
+        List<RecordSets> newSets = new ArrayList<>();
 
-
-        // 삭제 할 세트수가 존재시
-        if (deleteSets !=null){
-            for (Long setsId : deleteSets) {
-                recordSetsRepository.deleteById(setsId);        // 세트 데이터 삭제
-            }
-            em.flush();     // 삭제후 데이터가 영속화 되어 있는 상태이기때문에 삭제된 데이터를 flush 를 통해 적용해준다.
-        }
-
-        // 삭제 할 운동이 존재시
-        if (deleteExercises!=null){
-            for (Long detailsId : deleteExercises) {
-                recordDetailsRepository.deleteById(detailsId); // 상세 기록 삭제
-            }
-            em.flush();     // 삭제후 데이터가 영속화 되어 있는 상태이기때문에 삭제된 데이터를 flush 를 통해 적용해준다.
-        }
-
-
-        // 변경 할 운동 순서가 존재시
-        if (changeOrders != null){
-            for (ChangeOrders changeOrder : changeOrders) {
-                // 변경할 상세 기록 데이터가 있는지 확인후 없으면 400 예외 발생
-                RecordDetails details = recordDetailsRepository.findById(changeOrder.getRecordDetailsId()).orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
-                details.updateOrder(changeOrder.getOrders());   // 순서 변경
-            }
-        }
-
-        // 해당 기록에 저장된 상세기록 리스트를 가져온다.
-        List<RecordDetails> detailsList = record.getDetailsList();
         int recordSets = 0;
         int exerciseSize = 0;
         int recordVolume = 0;
         float totalMets = 0;
 
-        // 상세기록 리스트를 순환한다.
-        for (RecordDetails details : detailsList) {
+        for (RecordDto recordDto : recordDtos) {
             recordSets++;
             exerciseSize++;
-            int max1Rm = 0;     // 최대 1RM
-            int count = 0;      // 무게+횟수 기록 운동 갯수
-            int totalTimes = 0;     // 총 운동 시간(시간일때)
-            int maxReps = 0;        // 총 운동 횟수(무게+횟수 , 횟수)
-            int totalVolume = 0;    // 총 볼륨(무게 + 횟수)
-            int totalSets = 0;      // 총 진행한 세트수
-            int totalReps = 0;      // 총 진행한 횟수
 
-            if (details.getExercise()!=null){
-                totalMets += details.getExercise().getMets();
-            }else
-                totalMets += 4;
-            // 세트 리스트를 순환한다.
-            for (RecordSets recordSet :  details.getSetsList()) {
-                Integer weight = recordSet.getWeight();     // 무게
-                Integer reps = recordSet.getReps();         // 횟수
-                Integer times = recordSet.getTimes();       // 시간
-                totalSets++;        // 세트수 증가
-                if (weight!=null&& reps!=null){     // 무게 + 횟수일 떄
-                    max1Rm+= calculate1RM(weight,reps); //1RM 계산
-                    totalVolume += reps*weight; // 총 볼륨 계산
-                    recordVolume +=  reps*weight; // 기록 볼륨 누적
-                    totalReps += reps;      // 횟수 계싼
-                    count++;        // 운동 데이터 수 증가
-                }else if (times!=null){ // 시간일때
-                    totalTimes += times;
-                }else{
-                    maxReps = Math.max(reps,maxReps); // 최대 횟수 갱신
-                    totalReps += reps;
+            Object exercise;
+            if ("default".equals(recordDto.getSource())) {
+                Exercise defaultExercise = getExercise(recordDto.getExerciseId());
+                exercise = defaultExercise;
+                totalMets   += defaultExercise.getMets();
+            } else {
+                exercise = getCustomExercise(recordDto.getExerciseId());
+                totalMets   += 4;
+            }
+
+            RecordDetails recordDetails = RecordDetails.create(exercise, record, recordDto.getOrders());
+
+            Integer max1Rm = 0; // 최대 1RM
+            int count = 0; // 무게+횟수 기록 운동 갯수
+            Integer totalTimes = 0; // 총 운동 시간(시간일때)
+            int maxReps = 0; // 총 운동 횟수
+            int totalVolume = 0; // 총 볼륨
+            int totalSets = 0; // 총 진행한 세트수
+            int totalReps = 0; // 총 진행한 횟수
+
+            for (RecordSetsDto recordSetsDto : recordDto.getSets()) {
+                Integer reps = recordSetsDto.getReps();
+                Integer weight = recordSetsDto.getWeight();
+                Integer times = recordSetsDto.getTimes();
+                totalSets++; //세트수 증가
+
+                if (reps != null && weight != null) { // 무게 + 횟수일때
+                    newSets.add(RecordSets.ofWeightAndSets(weight, reps, recordDetails));
+                    max1Rm += calculate1RM(weight, reps); // 1RM 계산
+                    totalVolume += reps * weight; // 총 볼륨 계산
+                    recordVolume += reps * weight; // 기록 볼륨 누적
+                    totalReps += reps; // 총 횟수 계산
+                    count++;
+                } else if (times != null) { // 시간일때
+                    newSets.add(RecordSets.ofTimes(times, reps, recordDetails));
+                    totalTimes += times; // 총 시간 누적
+                } else if (reps != null) { // 횟수만 있을때
+                    newSets.add(RecordSets.ofSets(reps, recordDetails));
+                    maxReps = Math.max(reps, maxReps); // 최대 횟수 갱신
+                    totalReps += reps; // 총 횟수 계산
                 }
             }
 
-            details.updateSets(totalSets);      // 총 세트수 업데이트
-            if (details.getMax1RM()!=null){     // 무게 + 횟수 일때
-                details.updateMax1RM(max1Rm/count); // 최대 1RM 갱신
-                details.updateDetailsVolume(totalVolume);   // 총 볼륨 갱신
-                details.updateDetailsReps(totalReps);       // 총 횟수 갱신
-            }else if (details.getSumTimes()!=null){     // 시간일 떄
-                details.updateDetailsTimes(totalTimes);     // 총 누적 시간 갱신
-            }else{
-                details.updateMaxReps(maxReps);     // 최대 횟수 갱신
-                details.updateDetailsReps(totalReps);       // 운동 상세 갱신
+            recordDetails.setDetailsSets(totalSets); // 총 세트수 설정
+
+            if (count > 0 && max1Rm != 0) { // 무게 + 횟수 있을때
+                recordDetails.setMax1RM(max1Rm / count); // 평균 1RM 설정
+                recordDetails.setDetailsVolume(totalVolume); // 볼륨 설정
+                recordDetails.setDetailsReps(totalReps); // 총 횟수 설정
+            } else if (totalTimes > 0) { // 시간일때
+                recordDetails.setSumTimes(totalTimes); // 총 시간 설정
+            } else { // 횟수일때
+                recordDetails.setMaxReps(maxReps); // 최대 횟수 설정
+                recordDetails.setDetailsReps(totalReps); // 총 횟수 설정
             }
+
+            newDetails.add(recordDetails);
         }
 
-        int totalCalorie = calculateTotalCalorie(record.getStartTime(), record.getEndTime(), record.getMember(), exerciseSize, totalMets);  // 수정된 데이터의 칼로리 계산
-        record.updateRecord(recordVolume,totalCalorie,recordSets); // 최종 기록 도메인 데이터 수정
+        recordDetailsRepository.saveAll(newDetails);
+        recordBatchService.insertSetsInBatch(newSets);      // 배치를 통한 대량 저장
+
+        int totalCalorie = calculateTotalCalorie(record.getStartTime(), record.getEndTime(), member, exerciseSize, totalMets);  // 수정된 데이터의 칼로리 계산
+        record.updateRecord(recordVolume, totalCalorie,recordSets); // 최종 기록 도메인 데이터 수정
+
+        recordBatchService.deleteDetailsIdsInBatch(deleteDetailsIds);   // 비동기로 삭제
     }
 
     /**
