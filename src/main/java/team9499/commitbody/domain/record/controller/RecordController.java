@@ -76,7 +76,7 @@ public class RecordController {
         return  ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",recordResponse));
     }
 
-    @Operation(summary = "기록 수정", description = "사용자가 완료한 기록의 정보를 수정 합니다.(운동 순서, 새 운동 추가,운동 삭제, 세트 추가/삭제/업데이트)")
+    @Operation(summary = "기록 수정", description = "사용자가 완료한 기록의 정보를 수정 합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value = "{\"success\":true,\"message\":\"기록 수정 완료\"}"))),
@@ -84,6 +84,8 @@ public class RecordController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 정보 미존재 시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"해당 정보를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "400_3", description = "BADREQUEST - 존재하지 않는 시용자 요청시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 찾을수 없습니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
