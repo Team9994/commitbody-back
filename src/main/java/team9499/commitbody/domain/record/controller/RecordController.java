@@ -89,10 +89,11 @@ public class RecordController {
     })
     @PutMapping("/record/{recordId}")
     public ResponseEntity<?> updateRoutine(@Parameter(description = "기록 ID") @PathVariable("recordId")Long recordId,
-                                           @RequestBody UpdateRecordRequest updateRecordRequest,
+                                           @RequestBody UpdateRecordRequest updateV2RecordRequest,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        recordService.updateRecord(memberId,recordId,updateRecordRequest.getUpdateSets(),updateRecordRequest.getNewExercises(),updateRecordRequest.getDeleteSetIds(),updateRecordRequest.getDeleteDetailsIds(),updateRecordRequest.getChangeOrders());
+
+        recordService.updateRecord(memberId,recordId,updateV2RecordRequest.getRecordName(),updateV2RecordRequest.getRecordDtoList());
         return ResponseEntity.ok(new SuccessResponse<>(true,"기록 수정 완료"));
     }
 
