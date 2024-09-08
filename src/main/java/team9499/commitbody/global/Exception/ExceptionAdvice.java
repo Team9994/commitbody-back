@@ -1,6 +1,8 @@
 package team9499.commitbody.global.Exception;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -48,5 +50,11 @@ public class ExceptionAdvice {
         ErrorResponse er = new ErrorResponse<>(false, e.getMessage());
         e.printStackTrace();
         return ResponseEntity.status(e.getExceptionStatus()).body(er);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        ErrorResponse er = new ErrorResponse(false,"올바른 타입이나 값을 작성해주세요");
+        return ResponseEntity.status(400).body(er);
     }
 }
