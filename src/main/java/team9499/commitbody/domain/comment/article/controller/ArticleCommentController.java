@@ -62,15 +62,15 @@ public class ArticleCommentController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
-    @GetMapping("/article/comment/{id}")
-    public ResponseEntity<?> all(@PathVariable("id") Long id,
+    @GetMapping("/article/{articleId}/comment")
+    public ResponseEntity<?> all(@PathVariable("articleId") Long articleId,
                                  @RequestParam(name = "lastId",required = false) Long lastId,
                                  @RequestParam(name = "lastLikeCount",required = false) Integer lastLikeCount,
                                  @RequestParam(name = "sortOrder",required = false,defaultValue = "RECENT") OrderType orderType,
                                  @AuthenticationPrincipal PrincipalDetails principalDetails,
                                  @Parameter(example = "{\"size\":10}")@PageableDefault Pageable pageable){
         Long memberId = getMemberId(principalDetails);
-        ArticleCommentResponse comments = articleCommentService.getComments(id, memberId, lastId, lastLikeCount,orderType, pageable);
+        ArticleCommentResponse comments = articleCommentService.getComments(articleId, memberId, lastId, lastLikeCount,orderType, pageable);
         
         return ResponseEntity.ok(new SuccessResponse<>(true,"댓글 조회",comments));
     }

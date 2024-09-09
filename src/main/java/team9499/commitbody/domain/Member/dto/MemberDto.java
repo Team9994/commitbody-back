@@ -46,6 +46,8 @@ public class MemberDto {
 
     private LoginType loginType;        //로그인 타입 (KAKAO, GOOGLE)
 
+    private Boolean blockStatus;    // 차단 상태
+
     @JsonIgnore
     private boolean notificationEnabled; //알림 유무
 

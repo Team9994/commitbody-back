@@ -12,6 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 public class ArticleCommentResponse {
 
+    private Integer totalCount;
+
     private boolean hasNext;
 
     private List<ArticleCommentDto> comments;
