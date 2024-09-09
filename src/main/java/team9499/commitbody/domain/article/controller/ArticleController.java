@@ -19,6 +19,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import team9499.commitbody.domain.article.domain.ArticleType;
+import team9499.commitbody.domain.article.dto.ArticleDto;
 import team9499.commitbody.domain.article.dto.request.ArticleSaveRequest;
 import team9499.commitbody.domain.article.dto.response.ProfileArticleResponse;
 import team9499.commitbody.domain.article.service.ArticleService;
@@ -58,6 +59,14 @@ public class ArticleController {
         Long memberId = getMemberId(principalDetails);
         Long articleId = articleService.saveArticle(memberId, request.getTitle(), request.getContent(), request.getArticleType(), request.getArticleCategory(), request.getVisibility(), file);
         return ResponseEntity.ok(new SuccessResponse<>(true,"둥록 성공",articleId));
+    }
+
+    @GetMapping("/article/{articleId}")
+    public ResponseEntity<?> getDetailsArticle(@PathVariable("articleId") Long articleId,
+                                               @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        ArticleDto detailArticle = articleService.getDetailArticle(memberId, articleId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",detailArticle));
     }
 
     @Operation(summary = "프로필 페이지 - 작성한 게시글 조회", description = "프로필 사용자가 작성한 게시글을 조회합니다. Default Size = 12 ",tags = "프로필")
