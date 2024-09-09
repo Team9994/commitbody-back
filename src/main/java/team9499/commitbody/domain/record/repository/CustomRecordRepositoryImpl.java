@@ -1,14 +1,10 @@
 package team9499.commitbody.domain.record.repository;
 
-import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
@@ -23,6 +19,7 @@ import team9499.commitbody.global.Exception.NoSuchException;
 
 import java.time.*;
 import java.time.format.TextStyle;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -166,12 +163,12 @@ public class CustomRecordRepositoryImpl implements CustomRecordRepository{
      * @param memberId  로그인한 사용자 아이디
      */
     @Override
-    public Map<String, RecordData> getRecordCountAdnDataForMonth(Long memberId){
+    public Map<String, RecordData> getRecordCountAdnDataForMonth(Long memberId,Integer year, Integer month){
         // 현재 시간으로부터 해당 달 조회
-        Result result = getResult();
+        Result result = getResult(year,month);
 
         List<Record> records = jpaQueryFactory.selectFrom(record)
-                .where(record.member.id.eq(memberId).and(record.endTime.between(result.startOfDay(), result.lastOfDay())))
+                .where(record.member.id.eq(memberId).and(record.endTime.between(result.from(), result.to())))
                 .orderBy(record.endTime.asc()).fetch();
 
         Map<String, RecordData> dayRecordCount = new LinkedHashMap<>();
@@ -207,54 +204,39 @@ public class CustomRecordRepositoryImpl implements CustomRecordRepository{
     /**
      * 해당달의 진행만 모든 기록을 무한 스크롤 조회
      * @param memberId  로그인한 사용자 ID
-     * @param lastTime  마지막 시간
-     * @param pageable  페이징 정보
      */
     @Override
-    public Slice<RecordDay> getRecordPage(Long memberId,LocalDateTime lastTime,Pageable pageable){
-        // 마지막 시간으로 lastTime 보다 작은 시간의 값을 조회
-        BooleanBuilder builder = new BooleanBuilder();
-        if (lastTime!=null){
-            builder.and(record.endTime.lt(lastTime));
-        }
-        Result result = getResult();
+    public List<RecordDay> getRecordPage(Long memberId,Integer year, Integer month){
+
+        Result result = getResult(year, month);
 
         List<Record> records = jpaQueryFactory.selectFrom(record)
-                .where(builder,record.member.id.eq(memberId).and(record.endTime.between(result.startOfDay(), result.lastOfDay())))
-                .limit(pageable.getPageSize()+1)
+                .where(record.member.id.eq(memberId).and(record.endTime.between(result.from(), result.to())))
                 .orderBy(record.endTime.desc()).fetch();
-
-        // 다음 페이지 존재 여부
-        boolean hasNext = false;
-        if (records.size() >pageable.getPageSize()){
-            records.remove(pageable.getPageSize());
-            hasNext = true;
-        }
         
         // 데이터 변환
         List<RecordDay> recordData = records.stream()
                 .map(record ->
                         new RecordDay(record.getId(),record.getRecordName(),
                                 converterTime(record)+" · "+converterDurationTime(record),record.getEndTime())).collect(Collectors.toList());
-
-        return new SliceImpl<>(recordData, pageable, hasNext);
+        return recordData;
     }
+
 
     /*
     현재 일 기준으로 해당달의 1일부터 마지막 일의 시간을 구하는 메서드
      */
-    private static Result getResult() {
-        LocalDate now = LocalDate.now();
-        LocalDateTime startOfDay = now.withDayOfMonth(1).atStartOfDay();
-        LocalDateTime lastOfDay = now.withDayOfMonth(now.lengthOfMonth()).atStartOfDay();
-        Result result = new Result(startOfDay, lastOfDay);
+    private static Result getResult(Integer year, Integer month) {
+        LocalDateTime from = LocalDateTime.of(year, month, 1, 00, 00);      // 해당 시작 날짜
+        LocalDateTime to = LocalDate.of(year, month, 1).with(TemporalAdjusters.lastDayOfMonth()).atTime(23, 59, 59);    // 해당 마짐가 날짜
+        Result result = new Result(from, to);
         return result;
     }
 
     /*
     레코드 생성
      */
-    private record Result(LocalDateTime startOfDay, LocalDateTime lastOfDay) {
+    private record Result(LocalDateTime from, LocalDateTime to) {
     }
 
     /*

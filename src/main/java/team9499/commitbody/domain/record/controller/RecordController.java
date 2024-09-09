@@ -9,8 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +20,6 @@ import team9499.commitbody.domain.record.service.RecordService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
-
-import java.time.LocalDateTime;
 
 @Tag(name = "기록",description = "운동 기록이 관련 API")
 @RestController
@@ -117,20 +113,20 @@ public class RecordController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
     }
 
-    @Operation(summary = "기록 조회", description = "사용자가 진행한 기록의 대해 모두 조회합니다. Default : size - 10, lastTime은 다음페이지 존재시 마지막 시간을 보냅니다.")
+    @Operation(summary = "기록 조회", description = "사용자가 진행한 기록의 대해 모두 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
-                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"dayRecordCount\":{\"1\":{\"day\":\"2024.08.01.(목)\",\"recordDays\":[{\"recordId\":56,\"recordName\":\"테스트\",\"durationTime\":\"2024.08.01.(목) · 18:37~20:37\"}]},\"3\":{\"day\":\"2024.08.03.(토)\",\"recordDays\":[{\"recordId\":58,\"recordName\":\"테스트\",\"durationTime\":\"2024.08.03.(토) · 18:37~20:37\"}]}},\"recordPage\":{\"hasNext\":false,\"records\":[{\"recordId\":57,\"recordName\":\"테스트\",\"durationTime\":\"2024.08.01.(목) · 18:37~20:37\",\"lastTime\":\"2024-08-01T20:37:32.71\"}]}}}"))),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"조회 성공\",\"data\":{\"dayRecordCount\":{\"2\":{\"day\":\"2024.09.02.(월)\",\"recordDays\":[{\"recordId\":63,\"recordName\":\"루틴 수정1\",\"durationTime\":\"2024.09.02.(월) · 4:34~6:34\"}]}},\"records\":[{\"recordId\":63,\"recordName\":\"루틴 수정1\",\"durationTime\":\"2024.09.02.(월) · 4:34~6:34\",\"lastTime\":\"2024-09-02T06:34:07.059\"}]}}"))),
             @ApiResponse(responseCode = "400", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/record")
-    public ResponseEntity<?> get(@RequestParam(value = "lastTime",required = false) LocalDateTime lastTime,
-                                 @Parameter(example = "{\"size\":10}")@PageableDefault(size = 10) Pageable pageable,
+    public ResponseEntity<?> get(@RequestParam("year") Integer year,
+                                 @RequestParam("month") Integer month,
                                  @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        RecordMonthResponse recordForMember = recordService.getRecordForMember(memberId,lastTime,pageable);
+        RecordMonthResponse recordForMember = recordService.getRecordForMember(memberId,year,month);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",recordForMember));
     }
 

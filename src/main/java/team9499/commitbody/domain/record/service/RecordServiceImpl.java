@@ -3,8 +3,6 @@ package team9499.commitbody.domain.record.service;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
@@ -279,35 +277,15 @@ public class RecordServiceImpl implements RecordService{
     /**
      * 해당 사용자의 운동 기록을 달력, 모든 데이터를 조회하여 RecordMonthResponse 적재
      * @param memberId  로그인한 사용자 ID
-     * @param lastTime  마지막 시간
-     * @param pageable  페이징 저보
      * @return  RecordMonthResponse반환
      */
     @Transactional(readOnly = true)
     @Override
-    public RecordMonthResponse getRecordForMember(Long memberId, LocalDateTime lastTime, Pageable pageable) {
-        Map<String, RecordData> recordCountAdnDataForMonth = recordRepository.getRecordCountAdnDataForMonth(memberId);  //일별 기록
-        Slice<RecordDay> recordDays = recordRepository.getRecordPage(memberId, lastTime, pageable); // 해당달 전제 데이터
-        RecordPage recordPage = new RecordPage(recordDays.hasNext(),recordDays.getContent());
+    public RecordMonthResponse getRecordForMember(Long memberId, Integer year, Integer month) {
+        Map<String, RecordData> recordCountAdnDataForMonth = recordRepository.getRecordCountAdnDataForMonth(memberId,year,month);  //일별 기록
+        List<RecordDay> recordPage = recordRepository.getRecordPage(memberId, year, month);// 해당달 전제 데이터
         return new RecordMonthResponse(recordCountAdnDataForMonth,recordPage);
 
-    }
-
-    /*
-    상세 운동의 대한 횟수를 새롭게 저장하는 메서드
-     */
-    private RecordSets recordSets(RecordDetails recordDetail, RecordSetsDto newSet) {
-        Integer sets = newSet.getReps();        // 세트수
-        Integer kg = newSet.getWeight();            // kg
-        Integer times = newSet.getTimes();      // 시간수
-        RecordSets recordSets;
-        if (sets != null & kg != null) {        // 무게-세트 기준
-            recordSets = RecordSets.ofWeightAndSets(kg, sets, recordDetail);
-        } else if (times != null) {             // 시간 기준
-            recordSets = RecordSets.ofTimes(times, sets,recordDetail);
-        } else                                  // 세트 기준
-            recordSets = RecordSets.ofSets(sets, recordDetail);
-        return recordSetsRepository.save(recordSets);
     }
 
     /*
