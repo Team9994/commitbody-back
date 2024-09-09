@@ -13,14 +13,19 @@ import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.article.domain.Visibility;
 import team9499.commitbody.domain.article.dto.ArticleDto;
+import team9499.commitbody.domain.block.domain.BlockMember;
+import team9499.commitbody.domain.block.domain.QBlockMember;
 import team9499.commitbody.domain.file.domain.File;
+import team9499.commitbody.domain.follow.domain.Follow;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
+import team9499.commitbody.domain.follow.domain.QFollow;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static team9499.commitbody.domain.article.domain.QArticle.*;
+import static team9499.commitbody.domain.block.domain.QBlockMember.*;
 import static team9499.commitbody.domain.comment.article.domain.QArticleComment.*;
 import static team9499.commitbody.domain.file.domain.QFile.*;
 import static team9499.commitbody.domain.follow.domain.QFollow.*;
@@ -65,6 +70,25 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
         boolean hasNext = isHasNext(pageable, collect);
 
         return new SliceImpl(collect,pageable,hasNext);
+    }
+
+    /**
+     * 게시글을 상세조회하는 쿼리
+     * @param loginMemberId 로그인한 사용자 ID
+     * @param articleId 조회할 게시글 ID
+     * @return ArticleDto 반환
+     */
+    @Override
+    public ArticleDto getDetailArticle(Long loginMemberId, Long articleId) {
+
+        List<Tuple> list = jpaQueryFactory.select(article, file,follow)
+                .from(article)
+                .leftJoin(file).on(article.id.eq(file.article.id)).fetchJoin()  // 파일 정보는 선택적이므로 LEFT JOIN
+                .leftJoin(follow).on(follow.follower.id.eq(loginMemberId).and(follow.following.id.eq(article.member.id)))
+                .where(article.id.eq(articleId)).fetch();
+
+        return list.stream()
+                .map(tuple -> ArticleDto.of(loginMemberId,tuple.get(article), converterImgUrl(tuple.get(file)),tuple.get(follow))).findFirst().get();
     }
 
     /*

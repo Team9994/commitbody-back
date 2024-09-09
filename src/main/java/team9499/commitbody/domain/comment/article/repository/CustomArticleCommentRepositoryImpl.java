@@ -1,6 +1,7 @@
 package team9499.commitbody.domain.comment.article.repository;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.CaseBuilder;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static team9499.commitbody.domain.block.domain.QBlockMember.blockMember;
 import static team9499.commitbody.domain.comment.article.domain.QArticleComment.*;
 
 @Slf4j
@@ -49,28 +51,29 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
 
         OrderSpecifier[] order = getSortOrder(orderType,articleComment);
         // 부모 댓글만 가져오기 위한 조건 추가
-        List<ArticleComment> comments = jpaQueryFactory
-                .selectFrom(articleComment)
+        List<Tuple> comments = jpaQueryFactory
+                .select(articleComment, blockMember)
+                .from(articleComment)
                 .leftJoin(articleComment.childComments, childComment).fetchJoin() // 페치 조인 사용
-                .where(builder.and(articleComment.article.id.eq(articleId))
-                        .and(articleComment.parent.isNull()))
+                .leftJoin(blockMember).on(blockMember.blocker.id.eq(memberId)) // 차단 정보를 articleComment의 member와 연결
+                .where(articleComment.article.id.eq(articleId)
+                        .and(articleComment.parent.isNull())
+                        .and(blockMember.isNull()).or(blockMember.blockStatus.eq(false)).or(blockMember.blocked.id.ne(articleComment.member.id))) // 차단되지 않았거나 차단이 해제된 경우
                 .orderBy(order) // 최신 댓글 우선 정렬
                 .limit(pageable.getPageSize() + 1)
                 .fetch();
 
+
+
         // 조회된 댓글을 순회하며 ArticleCommentDto의 매핑하여 객체를 담습니다.
         List<ArticleCommentDto> articleCommentDtos = comments.stream()
-                .map(parentComment -> {
+                .map(tuple -> {
                     ArticleCommentDto parentCommentDto = ArticleCommentDto.of(
-                            parentComment.getId(),
-                            parentComment.getContent(),
-                            parentComment.getMember().getNickname(),
-                            parentComment.getMember().getProfile(),
-                            TimeConverter.converter(parentComment.getCreatedAt()),
-                            parentComment.getLikeCount(),
-                            checkWriter(parentComment.getMember().getId(), memberId)    // 사용자인지 체크
+                            tuple.get(articleComment),
+                            TimeConverter.converter(tuple.get(articleComment).getCreatedAt()),
+                            checkWriter(tuple.get(articleComment.member.id), memberId)
                     );
-                    parentCommentDto.setReplyCount(parentComment.getChildComments().size());
+                    parentCommentDto.setReplyCount(tuple.get(articleComment.childComments.size()));
                     return parentCommentDto;
                 })
                 .collect(Collectors.toList());      // 리시트로 반환
@@ -82,6 +85,21 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
             articleCommentDtos.remove(pageable.getPageSize());
         }
         return new SliceImpl<>(articleCommentDtos, pageable, hasNext);
+    }
+
+    @Override
+    public Integer getCommentCount(Long articleId, Long memberId) {
+        List<ArticleComment> fetch = jpaQueryFactory
+                .select(articleComment)
+                .from(articleComment)
+                .leftJoin(articleComment.childComments, childComment).fetchJoin() // 페치 조인 사용
+                .leftJoin(blockMember).on(blockMember.blocker.id.eq(memberId)) // 차단 정보를 articleComment의 member와 연결
+                .where(articleComment.article.id.eq(articleId)
+                        .and(articleComment.parent.isNull())
+                        .and(blockMember.isNull()).or(blockMember.blockStatus.eq(false)).or(blockMember.blocked.id.ne(articleComment.member.id)))
+                .fetch();
+        int size = fetch.size();
+        return size;
     }
 
     /**

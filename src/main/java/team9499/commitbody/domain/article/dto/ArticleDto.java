@@ -2,8 +2,12 @@ package team9499.commitbody.domain.article.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
+import team9499.commitbody.domain.Member.domain.Member;
+import team9499.commitbody.domain.Member.dto.MemberDto;
 import team9499.commitbody.domain.article.domain.Article;
 import team9499.commitbody.domain.article.domain.ArticleCategory;
+import team9499.commitbody.domain.follow.domain.Follow;
+import team9499.commitbody.domain.follow.domain.FollowStatus;
 import team9499.commitbody.global.utils.TimeConverter;
 
 @Data
@@ -15,7 +19,13 @@ public class ArticleDto {
 
     private Long articleId;     // 게시글 ID
 
+    private boolean postOwner;      // 게시글 작성자 체크   [ture : 작성자 , false : 타사용자]
+
+    private FollowStatus followStatus; // 팔로우 상태
+
     private String title;       // 게시글 제목
+
+    private String content;     //게시글 내용
 
     private ArticleCategory articleCategory;        // 게시글 타입
 
@@ -27,6 +37,8 @@ public class ArticleDto {
 
     private String imageUrl;        // 이미지 url
 
+    private MemberDto member;       // 사용자
+
 
     public static ArticleDto of(Long articleId, String imageUrl){
         return ArticleDto.builder().articleId(articleId).imageUrl(imageUrl).build();
@@ -35,6 +47,15 @@ public class ArticleDto {
     public static ArticleDto of(Article article, String imageUrl){
         return ArticleDto.builder().articleId(article.getId()).title(article.getTitle()).articleCategory(article.getArticleCategory()).time(TimeConverter.converter(article.getCreatedAt())).likeCount(article.getLikeCount())
                 .commentCount(article.getCommentCount()).imageUrl(imageUrl).build();
+    }
+
+    public static ArticleDto of(Long loginMemberId,Article article, String imageUrl, Follow follow){
+        Member member = article.getMember();
+        MemberDto memberDto = MemberDto.builder().memberId(member.getId()).nickname(member.getNickname()).profile(member.getProfile()).build();
+        return ArticleDto.builder().articleId(article.getId()).title(article.getTitle()).content(article.getContent()).articleCategory(article.getArticleCategory()).time(TimeConverter.converter(article.getCreatedAt())).likeCount(article.getLikeCount())
+                .commentCount(article.getCommentCount()).imageUrl(imageUrl).member(memberDto)
+                .postOwner(!loginMemberId.equals(member.getId()) ? false : true)
+                .followStatus(follow == null ? null : follow.getStatus()).build();
     }
 
 }

@@ -15,6 +15,7 @@ import team9499.commitbody.domain.article.domain.Visibility;
 import team9499.commitbody.domain.article.dto.ArticleDto;
 import team9499.commitbody.domain.article.dto.response.ProfileArticleResponse;
 import team9499.commitbody.domain.article.repository.ArticleRepository;
+import team9499.commitbody.domain.block.servcice.BlockMemberService;
 import team9499.commitbody.domain.file.service.FileService;
 import team9499.commitbody.global.redis.RedisService;
 
@@ -27,6 +28,7 @@ public class ArticleServiceImpl implements ArticleService{
     private final RedisService redisService;
     private final ArticleRepository articleRepository;
     private final FileService fileService;
+    private final BlockMemberService blockMemberService;
 
 
     @Override
@@ -36,6 +38,25 @@ public class ArticleServiceImpl implements ArticleService{
         articleRepository.save(article);
         fileService.saveArticleFile(article,file);
         return article.getId();
+    }
+
+    /**
+     * 작성된 게시글의 대한 상세조회는 메서드
+     * 작성자가 차단한 사용자가 조회시 400 예외 발생하며, 타 사용자의 게시글 조회시 차단 여부의 따른 Boolean 타입으로 차단 여부 표시
+     * @param memberId  로그인한 사용자 ID
+     * @param articleId 조회할 게시글 ID
+     * @return ArticleDto 반환
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ArticleDto getDetailArticle(Long memberId, Long articleId) {
+        ArticleDto detailArticle = articleRepository.getDetailArticle(memberId, articleId);
+        // 차단 여부 체크
+        Boolean blockStatus = blockMemberService.checkBlock(detailArticle.getMember().getMemberId(),memberId);
+        if (!detailArticle.getMember().getMemberId().equals(memberId))
+            detailArticle.getMember().setBlockStatus(blockStatus);
+
+        return detailArticle;
     }
 
     /**

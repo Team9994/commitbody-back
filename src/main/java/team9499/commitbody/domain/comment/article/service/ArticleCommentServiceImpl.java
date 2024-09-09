@@ -90,8 +90,10 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
     @Override
     public ArticleCommentResponse getComments(Long articleId, Long memberId, Long lastId,Integer lastLikeCount,OrderType orderType, Pageable pageable) {
 
-        Slice<ArticleCommentDto> allCommentByArticle = articleCommentRepository.getAllCommentByArticle(articleId, memberId, lastId,lastLikeCount,orderType,pageable);
 
-        return new ArticleCommentResponse(allCommentByArticle.hasNext(),allCommentByArticle.getContent());
+        Slice<ArticleCommentDto> allCommentByArticle = articleCommentRepository.getAllCommentByArticle(articleId, memberId, lastId,lastLikeCount,orderType,pageable);
+        Integer commentCount = articleCommentRepository.getCommentCount(articleId, memberId);
+
+        return new ArticleCommentResponse(commentCount,allCommentByArticle.hasNext(),allCommentByArticle.getContent());
     }
 }
