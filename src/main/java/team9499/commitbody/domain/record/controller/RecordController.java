@@ -23,6 +23,7 @@ import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Tag(name = "기록",description = "운동 기록이 관련 API")
@@ -126,11 +127,11 @@ public class RecordController {
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/record")
-    public ResponseEntity<?> get(@RequestParam(value = "lastTime",required = false) LocalDateTime lastTime,
-                                 @Parameter(example = "{\"size\":10}")@PageableDefault(size = 10) Pageable pageable,
+    public ResponseEntity<?> get(@RequestParam("year") Integer year,
+                                 @RequestParam("month") Integer month,
                                  @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        RecordMonthResponse recordForMember = recordService.getRecordForMember(memberId,lastTime,pageable);
+        RecordMonthResponse recordForMember = recordService.getRecordForMember(memberId,year,month);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",recordForMember));
     }
 

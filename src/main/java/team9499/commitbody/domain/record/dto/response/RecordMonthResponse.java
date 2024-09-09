@@ -16,16 +16,8 @@ public class RecordMonthResponse {
 
     private Map<String,RecordData> dayRecordCount;        // 일별 진행 횟수
 
-    private RecordPage recordPage;
+    private List<RecordDay> records;
 
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class RecordPage {
-        private boolean hasNext;
-        private List<RecordDay> records;
-    }
 
     @Data
     @AllArgsConstructor
