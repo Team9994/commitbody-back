@@ -61,6 +61,16 @@ public class ArticleController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"둥록 성공",articleId));
     }
 
+    @Operation(summary = "게시글 상세 조회 - 기본 게시글 정보", description = "댓글을 제외한 게시글의 정보를 조회합니다. 차단된 사용자가 접근시 예외 발생",tags = "게시글")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"articleId\": 1, \"postOwner\": false, \"followStatus\": \"CANCEL\", \"title\": \"운동 게시글\", \"content\": \"운동 게시글의 내용입니다.\", \"time\": \"3일 전\", \"likeCount\": 0, \"commentCount\": 0, \"imageUrl\": \"https://d12ryzjapybmlj.cloudfront.net/images/10ee7e78-fd02-450e-a515-604d97d97c74.png\", \"member\": {\"memberId\": 2, \"nickname\": \"두번쨰닉네임\", \"profile\": \"https://d12ryzjapybmlj.cloudfront.net/default.PNG\", \"blockStatus\": false}}}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 차단된 사용자 접근시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 차단한 상태입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/article/{articleId}")
     public ResponseEntity<?> getDetailsArticle(@PathVariable("articleId") Long articleId,
                                                @AuthenticationPrincipal PrincipalDetails principalDetails){
@@ -77,6 +87,8 @@ public class ArticleController {
                     examples = @ExampleObject(value = "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"articles\": [{\"articleId\": 21, \"title\": \"제목\", \"articleCategory\": \"INFORMATION\", \"time\": \"2시간 전\", \"likeCount\": 0, \"commentCount\": 0, \"imageUrl\": \"등록된 이미지가 없습니다.\"}, {\"articleId\": 14, \"title\": \"운동 게시글\", \"articleCategory\": \"BODY_REVIEW\", \"time\": \"2일 전\", \"likeCount\": 0, \"commentCount\": 0, \"imageUrl\": \"https://d12ryzjapybmlj.cloudfront.net/images/925bf666-2787-4f31-89ab-ef24bd26d1d5.png\"}]}}"))),
             @ApiResponse(responseCode = "400", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400", description = "BADREQUEST - 차단된 사용자 접근시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 차단한 상태입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/my-page/articles/{id}")
