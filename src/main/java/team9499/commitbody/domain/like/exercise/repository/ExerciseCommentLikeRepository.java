@@ -12,4 +12,6 @@ public interface ExerciseCommentLikeRepository extends JpaRepository<ExerciseCom
 
     Optional<ExerciseCommentLike> findByMemberIdAndExerciseCommentId(Long memberId, Long exCommentId);
 
+    Optional<ExerciseCommentLike> findByMemberIdAndArticleIdAndExerciseCommentIsNull(Long memberId, Long articleId);
+
 }
