@@ -7,6 +7,8 @@ import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.article.domain.Article;
 import team9499.commitbody.domain.article.repository.ArticleRepository;
+import team9499.commitbody.domain.comment.article.domain.ArticleComment;
+import team9499.commitbody.domain.comment.article.repository.ArticleCommentRepository;
 import team9499.commitbody.domain.comment.exercise.domain.ExerciseComment;
 import team9499.commitbody.domain.comment.exercise.repository.ExerciseCommentRepository;
 import team9499.commitbody.domain.like.domain.ContentLike;
@@ -28,11 +30,13 @@ public class LikeServiceImpl implements LikeService {
     private final LikeRepository commentLikeRepository;
     private final ExerciseCommentRepository exerciseCommentRepository;
     private final ArticleRepository articleRepository;
+    private final ArticleCommentRepository articleCommentRepository;
     private final RedisService redisService;
     private final MemberRepository memberRepository;
 
     private final String ADD = "등록";
     private final String CANCEL ="해제";
+    private final LikeRepository likeRepository;
 
     /**
      * 운동 상세 페이지 - 댓글 좋아요 메서드
@@ -101,12 +105,49 @@ public class LikeServiceImpl implements LikeService {
         }
     }
 
+    /**
+     * 게시글글의 댓글을 좋아요하는 기능
+     * @param memberId 로그인한 사용자 ID
+     * @param commentId 좋아요할 댓글 ID
+     * @return
+     */
+    @Override
+    public String articleCommentLike(Long memberId, Long commentId) {
+        Optional<ContentLike> likeOptional = commentLikeRepository.findByMemberIdAndArticleCommentId(memberId, commentId);
+        ArticleComment articleComment = articleCommentRepository.findById(commentId).orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
+        Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
+        // 댓글의 최초 좋아요시
+        if (likeOptional.isEmpty()){
+            ContentLike contentLike = ContentLike.creatArticleCommentLike(member, articleComment);
+            likeRepository.save(contentLike);
+            getUpdateLikeCount(articleComment, true);
+            return ADD;
+        }else{
+            ContentLike contentLike = likeOptional.get();
+            if (contentLike.isLikeStatus()) {     // 만약 좋아요 상태가 true(좋아요 성공)이라면 false(좋아요 해제) 상태로 변경
+                getUpdateLikeCount(articleComment,false);  // 게시글의 좋아요수를 -1
+                contentLike.changeLike(false);
+                return CANCEL;
+            }else {     // 좋아요 상태가 false(취소) 상태라면 true(좋아요 성공)상태로 변경
+                getUpdateLikeCount(articleComment,true);
+                contentLike.changeLike(true);
+                return ADD;
+            }
+        }
+    }
+
     /*
     게시글의 좋아요 수를 조절하는 메서드
     type true = 일때 +1 , false = -1
      */
-    private static void getUpdateLikeCount(Article article,boolean type) {
-        Integer count = type ? article.getLikeCount() + 1 : article.getLikeCount()  -1;
-        article.updateLikeCount(count);
+    private static void getUpdateLikeCount(Object object,boolean type) {
+        if (object instanceof  Article){
+            Integer count = type ? ((Article) object).getLikeCount() + 1 : ((Article) object).getLikeCount()  -1;
+            ((Article) object).updateLikeCount(count);
+        }else if (object instanceof ArticleComment){
+            Integer count = type ? ((ArticleComment) object).getLikeCount() + 1 : ((ArticleComment) object).getLikeCount()  -1;
+            ((ArticleComment) object).updateLikeCount(count);
+        }
+
     }
 }

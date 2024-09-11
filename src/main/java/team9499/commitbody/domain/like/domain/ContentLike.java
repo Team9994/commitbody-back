@@ -45,6 +45,10 @@ public class ContentLike {
     public static ContentLike createArticleLike(Member member, Article article){
         return ContentLike.builder().member(member).article(article).likeStatus(true).build();
     }
+
+    public static ContentLike creatArticleCommentLike(Member member, ArticleComment articleComment){
+        return ContentLike.builder().member(member).articleComment(articleComment).likeStatus(true).build();
+    }
     public void changeLike(boolean likeStatus){
         this.likeStatus = likeStatus;
     }

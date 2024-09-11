@@ -63,4 +63,11 @@ public class LikeController {
         return ResponseEntity.ok(new SuccessResponse<>(true,articleLike));
     }
 
+    @PostMapping("/article/comment/like")
+    public ResponseEntity<?> articleCommentLike(@RequestBody Map<String, Long> articleLikeRequest,
+                                         @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = principalDetails.getMember().getId();
+        String articleLike = exerciseCommentLikeService.articleCommentLike(memberId,articleLikeRequest.get("commentId"));
+        return ResponseEntity.ok(new SuccessResponse<>(true,articleLike));
+    }
 }
