@@ -26,13 +26,14 @@ public class ArticleCommentDto {
     private boolean writer; //작성자
 
     private List<ArticleCommentDto> childComments;
+
     public static ArticleCommentDto of(Long commentId,String content,String nickname,String profile,String time,Integer likeCounter,boolean writer){
         return ArticleCommentDto.builder().commentId(commentId).content(content).profile(profile).nickname(nickname).time(time).likeCount(likeCounter).writer(writer).build();
     }
 
     public static ArticleCommentDto of(ArticleComment articleComment, String time, boolean writer){
         return ArticleCommentDto.builder().commentId(articleComment.getId()).content(articleComment.getContent()).profile(articleComment.getMember().getProfile())
-                .nickname(articleComment.getMember().getNickname()).time(time).likeCount(articleComment.getLikeCount()).writer(writer).build();
+                .nickname(articleComment.getMember().getNickname()).time(time).likeCount(articleComment.getLikeCount()).writer(writer).replyCount(articleComment.getChildComments().size()).build();
     }
 
 }

@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
+import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.comment.article.domain.ArticleComment;
 import team9499.commitbody.domain.comment.article.domain.OrderType;
 import team9499.commitbody.domain.comment.article.domain.QArticleComment;
@@ -52,7 +53,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
         OrderSpecifier[] order = getSortOrder(orderType,articleComment);
         // 부모 댓글만 가져오기 위한 조건 추가
         List<Tuple> comments = jpaQueryFactory
-                .select(articleComment, blockMember)
+                .select(articleComment, blockMember,articleComment.member)
                 .from(articleComment)
                 .leftJoin(articleComment.childComments, childComment).fetchJoin() // 페치 조인 사용
                 .leftJoin(blockMember).on(blockMember.blocker.id.eq(memberId)) // 차단 정보를 articleComment의 member와 연결
@@ -71,9 +72,8 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                     ArticleCommentDto parentCommentDto = ArticleCommentDto.of(
                             tuple.get(articleComment),
                             TimeConverter.converter(tuple.get(articleComment).getCreatedAt()),
-                            checkWriter(tuple.get(articleComment.member.id), memberId)
+                            checkWriter(tuple.get(articleComment.member), memberId)
                     );
-                    parentCommentDto.setReplyCount(tuple.get(articleComment.childComments.size()));
                     return parentCommentDto;
                 })
                 .collect(Collectors.toList());      // 리시트로 반환
@@ -132,7 +132,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
     /*
     댓글 작성자일경우 true 작성자가 아닐경우 false 반환
      */
-    static boolean checkWriter(Long parentId, Long memberId){
-        return parentId==memberId ? true : false;
+    static boolean checkWriter(Member member, Long memberId){
+        return member.getId().equals(memberId);
     }
 }
