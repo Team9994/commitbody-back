@@ -1,6 +1,6 @@
-package team9499.commitbody.domain.like.exercise.service;
+package team9499.commitbody.domain.like.service;
 
-public interface ExerciseCommentLikeService {
+public interface LikeService {
 
     String updateCommentLike(Long exCommentId, Long memberId);
 

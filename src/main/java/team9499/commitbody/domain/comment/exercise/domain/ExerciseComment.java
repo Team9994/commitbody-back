@@ -5,7 +5,7 @@ import lombok.*;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
-import team9499.commitbody.domain.like.exercise.domain.ExerciseCommentLike;
+import team9499.commitbody.domain.like.domain.ContentLike;
 import team9499.commitbody.global.utils.BaseTime;
 
 import java.util.List;
@@ -44,7 +44,7 @@ public class ExerciseComment extends BaseTime {
     private CustomExercise customExercise;
 
     @OneToMany(mappedBy = "exerciseComment",cascade = CascadeType.REMOVE)
-    private List<ExerciseCommentLike> exerciseCommentLikes;
+    private List<ContentLike> exerciseCommentLikes;
 
     private Integer likeCount;      // 좋아요수
 

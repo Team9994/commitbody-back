@@ -25,7 +25,7 @@ import team9499.commitbody.domain.exercise.repository.ExerciseInterestRepository
 import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
 import team9499.commitbody.domain.exercise.service.ExerciseInterestService;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
-import team9499.commitbody.domain.like.exercise.repository.ExerciseCommentLikeRepository;
+import team9499.commitbody.domain.like.repository.LikeRepository;
 import team9499.commitbody.domain.record.repository.RecordRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
@@ -45,7 +45,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     
     private final ElasticsearchClient elasticsearchClient;
     private final CustomExerciseRepository customExerciseRepository;
-    private final ExerciseCommentLikeRepository exerciseCommentLikeRepository;
+    private final LikeRepository commentLikeRepository;
     private final RecordRepository recordRepository;
     private final ExerciseInterestRepository exerciseInterestRepository;
     private final ExerciseInterestService exerciseInterestService;
@@ -304,7 +304,7 @@ public class ExerciseServiceImpl implements ExerciseService {
         CustomExercise customExercise = getCustomExercise(customExerciseId,memberId);
         recordRepository.deleteCustomExercise(customExercise.getId());                      // 운동 기록 삭제
         exerciseInterestRepository.deleteAllByCustomExerciseId(customExercise.getId());     // 관심 운동 삭제
-        exerciseCommentLikeRepository.deleteByCustomExerciseId(customExercise.getId());     // 댓글 좋아요 삭제
+        commentLikeRepository.deleteByCustomExerciseId(customExercise.getId());     // 댓글 좋아요 삭제
         customExerciseRepository.delete(customExercise);                    // 커스텀 운동 삭제
     }
 

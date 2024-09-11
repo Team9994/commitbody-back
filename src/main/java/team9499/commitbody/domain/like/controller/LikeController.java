@@ -1,4 +1,4 @@
-package team9499.commitbody.domain.like.exercise.controller;
+package team9499.commitbody.domain.like.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import team9499.commitbody.domain.like.exercise.service.ExerciseCommentLikeService;
+import team9499.commitbody.domain.like.service.LikeService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
@@ -21,9 +21,9 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
-public class ExerciseCommentLikeController {
+public class LikeController {
 
-    private final ExerciseCommentLikeService exerciseCommentLikeService;
+    private final LikeService exerciseCommentLikeService;
 
     @Operation(summary = "운동 댓글 좋아요", description = "운동 상세 페이지의 작성된 댓글을 좋아요/취소가 가능합니다. ",tags = "운동 상세")
     @ApiResponses(value = {

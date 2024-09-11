@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.comment.exercise.domain.ExerciseComment;
 import team9499.commitbody.domain.comment.exercise.dto.ExerciseCommentDto;
 import team9499.commitbody.domain.comment.exercise.repository.CustomExerciseCommentRepository;
+import team9499.commitbody.domain.like.domain.QContentLike;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static team9499.commitbody.domain.comment.exercise.domain.QExerciseComment.*;
-import static team9499.commitbody.domain.like.exercise.domain.QExerciseCommentLike.exerciseCommentLike;
+import static team9499.commitbody.domain.like.domain.QContentLike.*;
 
 @Slf4j
 @Repository
@@ -53,7 +54,7 @@ public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommen
         // 쿼리 실행
         List<ExerciseComment> exerciseComments = jpaQueryFactory.select(exerciseComment)
                 .from(exerciseComment)
-                .leftJoin(exerciseComment.exerciseCommentLikes, exerciseCommentLike).fetchJoin()
+                .leftJoin(exerciseComment.exerciseCommentLikes, contentLike).fetchJoin()
                 .where(builder)
                 .limit(pageable.getPageSize()+1)
                 .orderBy(exerciseComment.createdAt.desc())      // 최신순을 유지하기 위해 내림차순

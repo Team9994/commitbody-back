@@ -1,4 +1,4 @@
-package team9499.commitbody.domain.like.exercise.domain;
+package team9499.commitbody.domain.like.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,17 +6,18 @@ import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.article.domain.Article;
 import team9499.commitbody.domain.comment.article.domain.ArticleComment;
 import team9499.commitbody.domain.comment.exercise.domain.ExerciseComment;
+
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @ToString(exclude = {"articleComment,exercise_comment_id"})
-public class ExerciseCommentLike {
+public class ContentLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ex_comment_like_id")
+    @Column(name = "like_id")
     private Long id;
 
     private boolean likeStatus;     // 좋아요 상태
@@ -37,12 +38,12 @@ public class ExerciseCommentLike {
     @ManyToOne(fetch = FetchType.LAZY)
     private Article article;            // 게시글
 
-    public static ExerciseCommentLike createLike(Member member, ExerciseComment exerciseComment){
-        return ExerciseCommentLike.builder().member(member).exerciseComment(exerciseComment).likeStatus(false).build();
+    public static ContentLike createLike(Member member, ExerciseComment exerciseComment){
+        return ContentLike.builder().member(member).exerciseComment(exerciseComment).likeStatus(false).build();
     }
 
-    public static ExerciseCommentLike createArticleLike(Member member, Article article){
-        return ExerciseCommentLike.builder().member(member).article(article).likeStatus(true).build();
+    public static ContentLike createArticleLike(Member member, Article article){
+        return ContentLike.builder().member(member).article(article).likeStatus(true).build();
     }
     public void changeLike(boolean likeStatus){
         this.likeStatus = likeStatus;
