@@ -23,7 +23,7 @@ public class FcmService {
     public void sendFollowingMessage(String followingId,String content){
         String fcmToken = redisService.getFCMToken(followingId);
 
-        if (fcmToken.equals("")) return;
+        if (fcmTokenValid(fcmToken)) return;
 
         // 메시 객체 생성
         Message message = Message.builder()
@@ -48,7 +48,7 @@ public class FcmService {
      */
     public void sendReplyComment(String receiverId,String articleTitle,String content,String commentId){
         String fcmToken = redisService.getFCMToken(receiverId);      // 수신자
-        if (fcmToken.equals("")) return;
+        if (fcmTokenValid(fcmToken)) return;
 
         Message message = Message.builder()
                 .setToken(fcmToken)
@@ -70,7 +70,7 @@ public class FcmService {
      */
     public void sendComment(String receiverId,String articleTitle,String content,String commentId){
         String fcmToken = redisService.getFCMToken(receiverId);      // 수신자
-        if (fcmToken.equals("")) return;
+        if (fcmTokenValid(fcmToken)) return;
 
         Message message = Message.builder()
                 .setToken(fcmToken)
@@ -84,6 +84,50 @@ public class FcmService {
     }
 
 
+    /**
+     * 게시글 좋아요시 전송되는 알림 기능
+     * @param receiverId  알림수신자 ID
+     * @param articleId 좋아요한 게시글 ID
+     * @param content   알림 내용
+     */
+    public void sendArticleLike(String receiverId,String articleId,String content){
+        String fcmToken = redisService.getFCMToken(receiverId);
+        if (fcmTokenValid(fcmToken)) return;
+
+        Message message = Message.builder()
+                .setToken(fcmToken)
+                .setNotification(Notification.builder()
+                        .setTitle("게시글 좋아요 알림")
+                        .setBody(content)
+                        .build())
+                .putData("articleId", articleId)
+                .build();
+        send(message);
+    }
+
+    public void sendArticleCommentLike(String receiverId,String commentId,String content){
+        String fcmToken = redisService.getFCMToken(receiverId);
+        if (fcmTokenValid(fcmToken)) return;
+
+        Message message = Message.builder()
+                .setToken(fcmToken)
+                .setNotification(Notification.builder()
+                        .setTitle("게시글 댓글 좋아요 알림")
+                        .setBody(content)
+                        .build())
+                .putData("commentId", commentId)
+                .build();
+        send(message);
+    }
+
+
+
+    /*
+    토큰값이 존재하는지 검증 "" 빈값일 경우 false
+     */
+    private static boolean fcmTokenValid(String fcmToken) {
+        return fcmToken.equals("");
+    }
 
     private void send(Message message) {
         ApiFuture<String> response = FirebaseMessaging.getInstance().sendAsync(message);    // 비동기 전송

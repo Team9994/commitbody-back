@@ -15,6 +15,7 @@ import team9499.commitbody.domain.like.domain.ContentLike;
 import team9499.commitbody.domain.like.repository.LikeRepository;
 import team9499.commitbody.domain.like.service.LikeService;
 import team9499.commitbody.global.Exception.NoSuchException;
+import team9499.commitbody.global.notification.service.NotificationService;
 import team9499.commitbody.global.redis.RedisService;
 
 import java.util.Optional;
@@ -33,6 +34,8 @@ public class LikeServiceImpl implements LikeService {
     private final ArticleCommentRepository articleCommentRepository;
     private final RedisService redisService;
     private final MemberRepository memberRepository;
+    private final NotificationService notificationService;
+
 
     private final String ADD = "등록";
     private final String CANCEL ="해제";
@@ -83,22 +86,27 @@ public class LikeServiceImpl implements LikeService {
     public String articleLike(Long articleId, Long memberId) {
         Optional<ContentLike> commentLikeOptional = commentLikeRepository.findByMemberIdAndArticleIdAndExerciseCommentIsNull(memberId, articleId);
         Article article = articleRepository.findById(articleId).orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
+        Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
+
+
         // 만약 좋아요한 데이터가 존재하지않는다면 좋아요를 ture를한 상태로 데이터 생성
         if (commentLikeOptional.isEmpty()){
-            Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
             ContentLike articleLike = ContentLike.createArticleLike(member, article);
             getUpdateLikeCount(article,true);
             commentLikeRepository.save(articleLike);
+            notificationService.sendArticleLike(member,article.getMember().getId(),article.getId(),true);
             return ADD;
         }else{          // 만약 좋아요한 데이터자 존재할때
             ContentLike exerciseCommentLike = commentLikeOptional.get();
             if (exerciseCommentLike.isLikeStatus()) {     // 만약 좋아요 상태가 true(좋아요 성공)이라면 false(좋아요 해제) 상태로 변경
                 getUpdateLikeCount(article,false);  // 게시글의 좋아요수를 -1
                 exerciseCommentLike.changeLike(false);
+                notificationService.sendArticleLike(member,article.getMember().getId(),article.getId(),false);
                 return CANCEL;
             }else {     // 좋아요 상태가 false(취소) 상태라면 true(좋아요 성공)상태로 변경
                 exerciseCommentLike.changeLike(true);
                 getUpdateLikeCount(article,true);
+                notificationService.sendArticleLike(member,article.getMember().getId(),article.getId(),true);
                 return ADD;
             }
 
@@ -121,16 +129,19 @@ public class LikeServiceImpl implements LikeService {
             ContentLike contentLike = ContentLike.creatArticleCommentLike(member, articleComment);
             likeRepository.save(contentLike);
             getUpdateLikeCount(articleComment, true);
+            notificationService.sendCommentLike(member,articleComment.getMember().getId(),articleComment.getId(),true);
             return ADD;
         }else{
             ContentLike contentLike = likeOptional.get();
             if (contentLike.isLikeStatus()) {     // 만약 좋아요 상태가 true(좋아요 성공)이라면 false(좋아요 해제) 상태로 변경
                 getUpdateLikeCount(articleComment,false);  // 게시글의 좋아요수를 -1
                 contentLike.changeLike(false);
+                notificationService.sendCommentLike(member,articleComment.getMember().getId(),articleComment.getId(),false);
                 return CANCEL;
             }else {     // 좋아요 상태가 false(취소) 상태라면 true(좋아요 성공)상태로 변경
                 getUpdateLikeCount(articleComment,true);
                 contentLike.changeLike(true);
+                notificationService.sendCommentLike(member,articleComment.getMember().getId(),articleComment.getId(),true);
                 return ADD;
             }
         }
