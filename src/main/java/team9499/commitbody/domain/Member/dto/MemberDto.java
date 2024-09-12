@@ -55,7 +55,7 @@ public class MemberDto {
     private boolean isUserDeactivated; //알림유무(true : 알림 받기, false : 알림 안받기)
 
 
-    public MemberDto toMemberDTO(Member member){
+    public static MemberDto toMemberDTO(Member member){
         return MemberDto.builder()
                 .memberId(member.getId()).nickname(member.getNickname()).build();
     }

@@ -21,7 +21,6 @@ import team9499.commitbody.global.notification.service.NotificationService;
 import team9499.commitbody.global.redis.RedisService;
 
 
-
 @Slf4j
 @Service
 @Transactional
@@ -84,16 +83,26 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
      * @param lastLikeCount 마지막 댓글 좋아요 수 
      * @param orderType 정렬 타입
      * @param pageable  페이징 정보
-     * @return
      */
     @Transactional(readOnly = true)
     @Override
     public ArticleCommentResponse getComments(Long articleId, Long memberId, Long lastId,Integer lastLikeCount,OrderType orderType, Pageable pageable) {
-
-
         Slice<ArticleCommentDto> allCommentByArticle = articleCommentRepository.getAllCommentByArticle(articleId, memberId, lastId,lastLikeCount,orderType,pageable);
         Integer commentCount = articleCommentRepository.getCommentCount(articleId, memberId);
 
         return new ArticleCommentResponse(commentCount,allCommentByArticle.hasNext(),allCommentByArticle.getContent());
+    }
+
+    /**
+     * 댓글의 작성된 대댓글 무한 스크롤 방식으로 조회
+     * @param commentId 조회할 댓글 ID
+     * @param memberId  로그인한 사용자 ID
+     * @param pageable  페이징 정보
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ArticleCommentResponse getReplyComments(Long commentId, Long memberId,Long lastId,Pageable pageable) {
+        Slice<ArticleCommentDto> comments = articleCommentRepository.getAllReplyComments(commentId, memberId, lastId,pageable);
+        return new ArticleCommentResponse(comments.hasNext(),comments.getContent());
     }
 }

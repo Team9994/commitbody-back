@@ -14,6 +14,10 @@ import java.util.List;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
+@Table(indexes = {
+        @Index(name = "idx_article_comment_created_desc",columnList = "parent_id, created_at desc")
+})
+@ToString(exclude = {"childComments"})
 public class ArticleComment extends BaseTime {
 
     @Id
@@ -50,5 +54,9 @@ public class ArticleComment extends BaseTime {
     public void addChildComment(ArticleComment child) {
         childComments.add(child);
         child.setParent(this);
+    }
+
+    public void updateLikeCount(Integer count){
+        this.likeCount = count;
     }
 }

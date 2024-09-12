@@ -75,6 +75,24 @@ public class ArticleCommentController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"댓글 조회",comments));
     }
 
+    @Operation(summary = "운동 게시글 - 대댓글 조회", description = "운동 게시글의 작성된 댓글의 대댓글을 조회합니다.",tags = "게시글")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"대댓글 조회\", \"data\": {\"hasNext\": false, \"comments\": [{\"commentId\": 26, \"content\": \"대댓글?\", \"nickname\": \"테스트닉네임\", \"profile\": \"https://d12ryzjapybmlj.cloudfront.net/default.PNG\", \"time\": \"5시간 전\", \"likeCount\": 0, \"writer\": true}]}}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
+    @GetMapping("/article/comment/{commentId}/reply")
+    public ResponseEntity<?> allReplyComments(@PathVariable("commentId") Long commentId,
+                                              @RequestParam(value = "lastId",required = false)Long lastId,
+                                              @AuthenticationPrincipal PrincipalDetails principalDetails,
+                                              @Parameter(example = "{\"size\":10}")@PageableDefault Pageable pageable){
+        Long memberId = getMemberId(principalDetails);
+        ArticleCommentResponse replyComments = articleCommentService.getReplyComments(commentId, memberId, lastId, pageable);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"대댓글 조회",replyComments));
+    }
+
     private static Long getMemberId(PrincipalDetails principalDetails) {
         Long memberId = principalDetails.getMember().getId();
         return memberId;

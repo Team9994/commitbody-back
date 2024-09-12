@@ -2,5 +2,10 @@ package team9499.commitbody.global.notification.domain;
 
 public enum NotificationType {
 
-    FOLLOW,COMMENT,LIKE,REPLY_COMMENT
+    FOLLOW,
+    COMMENT,
+    REPLY_COMMENT,
+    ARTICLE_LIKE,
+    COMMENT_LIKE
+
 }
