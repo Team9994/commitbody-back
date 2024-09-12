@@ -8,6 +8,10 @@ import team9499.commitbody.global.utils.BaseTime;
 @Entity
 @Data
 @Builder
+@Table(indexes ={
+        @Index(name = "idx_blocker_id",columnList = "blocker_id"),
+        @Index(name = "idx_blocked_id",columnList = "blocked_id")
+})
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @ToString(exclude = "{blocker,blocked}")
@@ -18,11 +22,11 @@ public class BlockMember extends BaseTime {
     @Column(name = "block_id")
     private Long id;
 
-    @JoinColumn(name = "blocker_id")
+    @JoinColumn(name = "blocker_id",foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     @ManyToOne(fetch = FetchType.LAZY)
     private Member blocker;         // 차단한 사람
 
-    @JoinColumn(name = "blocked_id")
+    @JoinColumn(name = "blocked_id",foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     @ManyToOne(fetch = FetchType.LAZY)
     private Member blocked;         // 차단 당한 사람
 

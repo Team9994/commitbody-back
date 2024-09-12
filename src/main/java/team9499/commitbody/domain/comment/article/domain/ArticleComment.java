@@ -14,6 +14,9 @@ import java.util.List;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
+@Table(indexes = {
+        @Index(name = "idx_article_comment_created_desc",columnList = "parent_id, created_at desc")
+})
 @ToString(exclude = {"childComments"})
 public class ArticleComment extends BaseTime {
 
