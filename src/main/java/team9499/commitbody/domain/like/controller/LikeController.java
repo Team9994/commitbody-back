@@ -63,8 +63,20 @@ public class LikeController {
         return ResponseEntity.ok(new SuccessResponse<>(true,articleLike));
     }
 
+    @Operation(summary = "게시글 대/댓글 좋아요", description = "게시글의 작성된 대/댓글의 대해서 등록/해제 기능을 합니다.",tags = "게시글")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK - 좋아요 성공시[\"등록\"], 좋아요 해제시[\"해제\"]", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"등록\"}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 존재하지 않는 시용자 요청시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "400_3", description = "BADREQUEST - 존재하지 않는 게시글 요청시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"해당 정보를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @PostMapping("/article/comment/like")
-    public ResponseEntity<?> articleCommentLike(@RequestBody Map<String, Long> articleLikeRequest,
+    public ResponseEntity<?> articleCommentLike(@Parameter(schema = @Schema(example = "{\"commentId\": 1}"))@RequestBody Map<String, Long> articleLikeRequest,
                                          @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = principalDetails.getMember().getId();
         String articleLike = exerciseCommentLikeService.articleCommentLike(memberId,articleLikeRequest.get("commentId"));
