@@ -75,6 +75,15 @@ public class ArticleCommentController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"댓글 조회",comments));
     }
 
+    @GetMapping("/article/comment/{commentId}/reply")
+    public ResponseEntity<?> allReplyComments(@PathVariable("commentId") Long commentId,
+                                              @AuthenticationPrincipal PrincipalDetails principalDetails,
+                                              @PageableDefault Pageable pageable){
+        Long memberId = getMemberId(principalDetails);
+        ArticleCommentResponse replyComments = articleCommentService.getReplyComments(commentId, memberId, pageable);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"대댓글 조회",replyComments));
+    }
+
     private static Long getMemberId(PrincipalDetails principalDetails) {
         Long memberId = principalDetails.getMember().getId();
         return memberId;
