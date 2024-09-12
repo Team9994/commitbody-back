@@ -83,7 +83,6 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
      * @param lastLikeCount 마지막 댓글 좋아요 수 
      * @param orderType 정렬 타입
      * @param pageable  페이징 정보
-     * @return
      */
     @Transactional(readOnly = true)
     @Override

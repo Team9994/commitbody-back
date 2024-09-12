@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.Member.domain.Member;
+import team9499.commitbody.domain.Member.dto.MemberDto;
 import team9499.commitbody.domain.block.domain.QBlockMember;
 import team9499.commitbody.domain.comment.article.domain.ArticleComment;
 import team9499.commitbody.domain.comment.article.domain.OrderType;
@@ -71,10 +72,11 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
         // 조회된 댓글을 순회하며 articleComments 매핑하여 객체를 담습니다.
         List<ArticleCommentDto> articleComments = comments.stream()
                 .map(tuple -> ArticleCommentDto.of(
-                                tuple.get(articleComment),
-                                TimeConverter.converter(tuple.get(articleComment).getCreatedAt()),
-                                checkWriter(tuple.get(articleComment.member), memberId),
-                                true
+                        tuple.get(articleComment),
+                        MemberDto.toMemberDTO(tuple.get(articleComment.member)),
+                        TimeConverter.converter(tuple.get(articleComment).getCreatedAt()),
+                        checkWriter(tuple.get(articleComment.member), memberId),
+                        true
                         )
                 ).collect(Collectors.toList());
 
@@ -84,6 +86,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
         if (hasNext) {
             articleComments.remove(pageable.getPageSize());
         }
+
         return new SliceImpl<>(articleComments, pageable, hasNext);
     }
 

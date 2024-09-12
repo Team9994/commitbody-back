@@ -35,8 +35,9 @@ public class ArticleCommentDto {
     }
 
     public static ArticleCommentDto of(ArticleComment articleComment,String time, boolean writer,boolean reply){
+        log.info("n+1");
         return ArticleCommentDto.builder().commentId(articleComment.getId()).content(articleComment.getContent()).profile(articleComment.getMember().getProfile())
-                .nickname(articleComment.getMember().getNickname()).time(time).likeCount(articleComment.getLikeCount()).writer(writer).replyCount(reply ? null :articleComment.getChildComments().size()).build();
+                .nickname(articleComment.getMember().getNickname()).time(time).likeCount(articleComment.getLikeCount()).writer(writer).replyCount(reply ? articleComment.getChildComments().size() : null).build();
     }
 
     public static ArticleCommentDto of(ArticleComment articleComment, MemberDto memberDto, String time, boolean writer, boolean reply){
