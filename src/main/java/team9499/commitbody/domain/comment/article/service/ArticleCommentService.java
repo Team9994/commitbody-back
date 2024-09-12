@@ -11,5 +11,5 @@ public interface ArticleCommentService {
 
     ArticleCommentResponse getComments(Long articleId, Long memberId, Long lastId, Integer lastLikeCount, OrderType orderType, Pageable pageable);
 
-    ArticleCommentResponse getReplyComments(Long commentId, Long memberId,Pageable pageable);
+    ArticleCommentResponse getReplyComments(Long commentId, Long memberId,Long lastId,Pageable pageable);
 }

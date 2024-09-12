@@ -85,10 +85,11 @@ public class ArticleCommentController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/article/comment/{commentId}/reply")
     public ResponseEntity<?> allReplyComments(@PathVariable("commentId") Long commentId,
+                                              @RequestParam(value = "lastId",required = false)Long lastId,
                                               @AuthenticationPrincipal PrincipalDetails principalDetails,
                                               @Parameter(example = "{\"size\":10}")@PageableDefault Pageable pageable){
         Long memberId = getMemberId(principalDetails);
-        ArticleCommentResponse replyComments = articleCommentService.getReplyComments(commentId, memberId, pageable);
+        ArticleCommentResponse replyComments = articleCommentService.getReplyComments(commentId, memberId, lastId, pageable);
         return ResponseEntity.ok(new SuccessResponse<>(true,"대댓글 조회",replyComments));
     }
 

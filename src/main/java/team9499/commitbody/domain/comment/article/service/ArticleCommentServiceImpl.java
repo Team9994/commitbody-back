@@ -101,8 +101,8 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
      */
     @Transactional(readOnly = true)
     @Override
-    public ArticleCommentResponse getReplyComments(Long commentId, Long memberId,Pageable pageable) {
-        Slice<ArticleCommentDto> comments = articleCommentRepository.getAllReplyComments(commentId, memberId, pageable);
+    public ArticleCommentResponse getReplyComments(Long commentId, Long memberId,Long lastId,Pageable pageable) {
+        Slice<ArticleCommentDto> comments = articleCommentRepository.getAllReplyComments(commentId, memberId, lastId,pageable);
         return new ArticleCommentResponse(comments.hasNext(),comments.getContent());
     }
 }

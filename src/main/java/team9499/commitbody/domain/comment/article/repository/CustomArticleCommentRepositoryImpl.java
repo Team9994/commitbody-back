@@ -117,10 +117,15 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
      * 조회하는 사용자를 차단한 사용자가 있을경우 차단한 사용자의 댓글을 필터링 한 후 조회
      * @param commentId 조회할 부모 댓글 ID
      * @param memberId  로그인한 사용자 ID
+     * @param lastId 조회된 댓글의 마지막 조회 ID
      * @param pageable  페이징 정보
      */
     @Override
-    public Slice<ArticleCommentDto> getAllReplyComments(Long commentId, Long memberId, Pageable pageable) {
+    public Slice<ArticleCommentDto> getAllReplyComments(Long commentId, Long memberId,Long lastId, Pageable pageable) {
+        BooleanBuilder builder = new BooleanBuilder();
+        if (lastId!=null){
+            builder.and(articleComment.id.lt(lastId));
+        }
 
         List<Tuple> articleComments = jpaQueryFactory
                 .select(articleComment, articleComment.member)
@@ -129,7 +134,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                 .leftJoin(childComment.member, member).fetchJoin() // 자식 댓글 작성자 조인
                 .leftJoin(blockMember).on(blockMember.blocked.id.eq(articleComment.member.id).and(blockMember.blocker.id.eq(memberId))) // 차단한 사용자 필터링 조건
                 .leftJoin(childBlock).on(childBlock.blocked.id.eq(memberId).and(childBlock.blocker.id.eq(articleComment.member.id)))    // 차단된 사용자 필터링 조건
-                .where(articleComment.parent.id.eq(commentId) // 부모 댓글 필터링
+                .where(builder,articleComment.parent.id.eq(commentId) // 부모 댓글 필터링
                         .and(blockMember.id.isNull().or(blockMember.blockStatus.eq(false)))
                         .and(childBlock.id.isNull().or(childBlock.blockStatus.eq(false)))
                 ) // 차단된 사용자가 아니거나 차단이 해제된 경우만

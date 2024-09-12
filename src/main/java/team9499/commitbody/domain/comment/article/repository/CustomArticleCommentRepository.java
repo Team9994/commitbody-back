@@ -12,5 +12,5 @@ public interface CustomArticleCommentRepository {
 
     Integer getCommentCount(Long articleId, Long memberId);
 
-    Slice<ArticleCommentDto> getAllReplyComments(Long commentId, Long memberId,Pageable pageable);
+    Slice<ArticleCommentDto> getAllReplyComments(Long commentId, Long memberId,Long lastId ,Pageable pageable);
 }
