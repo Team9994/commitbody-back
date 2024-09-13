@@ -56,15 +56,15 @@ public class ArticleCommentController {
         return ResponseEntity.ok(new SuccessResponse<>(true,commentType));
     }
 
-//    @PutMapping("/article/comment/{commentId}")
-//    public ResponseEntity<?> updateComment(@PathVariable("commentId") Long commentId,
-//                                           @RequestBody Map<String,String> updateComment,
-//                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
-//        String content = updateComment.get("content");
-//        Long memberId = getMemberId(principalDetails);
-//        articleCommentService.updateArticleComment(memberId, commentId, content);
-//        return ResponseEntity.ok(new SuccessResponse<>(true,"댓글 수정 성공"));
-//    }
+    @PutMapping("/article/comment/{commentId}")
+    public ResponseEntity<?> updateComment(@PathVariable("commentId") Long commentId,
+                                           @RequestBody Map<String,String> updateComment,
+                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
+        String content = updateComment.get("content");
+        Long memberId = getMemberId(principalDetails);
+        articleCommentService.updateArticleComment(memberId, commentId, content);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"댓글 수정 성공"));
+    }
 
     @DeleteMapping("/article/comment/{commentId}")
     public ResponseEntity<?> deleteComment(@PathVariable("commentId") Long commentId,
