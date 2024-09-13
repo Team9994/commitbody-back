@@ -160,6 +160,21 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
     }
 
     /**
+     * 부모 댓그르이 작성된 자식 댓글모두 조회
+     * @param commentId 부모 댓글 ID
+     * @return 자식댓글의 ID 리스트
+     */
+    @Override
+    public List<Long> getAllChildComment(Long commentId) {
+        List<ArticleComment> fetch = jpaQueryFactory.select(articleComment)
+                .from(articleComment)
+                .leftJoin(articleComment.childComments, childComment).fetchJoin()
+                .where(articleComment.parent.id.eq(commentId))
+                .fetch();
+        return fetch.stream().map(ArticleComment::getId).collect(Collectors.toList());
+    }
+
+    /**
      * 동적 정렬
      * - RECENT 최신순으로 정렬합니다.
      * - LIKE 좋아요 순으로 정렬합니다. 먼저 좋여가 많은순으로 정렬후 그이후 좋아요가 모두 0이라면 ID를 기준으로 내림차순 정렬 합니다.

@@ -5,6 +5,8 @@ import org.springframework.data.domain.Slice;
 import team9499.commitbody.domain.comment.article.domain.OrderType;
 import team9499.commitbody.domain.comment.article.dto.ArticleCommentDto;
 
+import java.util.List;
+
 
 public interface CustomArticleCommentRepository {
 
@@ -13,4 +15,6 @@ public interface CustomArticleCommentRepository {
     Integer getCommentCount(Long articleId, Long memberId);
 
     Slice<ArticleCommentDto> getAllReplyComments(Long commentId, Long memberId,Long lastId ,Pageable pageable);
+
+    List<Long> getAllChildComment(Long commentId);
 }
