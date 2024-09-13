@@ -80,25 +80,19 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
     }
 
     /**
-//     * 댓글 수정
-//     * 작성자만이 댓글을 수정 가능 비작성자 수정시 403 예외 발생
-//     * @param memberId  로그인한 사용자 ID
-//     * @param commentId 변경할 댓글 IDD
-//     * @param content 수정할 댓글 내용
-//     */
-//    @Override
-//    public void updateArticleComment(Long memberId, Long commentId,String content) {
-//        ArticleComment articleComment = articleCommentRepository.findById(commentId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
-//        if (!articleComment.getMember().getId().equals(memberId)){
-//            throw new InvalidUsageException(ExceptionStatus.FORBIDDEN,ExceptionType.AUTHOR_ONLY);
-//        }
-//
-//        NotificationType notificationType  =  articleComment.getParent() == null ? NotificationType.COMMENT :NotificationType.REPLY_COMMENT;
-//        String notificationContent = articleComment.getMember().getNickname()+"님이 회원님의 게시글에 댓글을 남겼어요: "+content;
-//
-//        notificationService.updateNotification(articleComment.getMember().getId(),memberId,notificationContent,notificationType);
-//        articleComment.updateContent(content);
-//    }
+     * 댓글 수정 
+     * 작성자만이 댓글을 수정 가능 비작성자 수정시 403 예외 발생
+     * @param memberId  로그인한 사용자 ID
+     * @param commentId 변경할 댓글 ID
+     * @param content 수정할 댓글 내용
+     */
+    @Override
+    public void updateArticleComment(Long memberId, Long commentId,String content) {
+        ArticleComment articleComment = articleCommentRepository.findById(commentId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        validWriter(memberId, articleComment);      // 상용자 검증
+        articleComment.updateContent(content);      // 댓글 수정
+        notificationService.updateNotification(commentId,content);      // 알림 내용 수정
+    }
 
     /**
      * 게시글의 작성된 댓글 조회
@@ -144,9 +138,7 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
         ArticleComment articleComment = articleCommentRepository.findById(commentId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
         
         //작성자가 아닐시 예외 발생
-        if (!articleComment.getMember().getId().equals(memberId)) {
-            throw new InvalidUsageException(ExceptionStatus.FORBIDDEN,ExceptionType.AUTHOR_ONLY);
-        }
+        validWriter(memberId, articleComment);
 
         // 부모 댓글을 삭제하려는 경우
         if (articleComment.getParent()==null){
@@ -156,6 +148,15 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
             articleCommentBatchService.deleteCommentBatch(commentId,deleteIds); // 배치를 통해 댓글과 관련된 모든 데이터 삭제
         }else { // 대댓글을 삭제하는 경우
             articleCommentBatchService.deleteChildCommentBatch(commentId);
+        }
+    }
+
+    /*
+    작성자인지 검증하는 메서드
+     */
+    private static void validWriter(Long memberId, ArticleComment articleComment) {
+        if (!articleComment.getMember().getId().equals(memberId)){
+            throw new InvalidUsageException(ExceptionStatus.FORBIDDEN,ExceptionType.AUTHOR_ONLY);
         }
     }
 }
