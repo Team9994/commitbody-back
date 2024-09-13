@@ -16,9 +16,12 @@ import team9499.commitbody.domain.comment.article.dto.response.ArticleCommentRes
 import team9499.commitbody.domain.comment.article.repository.ArticleCommentRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.InvalidUsageException;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.notification.service.NotificationService;
 import team9499.commitbody.global.redis.RedisService;
+
+import java.util.List;
 
 
 @Slf4j
@@ -28,6 +31,7 @@ import team9499.commitbody.global.redis.RedisService;
 public class ArticleCommentServiceImpl implements ArticleCommentService{
 
     private final ArticleCommentRepository articleCommentRepository;
+    private final ArticleCommentBatchService articleCommentBatchService;
     private final ArticleRepository articleRepository;
     private final RedisService redisService;
     private final NotificationService notificationService;
@@ -76,6 +80,21 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
     }
 
     /**
+     * 댓글 수정 
+     * 작성자만이 댓글을 수정 가능 비작성자 수정시 403 예외 발생
+     * @param memberId  로그인한 사용자 ID
+     * @param commentId 변경할 댓글 ID
+     * @param content 수정할 댓글 내용
+     */
+    @Override
+    public void updateArticleComment(Long memberId, Long commentId,String content) {
+        ArticleComment articleComment = articleCommentRepository.findById(commentId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        validWriter(memberId, articleComment);      // 상용자 검증
+        articleComment.updateContent(content);      // 댓글 수정
+        notificationService.updateNotification(commentId,content);      // 알림 내용 수정
+    }
+
+    /**
      * 게시글의 작성된 댓글 조회
      * @param articleId 게시글 아이디
      * @param memberId  사용자 id
@@ -104,5 +123,40 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
     public ArticleCommentResponse getReplyComments(Long commentId, Long memberId,Long lastId,Pageable pageable) {
         Slice<ArticleCommentDto> comments = articleCommentRepository.getAllReplyComments(commentId, memberId, lastId,pageable);
         return new ArticleCommentResponse(comments.hasNext(),comments.getContent());
+    }
+
+    /**
+     * 게시글의 작성된 댓글을 삭제합니다.
+     * 부모 댓글 삭제시 : 대댓글과, 좋아요, 댓글과 관련된 알림 기록등을 JDBC 배치를 사용해 삭제합니다.
+     * 자식 댓글 삭제시 : 해당 대댓글과 좋아요 대댓글 관련 알림 기록등을 JDBC 배치를 사용해 삭제합니다.
+     * 작성자가 아닐시 삭제 요청이오면 403 예외를 발생합니다.
+     * @param memberId 로그인한 사용자 ID
+     * @param commentId 삭제할 댓글 ID
+     */
+    @Override
+    public void deleteArticleComment(Long memberId, Long commentId) {
+        ArticleComment articleComment = articleCommentRepository.findById(commentId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        
+        //작성자가 아닐시 예외 발생
+        validWriter(memberId, articleComment);
+
+        // 부모 댓글을 삭제하려는 경우
+        if (articleComment.getParent()==null){
+            Article article = articleRepository.findById(articleComment.getArticle().getId()).get();       // 작성된 게시글의 객체를 조호
+            article.updateCommentCount(article.getCommentCount()-1);  // 부모 댓글 삭제시에는 게시글의 작성된 댓글수 -1
+            List<Long> deleteIds = articleCommentRepository.getAllChildComment(commentId);  // 작성된 댓글의 대댓글의 ID를 리스트화
+            articleCommentBatchService.deleteCommentBatch(commentId,deleteIds); // 배치를 통해 댓글과 관련된 모든 데이터 삭제
+        }else { // 대댓글을 삭제하는 경우
+            articleCommentBatchService.deleteChildCommentBatch(commentId);
+        }
+    }
+
+    /*
+    작성자인지 검증하는 메서드
+     */
+    private static void validWriter(Long memberId, ArticleComment articleComment) {
+        if (!articleComment.getMember().getId().equals(memberId)){
+            throw new InvalidUsageException(ExceptionStatus.FORBIDDEN,ExceptionType.AUTHOR_ONLY);
+        }
     }
 }

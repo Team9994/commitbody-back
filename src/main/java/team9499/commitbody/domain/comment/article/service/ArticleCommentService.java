@@ -9,7 +9,12 @@ public interface ArticleCommentService {
 
     String saveArticleComment(Long memberId, Long ArticleId,Long commentParentId,String content,String replyNickname);
 
+    void updateArticleComment(Long memberId, Long commentId,String content);
+
     ArticleCommentResponse getComments(Long articleId, Long memberId, Long lastId, Integer lastLikeCount, OrderType orderType, Pageable pageable);
 
     ArticleCommentResponse getReplyComments(Long commentId, Long memberId,Long lastId,Pageable pageable);
+
+    void deleteArticleComment(Long memberId, Long commentId);
+
 }

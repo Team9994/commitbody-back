@@ -59,4 +59,8 @@ public class ArticleComment extends BaseTime {
     public void updateLikeCount(Integer count){
         this.likeCount = count;
     }
+
+    public void updateContent(String content){
+        this.content = content;
+    }
 }

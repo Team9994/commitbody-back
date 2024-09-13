@@ -1,7 +1,6 @@
 package team9499.commitbody.global.notification.service;
 
 import team9499.commitbody.domain.Member.domain.Member;
-import team9499.commitbody.global.notification.domain.NotificationType;
 
 public interface NotificationService {
 
@@ -20,4 +19,6 @@ public interface NotificationService {
     void sendArticleLike(Member member, Long receiverId,Long articleId, boolean status);
 
     void sendCommentLike(Member member,Long receiverId,Long commentId,boolean status);
+
+    void updateNotification(Long commentId, String content);
 }

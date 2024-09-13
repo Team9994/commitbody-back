@@ -36,7 +36,7 @@ public class ArticleController {
     private final ArticleService articleService;
 
     @Tag(name = "게시글",description = "게시글 관련 API")
-    @Operation(summary = "운동 게시글 등록", description = "운동 게시글을 작성하는 API 입니다. 관심운동 등록시에는 'articleCategory' 필드를 사용하지 않아도 됩니다.")
+    @Operation(summary = "게시글 등록", description = "게시글을 작성하는 API 입니다. 관심운동 등록시에는 'articleCategory' 필드를 사용하지 않아도 됩니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK - 게시글 작성 성공시 작성된 게시글 ID를 반환합니다.", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
                     examples = @ExampleObject(value = "{\"success\":true,\"message\":\"등록 성공\",\"data\":1}"))),

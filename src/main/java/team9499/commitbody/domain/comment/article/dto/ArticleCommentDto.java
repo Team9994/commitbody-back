@@ -41,7 +41,7 @@ public class ArticleCommentDto {
 
     public static ArticleCommentDto of(ArticleComment articleComment, MemberDto memberDto, String time, boolean writer, boolean reply){
         return ArticleCommentDto.builder().commentId(articleComment.getId()).content(articleComment.getContent()).profile(memberDto.getProfile())
-                .nickname(memberDto.getNickname()).time(time).likeCount(articleComment.getLikeCount()).writer(writer).replyCount(reply ? null :articleComment.getChildComments().size()).build();
+                .nickname(memberDto.getNickname()).time(time).likeCount(articleComment.getLikeCount()).writer(writer).replyCount(reply ?articleComment.getChildComments().size(): null ).build();
     }
 
 }

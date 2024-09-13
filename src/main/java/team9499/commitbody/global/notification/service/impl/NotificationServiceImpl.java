@@ -17,8 +17,6 @@ import team9499.commitbody.global.notification.service.FcmService;
 import team9499.commitbody.global.notification.service.NotificationService;
 import team9499.commitbody.global.redis.RedisService;
 
-import java.util.Optional;
-
 @Slf4j
 @Service
 @Transactional
@@ -38,6 +36,12 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.save(notification);
     }
 
+    /**
+     * 비동기를 통한 팔로워 삭제
+     * @param receiverId 수신자 ID
+     * @param senderId  발신자 ID
+     * @param notificationType  알림 타입 
+     */
     @Async
     public void asyncDelete(Long receiverId, Long senderId, NotificationType notificationType){
         notificationRepository.deleteByReceiverIdAndSenderIdAndNotificationType(receiverId,senderId,notificationType);
@@ -55,12 +59,16 @@ public class NotificationServiceImpl implements NotificationService {
         Member followingMember = getReceiverMember(followingId);
         String content = followerMember.getNickname()+"님이 회원님을 팔로우하기 시작했어요.";
 
-        saveNotification(content, NotificationType.FOLLOW, followingMember, followerMember);
+        saveNotification(content, NotificationType.FOLLOW, followingMember, followerMember,null);
 
         if (followingMember.isNotificationEnabled()) // 알림성정울 true로 한 상태 일때 알림 전송
             fcmService.sendFollowingMessage(String.valueOf(followingMember.getId()),content);
     }
 
+    /**
+     * 알림의 일괄 읽음 처리를 하는 메서드
+     * @param receiverId 발신자 ID
+     */
     @Override
     public void updateRead(Long receiverId) {
         notificationRepository.updateRead(receiverId);
@@ -86,6 +94,14 @@ public class NotificationServiceImpl implements NotificationService {
         return notificationRepository.existsByReceiverIdAndIsRead(memberId, 0);
     }
 
+    /**
+     * 비동기를 통해 댓글의 답글이 달릴때 멘션한 사용자에게 알림을 전송합니다.
+     * @param member 발신자 사용자 객체
+     * @param replyNickname 수신자 닉네임
+     * @param articleTitle  게시글 제목
+     * @param commentContent    답글 내용
+     * @param commentId 댓글 ID
+     */
     @Async
     @Override
     public void sendReplyComment(Member member, String replyNickname,String articleTitle,String commentContent,String commentId) {
@@ -94,10 +110,18 @@ public class NotificationServiceImpl implements NotificationService {
         // 알림 기능을 사용하며, 만약 자신에게 담긴 답글의 경우 알림 이전송되지 않도록
         if (replyMember.isNotificationEnabled() && member.getId() != replyMember.getId()) {
             fcmService.sendReplyComment(String.valueOf(replyMember.getId()), articleTitle, content,commentId);
-            saveNotification(content, NotificationType.REPLY_COMMENT, replyMember, member);
+            saveNotification(content, NotificationType.REPLY_COMMENT, replyMember, member, Long.valueOf(commentId));
         }
     }
 
+    /**
+     * 비동기를 통한 게시글의 댓글이 달릴시 게시글 작성자에게 댓글 알림을 전송합니다.
+     * @param member    발신자 정보 객체
+     * @param receiverId    수신자 ID
+     * @param articleTitle  게시글 제목
+     * @param commentContent    댓글 내용
+     * @param commentId 댓글 ID
+     */
     @Async
     @Override
     public void sendComment(Member member,Long receiverId,String articleTitle, String commentContent,String commentId) {
@@ -106,7 +130,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         if (receiverMember.isNotificationEnabled() && !member.getId().equals(receiverMember.getId())) {
             fcmService.sendComment(String.valueOf(receiverMember.getId()),articleTitle,content,commentId);
-            saveNotification(content, NotificationType.COMMENT, receiverMember, member);
+            saveNotification(content, NotificationType.COMMENT, receiverMember, member, Long.valueOf(commentId));
         }
     }
 
@@ -128,12 +152,13 @@ public class NotificationServiceImpl implements NotificationService {
         // 알림을 좋아요한 상태이며, 알림 수신여부 , 발신자와 수신자의 아이디가 같지 않을때만 알림 전송
         if (status && receiverMember.isNotificationEnabled() && !member.getId().equals(receiverMember.getId())){
             fcmService.sendArticleLike(String.valueOf(receiverId),String.valueOf(articleId),content);
-            saveNotification(content, NotificationType.ARTICLE_LIKE, receiverMember, member);
+            saveNotification(content, NotificationType.ARTICLE_LIKE, receiverMember, member,null);
         }else {     // 좋아요 해제 요청시에는 알림 데이터 삭제
             asyncDelete(receiverId, member.getId(), NotificationType.ARTICLE_LIKE);
         }
 
     }
+    
     @Override
     public void sendCommentLike(Member member, Long receiverId,Long commentId,boolean status) {
         Member receiverMember = getReceiverMember(receiverId);
@@ -141,10 +166,26 @@ public class NotificationServiceImpl implements NotificationService {
 
         if (status && receiverMember.isNotificationEnabled() && !member.getId().equals(receiverMember.getId())){
             fcmService.sendArticleCommentLike(String.valueOf(receiverId),String.valueOf(commentId),content);
-            saveNotification(content, NotificationType.COMMENT_LIKE, receiverMember, member);
+            saveNotification(content, NotificationType.COMMENT_LIKE, receiverMember, member,commentId);
         }else {     // 좋아요 해제 요청시에는 알림 데이터 삭제
             asyncDelete(receiverId, member.getId(), NotificationType.COMMENT_LIKE);
         }
+    }
+
+
+    /**
+     * 댓글 수정시 알림의 저장된 알림 내용 수정 
+     * 비동기를 통한 수정
+     * @param commentId 수정할 댓글 ID
+     * @param content   수정할 댓글 내용
+     */
+    @Async
+    @Override
+    public void updateNotification(Long commentId, String content) {
+        Notification notification = notificationRepository.findByCommentId(commentId);
+        String[] split = notification.getContent().split(":");  // 알림 내용의 : 기준으로 분리
+        notification.updateContent(split[0] +":"+ content); // 수정된 알림 내용을 저장
+
     }
 
     private Member getReplyMember(String replyNickname) {
@@ -158,8 +199,8 @@ public class NotificationServiceImpl implements NotificationService {
     /*
     알림의 데이터를 비동기 저장
      */
-    private void saveNotification(String content, NotificationType replyComment, Member replyMember, Member member) {
-        Notification notification = Notification.of(content, replyComment, replyMember, member);
+    private void saveNotification(String content, NotificationType replyComment, Member replyMember, Member member,Long commentId) {
+        Notification notification = Notification.of(content, replyComment, replyMember, member,commentId);
         asyncSave(notification);
     }
 
