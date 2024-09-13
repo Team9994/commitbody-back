@@ -23,6 +23,8 @@ import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
 
+import java.util.Map;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -53,6 +55,24 @@ public class ArticleCommentController {
 
         return ResponseEntity.ok(new SuccessResponse<>(true,commentType));
     }
+
+//    @PutMapping("/article/comment/{commentId}")
+//    public ResponseEntity<?> updateComment(@PathVariable("commentId") Long commentId,
+//                                           @RequestBody Map<String,String> updateComment,
+//                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
+//        String content = updateComment.get("content");
+//        Long memberId = getMemberId(principalDetails);
+//        articleCommentService.updateArticleComment(memberId, commentId, content);
+//        return ResponseEntity.ok(new SuccessResponse<>(true,"댓글 수정 성공"));
+//    }
+
+    @DeleteMapping("/article/comment/{commentId}")
+    public ResponseEntity<?> deleteComment(@PathVariable("commentId") Long commentId,
+                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        articleCommentService.deleteArticleComment(memberId, commentId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
+                                           }
 
     @Operation(summary = "운동 게시글 - 댓글 조회", description = "운동 게시글의 작성된 댓글을 조회합니다. sortOrder:[RECENT,LIKE] 이며, LIKE 정렬시 마지막 조회 데이터의 likeCount가 0일경우 lastLikeCount와 lastId를 사용하며, 0이 아닐시에는 lastLikeCount만 사용합니다.)",tags = "게시글")
     @ApiResponses(value = {
