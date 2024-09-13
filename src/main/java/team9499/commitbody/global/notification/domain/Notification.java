@@ -5,6 +5,8 @@ import lombok.*;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.global.utils.BaseTime;
 
+import static ch.qos.logback.classic.spi.ThrowableProxyVO.build;
+
 @Data
 @Entity
 @Builder
@@ -34,7 +36,16 @@ public class Notification extends BaseTime {
     @ManyToOne(fetch = FetchType.LAZY)
     private Member sender;      // 발신자
 
-    public static Notification of(String content,NotificationType notificationType,Member receiver,Member sender){
-        return Notification.builder().content(content).notificationType(notificationType).receiver(receiver).sender(sender).isRead(0).build();
+    private Long commentId;     // 댓글 ID
+
+    public static Notification of(String content,NotificationType notificationType,Member receiver,Member sender,Long commentId){
+        NotificationBuilder notificationBuilder = Notification.builder().content(content).notificationType(notificationType).receiver(receiver).sender(sender).isRead(0);
+        if (content!=null)  notificationBuilder.commentId(commentId); // 댓글의 대한 알림일 경우
+        
+        return notificationBuilder.build();
+    }
+
+    public void updateContent(String content){
+        this.content = content;
     }
 }

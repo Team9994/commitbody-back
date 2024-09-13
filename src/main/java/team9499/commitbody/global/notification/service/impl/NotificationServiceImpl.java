@@ -17,8 +17,6 @@ import team9499.commitbody.global.notification.service.FcmService;
 import team9499.commitbody.global.notification.service.NotificationService;
 import team9499.commitbody.global.redis.RedisService;
 
-import java.util.Optional;
-
 @Slf4j
 @Service
 @Transactional
@@ -55,7 +53,7 @@ public class NotificationServiceImpl implements NotificationService {
         Member followingMember = getReceiverMember(followingId);
         String content = followerMember.getNickname()+"님이 회원님을 팔로우하기 시작했어요.";
 
-        saveNotification(content, NotificationType.FOLLOW, followingMember, followerMember);
+        saveNotification(content, NotificationType.FOLLOW, followingMember, followerMember,null);
 
         if (followingMember.isNotificationEnabled()) // 알림성정울 true로 한 상태 일때 알림 전송
             fcmService.sendFollowingMessage(String.valueOf(followingMember.getId()),content);
@@ -94,7 +92,7 @@ public class NotificationServiceImpl implements NotificationService {
         // 알림 기능을 사용하며, 만약 자신에게 담긴 답글의 경우 알림 이전송되지 않도록
         if (replyMember.isNotificationEnabled() && member.getId() != replyMember.getId()) {
             fcmService.sendReplyComment(String.valueOf(replyMember.getId()), articleTitle, content,commentId);
-            saveNotification(content, NotificationType.REPLY_COMMENT, replyMember, member);
+            saveNotification(content, NotificationType.REPLY_COMMENT, replyMember, member, Long.valueOf(commentId));
         }
     }
 
@@ -106,7 +104,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         if (receiverMember.isNotificationEnabled() && !member.getId().equals(receiverMember.getId())) {
             fcmService.sendComment(String.valueOf(receiverMember.getId()),articleTitle,content,commentId);
-            saveNotification(content, NotificationType.COMMENT, receiverMember, member);
+            saveNotification(content, NotificationType.COMMENT, receiverMember, member, Long.valueOf(commentId));
         }
     }
 
@@ -128,7 +126,7 @@ public class NotificationServiceImpl implements NotificationService {
         // 알림을 좋아요한 상태이며, 알림 수신여부 , 발신자와 수신자의 아이디가 같지 않을때만 알림 전송
         if (status && receiverMember.isNotificationEnabled() && !member.getId().equals(receiverMember.getId())){
             fcmService.sendArticleLike(String.valueOf(receiverId),String.valueOf(articleId),content);
-            saveNotification(content, NotificationType.ARTICLE_LIKE, receiverMember, member);
+            saveNotification(content, NotificationType.ARTICLE_LIKE, receiverMember, member,null);
         }else {     // 좋아요 해제 요청시에는 알림 데이터 삭제
             asyncDelete(receiverId, member.getId(), NotificationType.ARTICLE_LIKE);
         }
@@ -141,11 +139,21 @@ public class NotificationServiceImpl implements NotificationService {
 
         if (status && receiverMember.isNotificationEnabled() && !member.getId().equals(receiverMember.getId())){
             fcmService.sendArticleCommentLike(String.valueOf(receiverId),String.valueOf(commentId),content);
-            saveNotification(content, NotificationType.COMMENT_LIKE, receiverMember, member);
+            saveNotification(content, NotificationType.COMMENT_LIKE, receiverMember, member,commentId);
         }else {     // 좋아요 해제 요청시에는 알림 데이터 삭제
             asyncDelete(receiverId, member.getId(), NotificationType.COMMENT_LIKE);
         }
     }
+
+//
+//    @Async
+//    @Override
+//    public void updateNotification(Long receiverId, Long senderId, String content, NotificationType notificationType) {
+//        if (!receiverId.equals(senderId)) {
+//            Notification notification = notificationRepository.findByReceiverIdAndSenderIdAndNotificationType(receiverId, senderId, notificationType).orElse(null);
+//            if (notification != null) notification.updateContent(content);
+//        }
+//    }
 
     private Member getReplyMember(String replyNickname) {
         return memberRepository.findByNickname(replyNickname).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
@@ -158,8 +166,8 @@ public class NotificationServiceImpl implements NotificationService {
     /*
     알림의 데이터를 비동기 저장
      */
-    private void saveNotification(String content, NotificationType replyComment, Member replyMember, Member member) {
-        Notification notification = Notification.of(content, replyComment, replyMember, member);
+    private void saveNotification(String content, NotificationType replyComment, Member replyMember, Member member,Long commentId) {
+        Notification notification = Notification.of(content, replyComment, replyMember, member,commentId);
         asyncSave(notification);
     }
 
