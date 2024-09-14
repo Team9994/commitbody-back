@@ -112,12 +112,29 @@ public class ArticleServiceImpl implements ArticleService{
         String previousFileName = (String) articleAndFile.get("storedName");
 
         // 작성자 아닌 사용자가 요청시 403 예외 발생
-        if (!article.getMember().getId().equals(memberId))
-            throw new InvalidUsageException(ExceptionStatus.FORBIDDEN, ExceptionType.AUTHOR_ONLY);
+        validWriter(memberId, article);
         article.update(title, content, articleType, articleCategory, visibility);
 
         fileService.updateArticleFile(article, previousFileName, file);
 
 
+    }
+
+    /**
+     * 게시글 삭제 : 게시글 삭제시 연관된(좋아요,알림,댓글,파일)을 모두 비동기로 삭제합니다.
+     * @param memberId 로그인한 사용자 ID
+     * @param articleId 삭제할 게시글 ID
+     */
+    @Override
+    public void deleteArticle(Long memberId, Long articleId) {
+        Article article = articleRepository.findById(articleId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        validWriter(memberId,article);  // 작성자 검증
+
+        articleRepository.deleteArticle(articleId); //비동기를 통한 삭제
+    }
+
+    private static void validWriter(Long memberId, Article article) {
+        if (!article.getMember().getId().equals(memberId))
+            throw new InvalidUsageException(ExceptionStatus.FORBIDDEN, ExceptionType.AUTHOR_ONLY);
     }
 }

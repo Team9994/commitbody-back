@@ -3,33 +3,29 @@ package team9499.commitbody.domain.article.repository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
-import team9499.commitbody.domain.Member.domain.QMember;
-import team9499.commitbody.domain.article.domain.Article;
 import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.article.domain.Visibility;
 import team9499.commitbody.domain.article.dto.ArticleDto;
-import team9499.commitbody.domain.block.domain.BlockMember;
-import team9499.commitbody.domain.block.domain.QBlockMember;
 import team9499.commitbody.domain.file.domain.File;
-import team9499.commitbody.domain.follow.domain.Follow;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
-import team9499.commitbody.domain.follow.domain.QFollow;
+import team9499.commitbody.domain.like.domain.QContentLike;
+import team9499.commitbody.global.notification.domain.QNotification;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static team9499.commitbody.domain.Member.domain.QMember.*;
 import static team9499.commitbody.domain.article.domain.QArticle.*;
-import static team9499.commitbody.domain.block.domain.QBlockMember.*;
 import static team9499.commitbody.domain.comment.article.domain.QArticleComment.*;
 import static team9499.commitbody.domain.file.domain.QFile.*;
 import static team9499.commitbody.domain.follow.domain.QFollow.*;
@@ -110,6 +106,17 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
 
 
         return Map.of("article",tuple.get(article),"storedName",tuple.get(file.storedName) == null ? "" : tuple.get(file.storedName));
+    }
+
+    @Async
+    @Transactional
+    @Override
+    public void deleteArticle(Long articleId) {
+        jpaQueryFactory.delete(article).where(article.id.eq(articleId)).execute();
+        jpaQueryFactory.delete(articleComment).where(articleComment.article.id.eq(articleId)).execute();
+        jpaQueryFactory.delete(QNotification.notification).where(QNotification.notification.articleId.eq(articleId)).execute();
+        jpaQueryFactory.delete(QContentLike.contentLike).where(QContentLike.contentLike.article.id.eq(articleId)).execute();
+        jpaQueryFactory.delete(file).where(file.article.id.eq(articleId)).execute();
     }
 
     /*

@@ -17,4 +17,6 @@ public interface ArticleService {
     ProfileArticleResponse getAllProfileArticle(Long loginMemberId, Long findMemberId, ArticleType articleType, Long lastId, Pageable pageable);
 
     void updateArticle(Long memberId, Long articleId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file);
+
+    void deleteArticle(Long memberId, Long articleId);
 }

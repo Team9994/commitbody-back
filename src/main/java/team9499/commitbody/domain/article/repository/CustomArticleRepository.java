@@ -14,4 +14,6 @@ public interface CustomArticleRepository {
     ArticleDto getDetailArticle(Long memberId, Long articleId);
 
     Map<String, Object> getArticleAndFile(Long articleId);
+
+    void deleteArticle(Long articleId);
 }
