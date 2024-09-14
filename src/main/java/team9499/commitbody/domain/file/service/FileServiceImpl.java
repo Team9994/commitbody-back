@@ -44,16 +44,25 @@ public class FileServiceImpl implements FileService{
      */
     @Override
     public void updateArticleFile(Article article, String previousFileName, MultipartFile multipartFile) {
-        if (!previousFileName.equals("")) {
-            File file = fileRepository.findByArticleId(article.getId());
-            FileType fileType = checkFileType(multipartFile);
-            String storedFileName = s3Service.updateImage(multipartFile, previousFileName);
-            String originalFilename = multipartFile.getOriginalFilename();
-            if (!file.getOriginName().equals(originalFilename)) {
-                file.update(originalFilename, storedFileName, fileType);
-            }
-        }else saveArticleFile(article,multipartFile);
+        // 파일이 없을시 저장 안함
+        if (multipartFile == null) {
+            return;
+        }
 
+        // 파일명이 "" 일경우 새롭게 파일을 저장
+        if (previousFileName.isEmpty()) {
+            saveArticleFile(article, multipartFile);
+            return;
+        }
+
+        File file = fileRepository.findByArticleId(article.getId());
+        String originalFilename = multipartFile.getOriginalFilename();
+        FileType fileType = checkFileType(multipartFile);
+        String storedFileName = s3Service.updateImage(multipartFile, previousFileName);
+
+        if ( !file.getOriginName().equals(originalFilename)) {
+            file.update(originalFilename, storedFileName, fileType);
+        }
     }
 
 
