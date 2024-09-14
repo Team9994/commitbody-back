@@ -12,7 +12,7 @@ public interface LikeRepository extends JpaRepository<ContentLike, Long>, Custom
 
     Optional<ContentLike> findByMemberIdAndExerciseCommentId(Long memberId, Long exCommentId);
 
-    Optional<ContentLike> findByMemberIdAndArticleIdAndExerciseCommentIsNull(Long memberId, Long articleId);
+    Optional<ContentLike> findByMemberIdAndArticleIdAndArticleCommentIdIsNull(Long memberId, Long articleId);
 
     Optional<ContentLike> findByMemberIdAndArticleCommentId(Long memberId, Long articleCommentId);
 

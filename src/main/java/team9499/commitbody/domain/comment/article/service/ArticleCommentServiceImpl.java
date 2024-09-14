@@ -68,12 +68,12 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
             commentType = "대댓글 작성 성공";
             // 비동기를 통한 알림 전송
             if (replyNickname!=null)
-                notificationService.sendReplyComment(member,replyNickname, article.getTitle(),parentComment.getContent(),String.valueOf(save.getId()));
+                notificationService.sendReplyComment(member,replyNickname, article.getTitle(),parentComment.getContent(),String.valueOf(save.getId()),articleId);
         } else { // 부모 댓글인 경우
             articleComment = ArticleComment.of(article, member, content, null); // 부모 댓글 없이 최상위 댓글 생성
             ArticleComment save = articleCommentRepository.save(articleComment);// 댓글 저장
             commentType ="댓글 작성 성공";
-            notificationService.sendComment(member,article.getMember().getId(),article.getTitle(),content,String.valueOf(save.getId()));    // 댓글 알림 전송
+            notificationService.sendComment(member,article.getMember().getId(),article.getTitle(),content,String.valueOf(save.getId()),articleId);    // 댓글 알림 전송
         }
         article.updateCommentCount(article.getCommentCount()+1);
         return commentType;
