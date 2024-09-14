@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
+import team9499.commitbody.domain.Member.domain.QMember;
+import team9499.commitbody.domain.article.domain.Article;
 import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.article.domain.Visibility;
 import team9499.commitbody.domain.article.dto.ArticleDto;
@@ -22,8 +24,10 @@ import team9499.commitbody.domain.follow.domain.QFollow;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import static team9499.commitbody.domain.Member.domain.QMember.*;
 import static team9499.commitbody.domain.article.domain.QArticle.*;
 import static team9499.commitbody.domain.block.domain.QBlockMember.*;
 import static team9499.commitbody.domain.comment.article.domain.QArticleComment.*;
@@ -89,6 +93,23 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
 
         return list.stream()
                 .map(tuple -> ArticleDto.of(loginMemberId,tuple.get(article), converterImgUrl(tuple.get(file)),tuple.get(follow))).findFirst().get();
+    }
+
+    /**
+     * 게시글과 게시글의 저장된 이미지 파일을 조회합니다.
+     * @param articleId
+     * @return
+     */
+    @Override
+    public Map<String, Object> getArticleAndFile(Long articleId) {
+        Tuple tuple = jpaQueryFactory.select(article, file.storedName)
+                .from(article)
+                .leftJoin(file).on(file.article.id.eq(article.id)).fetchJoin()
+                .where(article.id.eq(articleId))
+                .fetchOne();
+
+
+        return Map.of("article",tuple.get(article),"storedName",tuple.get(file.storedName) == null ? "" : tuple.get(file.storedName));
     }
 
     /*
