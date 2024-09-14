@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.article.dto.ArticleDto;
-import team9499.commitbody.domain.article.dto.request.ArticleSaveRequest;
+import team9499.commitbody.domain.article.dto.request.ArticleRequest;
 import team9499.commitbody.domain.article.dto.response.ProfileArticleResponse;
 import team9499.commitbody.domain.article.service.ArticleService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
@@ -53,7 +53,7 @@ public class ArticleController {
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @PostMapping(value = "/article",consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> saveArticle(@Valid @RequestPart("articleSaveRequest") ArticleSaveRequest request, BindingResult result,
+    public ResponseEntity<?> saveArticle(@Valid @RequestPart("articleSaveRequest") ArticleRequest request, BindingResult result,
                                          @RequestPart("file")MultipartFile file,
                                          @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
@@ -100,6 +100,16 @@ public class ArticleController {
         Long memberId = getMemberId(principalDetails);
         ProfileArticleResponse articles = articleService.getAllProfileArticle(memberId, findMemberId, articleType,lastId, pageable);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",articles));
+    }
+
+    @PutMapping(value = "/article/{articleId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateArticle(@PathVariable("articleId") Long articleId,
+                                           @RequestPart("updateArticleRequest") ArticleRequest request,
+                                           @RequestPart(required = false) MultipartFile file,
+                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        articleService.updateArticle(memberId,articleId,request.getContent(), request.getTitle(), request.getArticleType(), request.getArticleCategory(),request.getVisibility(),file);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"수정 성공"));
     }
 
     private static Long getMemberId(PrincipalDetails principalDetails) {
