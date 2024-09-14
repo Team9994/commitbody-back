@@ -33,4 +33,10 @@ public class File extends BaseTime {
     public static File of(String originName, String storedName, FileType fileType,Article article){
         return File.builder().originName(originName).storedName(storedName).fileType(fileType).article(article).build();
     }
+
+    public void update(String originName, String storedName,FileType fileType){
+        this.originName = originName;
+        this.storedName = storedName;
+        this.fileType = fileType;
+    }
 }

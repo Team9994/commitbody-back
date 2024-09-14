@@ -36,6 +36,28 @@ public class FileServiceImpl implements FileService{
     }
 
     /**
+     * 게시글의 파일을 수정합니다.
+     * 게시글의 업로드한 파일과 동일하지 않을 경우에만 새롭게 저장합니다.
+     * @param article 파일의 저장된 게시글
+     * @param previousFileName  S3에 저장된 이전 파일명
+     * @param multipartFile 파일
+     */
+    @Override
+    public void updateArticleFile(Article article, String previousFileName, MultipartFile multipartFile) {
+        if (!previousFileName.equals("")) {
+            File file = fileRepository.findByArticleId(article.getId());
+            FileType fileType = checkFileType(multipartFile);
+            String storedFileName = s3Service.updateImage(multipartFile, previousFileName);
+            String originalFilename = multipartFile.getOriginalFilename();
+            if (!file.getOriginName().equals(originalFilename)) {
+                file.update(originalFilename, storedFileName, fileType);
+            }
+        }else saveArticleFile(article,multipartFile);
+
+    }
+
+
+    /**
      * 파일의 유형을 검사합니다.
      * @param multipartFile
      * @return  사진파일시 IMAGE, 비디오 파일일시 VIDEO

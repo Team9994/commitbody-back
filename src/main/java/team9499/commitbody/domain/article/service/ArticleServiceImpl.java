@@ -17,7 +17,13 @@ import team9499.commitbody.domain.article.dto.response.ProfileArticleResponse;
 import team9499.commitbody.domain.article.repository.ArticleRepository;
 import team9499.commitbody.domain.block.servcice.BlockMemberService;
 import team9499.commitbody.domain.file.service.FileService;
+import team9499.commitbody.global.Exception.ExceptionStatus;
+import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.InvalidUsageException;
+import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.redis.RedisService;
+
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -31,6 +37,17 @@ public class ArticleServiceImpl implements ArticleService{
     private final BlockMemberService blockMemberService;
 
 
+    /**
+     * 게시글을 저장합니다.
+     * @param memberId  로그인한 사용자 ID
+     * @param title 게시글 제목
+     * @param content   게시글 내용
+     * @param articleType   게시글 타입 (운동인증, 정보&질문)
+     * @param articleCategory   정보질문 일때 사용(정보, 피드백, 몸평)
+     * @param visibility 게시글 공개 범위(전체, 비공개)
+     * @param file 사진
+     * @return  저장된 게시글 ID
+     */
     @Override
     public Long saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
         Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
@@ -75,5 +92,32 @@ public class ArticleServiceImpl implements ArticleService{
         boolean myAccount = loginMemberId == findMemberId  ? true : false;  // 현자 나의 프로필인지 확인
         Slice<ArticleDto> articles = articleRepository.getAllProfileArticle(loginMemberId, memberId,myAccount, articleType,lastId, pageable);
         return new ProfileArticleResponse(articles.hasNext(),articles.getContent());
+    }
+
+    /**
+     * 게시글을 수정합니다.
+     * 작성자가 아닌 사용자가 게시글 수정시 403 예외 발생
+     * @param memberId  로그인한 사용자 ID
+     * @param articleId 수정할 게시글 ID
+     * @param content   수정할 게시글 내용
+     * @param articleType   수정시 게시글 타입(운동인증, 정보&질문)
+     * @param articleCategory 정보질문 일때 사용(정보, 피드백, 몸평)
+     * @param visibility 게시글 공개 범위(전체, 비공개)
+     * @param file  – 사진
+     */
+    @Override
+    public void updateArticle(Long memberId, Long articleId, String title , String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
+        Map<String, Object> articleAndFile = articleRepository.getArticleAndFile(articleId);
+        Article article = (Article)articleAndFile.get("article");
+        String previousFileName = (String) articleAndFile.get("storedName");
+
+        // 작성자 아닌 사용자가 요청시 403 예외 발생
+        if (!article.getMember().getId().equals(memberId))
+            throw new InvalidUsageException(ExceptionStatus.FORBIDDEN, ExceptionType.AUTHOR_ONLY);
+        article.update(title, content, articleType, articleCategory, visibility);
+
+        fileService.updateArticleFile(article, previousFileName, file);
+
+
     }
 }

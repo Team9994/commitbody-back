@@ -61,4 +61,15 @@ public class Article extends BaseTime {
     public void updateLikeCount(Integer count){
         this.likeCount = count;
     }
+
+    public void update(String title, String content, ArticleType articleType,ArticleCategory articleCategory,Visibility visibility){
+        this.title = title;
+        this.content = content;
+        this.articleType = articleType;
+        if (articleType.equals(ArticleType.INFO_QUESTION)){
+            this.articleCategory = articleCategory;
+        }
+        this.visibility = visibility;
+
+    }
 }

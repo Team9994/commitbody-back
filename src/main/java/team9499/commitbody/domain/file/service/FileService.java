@@ -8,5 +8,7 @@ public interface FileService {
 
     void saveArticleFile(Article article, MultipartFile file);
 
+    void updateArticleFile(Article article, String previousFileName, MultipartFile file);
+
     FileType checkFileType(MultipartFile file);
 }
