@@ -130,6 +130,14 @@ public class ArticleController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"수정 성공"));
     }
 
+    @DeleteMapping("/article/{articleId}")
+    public ResponseEntity<?> deleteArticle(@PathVariable("articleId") Long articleId,
+                                           @AuthenticationPrincipal PrincipalDetails  principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        articleService.deleteArticle(memberId, articleId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
+    }
+
     private static Long getMemberId(PrincipalDetails principalDetails) {
         Long memberId = principalDetails.getMember().getId();
         return memberId;
