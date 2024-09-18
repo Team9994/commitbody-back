@@ -8,16 +8,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
+import team9499.commitbody.domain.block.domain.QBlockMember;
 import team9499.commitbody.domain.comment.exercise.domain.ExerciseComment;
 import team9499.commitbody.domain.comment.exercise.dto.ExerciseCommentDto;
 import team9499.commitbody.domain.comment.exercise.repository.CustomExerciseCommentRepository;
-import team9499.commitbody.domain.like.domain.QContentLike;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static team9499.commitbody.domain.block.domain.QBlockMember.*;
 import static team9499.commitbody.domain.comment.exercise.domain.QExerciseComment.*;
 import static team9499.commitbody.domain.like.domain.QContentLike.*;
 
@@ -34,6 +35,7 @@ public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommen
     public static final int DAY = 30;
     public static final int MONTH = 12;
 
+    private final QBlockMember fromBlock = new QBlockMember("fromBlock");
     /**
      * 운동 댓글의 무한 스크롤 메서드
      * @param memberId  로그인한 사용자 ID
@@ -55,7 +57,10 @@ public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommen
         List<ExerciseComment> exerciseComments = jpaQueryFactory.select(exerciseComment)
                 .from(exerciseComment)
                 .leftJoin(exerciseComment.exerciseCommentLikes, contentLike).fetchJoin()
-                .where(builder)
+                .leftJoin(blockMember).on(blockMember.blocked.id.eq(exerciseComment.member.id).and(blockMember.blocker.id.eq(memberId)))
+                .leftJoin(fromBlock).on(fromBlock.blocked.id.eq(memberId).and(fromBlock.blocker.id.eq(exerciseComment.member.id)))
+                .where(builder,blockMember.id.isNull().or(blockMember.blockStatus.eq(false))
+                        .and(fromBlock.id.isNull().or(fromBlock.blockStatus.eq(false))))
                 .limit(pageable.getPageSize()+1)
                 .orderBy(exerciseComment.createdAt.desc())      // 최신순을 유지하기 위해 내림차순
                 .fetch();
@@ -80,10 +85,6 @@ public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommen
         }
 
        return new SliceImpl<>(commentDtoList,pageable,hasNext);
-    }
-
-    private boolean checkLikeStatus(Long loginMemberId, Long writer, boolean nowLikeStatus){
-        return checkAuthor(loginMemberId,writer) ? nowLikeStatus : false;
     }
     /*
     댓글이 현재 로그인한 사용자인지 확인하는 메서드
