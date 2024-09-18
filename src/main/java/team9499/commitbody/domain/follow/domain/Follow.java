@@ -18,11 +18,11 @@ public class Follow {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "follower_id") // follower를 위한 컬럼
+    @JoinColumn(name = "follower_id",foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)) // follower를 위한 컬럼
     private Member follower;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "following_id") // following을 위한 컬럼
+    @JoinColumn(name = "following_id",foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)) // following을 위한 컬럼
     private Member following;
 
     @Enumerated(EnumType.STRING)
