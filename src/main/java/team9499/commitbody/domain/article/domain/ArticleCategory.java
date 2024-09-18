@@ -6,6 +6,9 @@ import java.util.Arrays;
 
 public enum ArticleCategory {
 
+    ALL("전체"),
+    FOLLOWING("팔로잉"),
+    POPULAR("인기"),
     INFORMATION("정보"),
     FEEDBACK("피드백"),
     BODY_REVIEW("몸평");

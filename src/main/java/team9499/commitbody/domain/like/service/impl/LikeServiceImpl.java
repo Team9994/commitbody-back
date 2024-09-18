@@ -84,7 +84,7 @@ public class LikeServiceImpl implements LikeService {
      */
     @Override
     public String articleLike(Long articleId, Long memberId) {
-        Optional<ContentLike> commentLikeOptional = commentLikeRepository.findByMemberIdAndArticleIdAndExerciseCommentIsNull(memberId, articleId);
+        Optional<ContentLike> commentLikeOptional = commentLikeRepository.findByMemberIdAndArticleIdAndArticleCommentIdIsNull(memberId, articleId);
         Article article = articleRepository.findById(articleId).orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
         Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
 
@@ -109,7 +109,6 @@ public class LikeServiceImpl implements LikeService {
                 notificationService.sendArticleLike(member,article.getMember().getId(),article.getId(),true);
                 return ADD;
             }
-
         }
     }
 
@@ -124,24 +123,25 @@ public class LikeServiceImpl implements LikeService {
         Optional<ContentLike> likeOptional = commentLikeRepository.findByMemberIdAndArticleCommentId(memberId, commentId);
         ArticleComment articleComment = articleCommentRepository.findById(commentId).orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
         Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
+        Long articleId = articleComment.getArticle().getId();
         // 댓글의 최초 좋아요시
         if (likeOptional.isEmpty()){
             ContentLike contentLike = ContentLike.creatArticleCommentLike(member, articleComment);
             likeRepository.save(contentLike);
             getUpdateLikeCount(articleComment, true);
-            notificationService.sendCommentLike(member,articleComment.getMember().getId(),articleComment.getId(),true);
+            sendCommentLike(member, articleComment, articleId, true);
             return ADD;
         }else{
             ContentLike contentLike = likeOptional.get();
             if (contentLike.isLikeStatus()) {     // 만약 좋아요 상태가 true(좋아요 성공)이라면 false(좋아요 해제) 상태로 변경
                 getUpdateLikeCount(articleComment,false);  // 게시글의 좋아요수를 -1
                 contentLike.changeLike(false);
-                notificationService.sendCommentLike(member,articleComment.getMember().getId(),articleComment.getId(),false);
+                sendCommentLike(member, articleComment, articleId, false);
                 return CANCEL;
             }else {     // 좋아요 상태가 false(취소) 상태라면 true(좋아요 성공)상태로 변경
                 getUpdateLikeCount(articleComment,true);
                 contentLike.changeLike(true);
-                notificationService.sendCommentLike(member,articleComment.getMember().getId(),articleComment.getId(),true);
+                sendCommentLike(member, articleComment, articleId, true);
                 return ADD;
             }
         }
@@ -151,6 +151,7 @@ public class LikeServiceImpl implements LikeService {
     게시글의 좋아요 수를 조절하는 메서드
     type true = 일때 +1 , false = -1
      */
+
     private static void getUpdateLikeCount(Object object,boolean type) {
         if (object instanceof  Article){
             Integer count = type ? ((Article) object).getLikeCount() + 1 : ((Article) object).getLikeCount()  -1;
@@ -160,5 +161,12 @@ public class LikeServiceImpl implements LikeService {
             ((ArticleComment) object).updateLikeCount(count);
         }
 
+    }
+
+    /*
+    댓글 좋아요 알림 전송
+     */
+    private void sendCommentLike(Member member, ArticleComment articleComment, Long articleId, boolean status) {
+        notificationService.sendCommentLike(member, articleComment.getMember().getId(), articleComment.getId(), articleId, status);
     }
 }

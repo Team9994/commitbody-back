@@ -38,10 +38,13 @@ public class Notification extends BaseTime {
 
     private Long commentId;     // 댓글 ID
 
-    public static Notification of(String content,NotificationType notificationType,Member receiver,Member sender,Long commentId){
+    private Long articleId;     // 게시글 ID
+
+    public static Notification of(String content,NotificationType notificationType,Member receiver,Member sender,Long commentId,Long articleId){
         NotificationBuilder notificationBuilder = Notification.builder().content(content).notificationType(notificationType).receiver(receiver).sender(sender).isRead(0);
         if (content!=null)  notificationBuilder.commentId(commentId); // 댓글의 대한 알림일 경우
-        
+        if (articleId!=null) notificationBuilder.articleId(articleId);
+
         return notificationBuilder.build();
     }
 

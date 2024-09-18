@@ -6,4 +6,6 @@ import team9499.commitbody.domain.file.domain.File;
 
 @Repository
 public interface FileRepository extends JpaRepository<File,Long> {
+
+    File findByArticleId(Long articleId);
 }

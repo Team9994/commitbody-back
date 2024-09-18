@@ -8,9 +8,9 @@ import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.article.domain.Visibility;
 import team9499.commitbody.global.annotations.ValidEnum;
 
-@Schema(description = "운동 게시글 작성 Request")
+@Schema(description = "운동 작성/수정 Request")
 @Data
-public class ArticleSaveRequest {
+public class ArticleRequest {
 
     @Schema(description = "게시글 제목")
     @NotBlank(message = "게시글 제목을 작성해주세요")
