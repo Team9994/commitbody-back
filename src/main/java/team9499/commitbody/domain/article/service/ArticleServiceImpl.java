@@ -2,6 +2,7 @@ package team9499.commitbody.domain.article.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import team9499.commitbody.domain.article.domain.ArticleCategory;
 import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.article.domain.Visibility;
 import team9499.commitbody.domain.article.dto.ArticleDto;
+import team9499.commitbody.domain.article.dto.response.AllArticleResponse;
 import team9499.commitbody.domain.article.dto.response.ProfileArticleResponse;
 import team9499.commitbody.domain.article.repository.ArticleRepository;
 import team9499.commitbody.domain.block.servcice.BlockMemberService;
@@ -22,8 +24,12 @@ import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.InvalidUsageException;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.redis.RedisService;
+import team9499.commitbody.global.utils.TimeConverter;
 
+import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -36,6 +42,37 @@ public class ArticleServiceImpl implements ArticleService{
     private final FileService fileService;
     private final BlockMemberService blockMemberService;
 
+    @Value("${cloud.aws.cdn.url}")
+    private String cloudUrl;
+
+    /**
+     * 게시글 전체 조회
+     * 인기 게시글 조회시에는 네이트브 쿼리를 사용해 조회하며, 그외 조회는 JPA를 사용해 조회
+     * @param memberId  로그인한 사용자 ID
+     * @param type  게시글 종류 (운동 인증, 정보 질문)
+     * @param articleCategory   (전체, 인기, 팔로잉, 장보, 피드백, 몸평)
+     * @param lastId    조회된 마지막 게시글 ID
+     * @param pageable 페이징 정보
+     * @return  AllArticleResponse 객체 반환
+     */
+    @Override
+    public AllArticleResponse getAllArticles(Long memberId, ArticleType type, ArticleCategory articleCategory, Long lastId, Pageable pageable) {
+        AllArticleResponse allArticleResponse = null;
+        // 인기 게시글일때
+        if (articleCategory.equals(ArticleCategory.POPULAR)) {
+            List<Object[]> test = articleRepository.findByPopularArticle(memberId);
+            List<ArticleDto> articleDtoList = test.stream().map(o -> ArticleDto.of((Long) o[0], (Long) o[8], ArticleCategory.fromKorean((String) o[3]), (String) o[5], (String) o[6], (Integer) o[10], (Integer) o[9],
+                            TimeConverter.converter(((Timestamp) o[1]).toLocalDateTime()), converterImgUrl((String) o[12]), (String) o[13], (String) o[14]))
+                    .collect(Collectors.toList());
+
+            allArticleResponse= new AllArticleResponse(false,articleDtoList);
+        }else{  // 인기게시글이 아닐때
+            Slice<ArticleDto> test = articleRepository.getAllArticles(memberId, type, articleCategory, lastId, pageable);
+            allArticleResponse= new AllArticleResponse(test.hasNext(),test.getContent());
+        }
+
+        return allArticleResponse;
+    }
 
     /**
      * 게시글을 저장합니다.
@@ -136,5 +173,12 @@ public class ArticleServiceImpl implements ArticleService{
     private static void validWriter(Long memberId, Article article) {
         if (!article.getMember().getId().equals(memberId))
             throw new InvalidUsageException(ExceptionStatus.FORBIDDEN, ExceptionType.AUTHOR_ONLY);
+    }
+
+    /*
+    파일을 S3 CDN의 URL 주소로 변경해줍니다.
+     */
+    private String converterImgUrl(String storedFileName) {
+        return storedFileName == null ? "등록된 이미지가 없습니다." : cloudUrl + storedFileName;
     }
 }

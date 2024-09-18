@@ -6,9 +6,12 @@ import team9499.commitbody.domain.article.domain.ArticleCategory;
 import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.article.domain.Visibility;
 import team9499.commitbody.domain.article.dto.ArticleDto;
+import team9499.commitbody.domain.article.dto.response.AllArticleResponse;
 import team9499.commitbody.domain.article.dto.response.ProfileArticleResponse;
 
 public interface ArticleService {
+
+    AllArticleResponse getAllArticles(Long memberId,ArticleType type, ArticleCategory articleCategory,Long lastId,Pageable pageable);
 
     Long saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file);
 
