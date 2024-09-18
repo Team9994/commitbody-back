@@ -9,6 +9,7 @@ import team9499.commitbody.domain.Member.domain.Gender;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.dto.response.MemberMyPageResponse;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
+import team9499.commitbody.domain.Member.service.MemberDocService;
 import team9499.commitbody.domain.Member.service.MemberService;
 import team9499.commitbody.domain.block.servcice.BlockMemberService;
 import team9499.commitbody.domain.follow.domain.FollowType;
@@ -29,6 +30,7 @@ public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final FollowRepository followRepository;
     private final BlockMemberService blockMemberService;
+    private final MemberDocService memberDocService;
     private final S3Service s3Service;
 
 
@@ -78,6 +80,8 @@ public class MemberServiceImpl implements MemberService {
         Member member = getMember(memberId);
         String profile = s3Service.updateProfile(file, member.getProfile(),deleteProfile);
         member.updateProfile(nickname,gender,birthDay,height,weight,boneMineralDensity,bodyFatPercentage,profile);
+
+        memberDocService.updateMemberDocAsync(String.valueOf(memberId),nickname,profile);
     }
 
 
