@@ -18,9 +18,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import team9499.commitbody.domain.article.domain.ArticleCategory;
 import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.article.dto.ArticleDto;
 import team9499.commitbody.domain.article.dto.request.ArticleRequest;
+import team9499.commitbody.domain.article.dto.response.AllArticleResponse;
 import team9499.commitbody.domain.article.dto.response.ProfileArticleResponse;
 import team9499.commitbody.domain.article.service.ArticleService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
@@ -34,6 +36,18 @@ import team9499.commitbody.global.payload.SuccessResponse;
 public class ArticleController {
 
     private final ArticleService articleService;
+
+    @GetMapping("/article")
+    public ResponseEntity<?> getAllArticle(@RequestParam(value = "type",required = false,defaultValue = "EXERCISE") ArticleType type,
+                                           @RequestParam(value = "category",required = false,defaultValue = "ALL") ArticleCategory category,
+                                           @RequestParam(value = "lastId",required = false) Long lastId,
+                                           @AuthenticationPrincipal PrincipalDetails principalDetails,
+                                           @PageableDefault(size = 12) Pageable pageable
+                                           ){
+        Long memberId = getMemberId(principalDetails);
+        AllArticleResponse allArticles = articleService.getAllArticles(memberId, type, category, lastId, pageable);
+        return ResponseEntity.ok(new SuccessResponse<>(true, "조회 성공",allArticles));
+    }
 
     @Tag(name = "게시글",description = "게시글 관련 API")
     @Operation(summary = "게시글 등록", description = "게시글을 작성하는 API 입니다. 질문&정보 게시글 등록시에는 'articleCategory' 필드를 사용하지 않아도 됩니다.")
