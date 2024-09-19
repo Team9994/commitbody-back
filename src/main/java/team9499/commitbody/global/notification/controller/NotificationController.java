@@ -1,6 +1,7 @@
 package team9499.commitbody.global.notification.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -26,10 +28,18 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
+    @Operation(summary = "알림 목록 조회", description = "해당 사용자의 알림 내역을 조회합니다.(팔로우 알림내역에는 articleId가 존재하지 않습니다.)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value =  "{\"success\": true, \"message\": \"성공\", \"data\": {\"hasNext\": false, \"notifications\": [{\"id\": 1, \"content\": \"스웨거님이 회원님을 팔로우하기 시작했어요.\", \"time\": \"3일 전\", \"profile\": \"https://d12ryzjapybmlj.cloudfront.net/default.PNG\", \"nickname\": \"스웨거\",\"articleId\":1}]}}"))),
+            @ApiResponse(responseCode = "400", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/notification")
     public ResponseEntity<?> getAllNotification(@RequestParam(value = "lastId", required = false) Long lastId,
                                                 @AuthenticationPrincipal PrincipalDetails principalDetails,
-                                                Pageable pageable){
+                                                @Parameter(example = "{\"size\":10}") @PageableDefault Pageable pageable){
         Long memberId = getMemberId(principalDetails);
         NotificationResponse allNotification = notificationService.getAllNotification(memberId, lastId, pageable);
 
