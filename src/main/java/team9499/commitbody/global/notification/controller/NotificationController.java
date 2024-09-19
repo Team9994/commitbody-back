@@ -8,13 +8,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
+import team9499.commitbody.global.notification.dto.response.NotificationResponse;
 import team9499.commitbody.global.notification.service.NotificationService;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
@@ -26,6 +25,16 @@ import team9499.commitbody.global.payload.SuccessResponse;
 public class NotificationController {
 
     private final NotificationService notificationService;
+
+    @GetMapping("/notification")
+    public ResponseEntity<?> getAllNotification(@RequestParam(value = "lastId", required = false) Long lastId,
+                                                @AuthenticationPrincipal PrincipalDetails principalDetails,
+                                                Pageable pageable){
+        Long memberId = getMemberId(principalDetails);
+        NotificationResponse allNotification = notificationService.getAllNotification(memberId, lastId, pageable);
+
+        return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",allNotification));
+    }
 
     @Operation(summary = "알림 일괄 읽기", description = "알림 버튼 클릭시 현재 알림을 모두 읽기 처리합니다.")
     @ApiResponses(value = {
