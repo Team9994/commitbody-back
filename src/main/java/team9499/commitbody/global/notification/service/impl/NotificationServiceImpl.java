@@ -2,17 +2,20 @@ package team9499.commitbody.global.notification.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
-import team9499.commitbody.domain.article.domain.Article;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.notification.domain.Notification;
 import team9499.commitbody.global.notification.domain.NotificationType;
+import team9499.commitbody.global.notification.dto.NotificationDto;
+import team9499.commitbody.global.notification.dto.response.NotificationResponse;
 import team9499.commitbody.global.notification.repository.NotificationRepository;
 import team9499.commitbody.global.notification.service.FcmService;
 import team9499.commitbody.global.notification.service.NotificationService;
@@ -46,6 +49,21 @@ public class NotificationServiceImpl implements NotificationService {
     @Async
     public void asyncDelete(Long receiverId, Long senderId, NotificationType notificationType){
         notificationRepository.deleteByReceiverIdAndSenderIdAndNotificationType(receiverId,senderId,notificationType);
+    }
+
+    /**
+     * 알림 내역 조회
+     * @param memberId 조회할 사용자 ID
+     * @param lastId 마지막 알림 ID
+     * @param pageable  페이지 정보
+     * @return  NotificationResponse 반환
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public NotificationResponse getAllNotification(Long memberId, Long lastId, Pageable pageable) {
+        Slice<NotificationDto> allNotification = notificationRepository.getAllNotification(memberId, lastId, pageable);
+
+        return new NotificationResponse(allNotification.hasNext(),allNotification.getContent());
     }
 
     /**
