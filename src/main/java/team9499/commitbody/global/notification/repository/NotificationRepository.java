@@ -11,7 +11,7 @@ import team9499.commitbody.global.notification.domain.NotificationType;
 import java.util.Optional;
 
 @Repository
-public interface NotificationRepository extends JpaRepository<Notification,Long> {
+public interface NotificationRepository extends JpaRepository<Notification,Long>,CustomNotificationRepository {
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Notification n SET n.isRead = 1 WHERE n.receiver.id IN :receiverId AND n.isRead = 0")
