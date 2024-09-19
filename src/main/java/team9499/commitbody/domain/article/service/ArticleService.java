@@ -13,7 +13,7 @@ public interface ArticleService {
 
     AllArticleResponse getAllArticles(Long memberId,ArticleType type, ArticleCategory articleCategory,Long lastId,Pageable pageable);
 
-    Long saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file);
+    ArticleDto saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file);
 
     ArticleDto getDetailArticle(Long memberId, Long articleId);
 

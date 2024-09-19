@@ -65,10 +65,10 @@ public class ArticleServiceImpl implements ArticleService{
                             TimeConverter.converter(((Timestamp) o[1]).toLocalDateTime()), converterImgUrl((String) o[12]), (String) o[13], (String) o[14]))
                     .collect(Collectors.toList());
 
-            allArticleResponse= new AllArticleResponse(false,articleDtoList);
+            allArticleResponse= new AllArticleResponse(null,false,articleDtoList);
         }else{  // 인기게시글이 아닐때
             Slice<ArticleDto> test = articleRepository.getAllArticles(memberId, type, articleCategory, lastId, pageable);
-            allArticleResponse= new AllArticleResponse(test.hasNext(),test.getContent());
+            allArticleResponse= new AllArticleResponse(null,test.hasNext(),test.getContent());
         }
 
         return allArticleResponse;
@@ -86,12 +86,13 @@ public class ArticleServiceImpl implements ArticleService{
      * @return  저장된 게시글 ID
      */
     @Override
-    public Long saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
+    public ArticleDto saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
         Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
         Article article = Article.of(title,content,articleType,articleCategory,visibility,member);
-        articleRepository.save(article);
-        fileService.saveArticleFile(article,file);
-        return article.getId();
+        Article save = articleRepository.save(article);
+        String filename = fileService.saveArticleFile(article, file);
+
+        return ArticleDto.of(save, member,filename.equals("등록된 이미지가 없습니다.") ? "등록된 이미지가 없습니다." : cloudUrl+filename);
     }
 
     /**
