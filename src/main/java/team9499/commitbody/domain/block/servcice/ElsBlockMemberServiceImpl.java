@@ -1,5 +1,10 @@
 package team9499.commitbody.domain.block.servcice;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.sql.QueryRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -8,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.block.domain.BlockMemberDoc;
 import team9499.commitbody.domain.block.repository.ElsBlockMemberRepository;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +24,7 @@ import java.util.List;
 public class ElsBlockMemberServiceImpl implements ElsBlockMemberService{
 
     private final ElsBlockMemberRepository elsBlockMemberRepository;
+    private final ElasticsearchClient elasticsearchClient;
 
     private String BLOCKED="blocked_";
     @Async
@@ -49,6 +56,29 @@ public class ElsBlockMemberServiceImpl implements ElsBlockMemberService{
             return blockMemberDoc.getBlockerId();
         }
         return List.of();
+    }
+
+    /**
+     * 차단한 사용자가 차단된 사용자의 ID를 조회하는 메서드
+     * @param blockerId 차단한 사용자 ID
+     * @return  차단된 사용자 ID를 List 반환
+     */
+    @Override
+    public List<Long> findBlockedIds(Long blockerId) {
+        SearchRequest searchRequest = new SearchRequest.Builder()
+                .index("block_member_index")
+                .query(q -> q.term(t -> t.field("blockerId").value(blockerId))).build();
+
+        List<Long> ids = new ArrayList<>();
+        try {
+            SearchResponse<Object> search = elasticsearchClient.search(searchRequest, Object.class);
+            for (Hit<Object> hit : search.hits().hits()) {
+                 ids.add(Long.parseLong(hit.id().replace(BLOCKED,"")));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return ids;
     }
 
     private String getElsId(Long blockedId) {

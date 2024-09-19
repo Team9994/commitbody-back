@@ -7,4 +7,6 @@ public interface ElsBlockMemberService {
     void blockMember(Long blockerId,Long blockedId,String status);
 
     List<Long> getBlockerIds(Long blockedId);
+
+    List<Long> findBlockedIds(Long blockerId);
 }
