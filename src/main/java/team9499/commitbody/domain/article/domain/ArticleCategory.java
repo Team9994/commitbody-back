@@ -1,9 +1,11 @@
 package team9499.commitbody.domain.article.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 
+@Slf4j
 public enum ArticleCategory {
 
     ALL("전체"),
@@ -25,11 +27,16 @@ public enum ArticleCategory {
 
     public static ArticleCategory fromKorean(String value){
         for (ArticleCategory articleCategory : ArticleCategory.values()) {
+            log.info("value={}",value.equals(articleCategory.getDescription()));
             if (articleCategory.getDescription().equals(value)){
                 return articleCategory;
             }
         }
         return null;
+    }
+
+    public static ArticleCategory stringToEnum(String value){
+        return ArticleCategory.valueOf(value);
     }
 
     @JsonCreator

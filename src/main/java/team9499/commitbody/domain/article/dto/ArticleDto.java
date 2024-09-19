@@ -1,5 +1,6 @@
 package team9499.commitbody.domain.article.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,8 @@ import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.follow.domain.Follow;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
 import team9499.commitbody.global.utils.TimeConverter;
+
+import java.time.LocalDateTime;
 
 @Slf4j
 @Data
@@ -42,6 +45,8 @@ public class ArticleDto {
 
     private MemberDto member;       // 사용자
 
+    @JsonIgnore
+    private LocalDateTime localDateTime;
 
     public static ArticleDto of(Long articleId, String imageUrl){
         return ArticleDto.builder().articleId(articleId).imageUrl(imageUrl).build();
@@ -50,6 +55,12 @@ public class ArticleDto {
     public static ArticleDto of(Article article, String imageUrl){
         return ArticleDto.builder().articleId(article.getId()).title(article.getTitle()).articleCategory(article.getArticleCategory()).time(TimeConverter.converter(article.getCreatedAt())).likeCount(article.getLikeCount())
                 .commentCount(article.getCommentCount()).imageUrl(imageUrl).build();
+    }
+
+    public static ArticleDto of(Article article,Member member, String imageUrl){
+        MemberDto memberDTO = MemberDto.toMemberDTO(member);
+        return ArticleDto.builder().articleId(article.getId()).title(article.getTitle()).articleCategory(article.getArticleCategory()).time(TimeConverter.converter(article.getCreatedAt())).likeCount(article.getLikeCount())
+                .commentCount(article.getCommentCount()).member(memberDTO).imageUrl(imageUrl).localDateTime(article.getCreatedAt()).build();
     }
 
     public static ArticleDto of(Long loginMemberId,Article article, String imageUrl, Follow follow){
