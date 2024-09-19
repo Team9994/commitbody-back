@@ -9,6 +9,9 @@ import static ch.qos.logback.classic.spi.ThrowableProxyVO.build;
 
 @Data
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_receiver_created",columnList = "receiver_id, created_at desc")
+})
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -28,7 +31,7 @@ public class Notification extends BaseTime {
     @Enumerated(EnumType.STRING)
     private NotificationType notificationType;  // 알림 종류(팔로우, 댓글 , 좋아요, 전체알림)
 
-    @JoinColumn(name = "receiver_id", nullable = false)
+    @JoinColumn(name = "receiver_id", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     @ManyToOne(fetch = FetchType.LAZY)
     private Member receiver;      // 수신자
 
