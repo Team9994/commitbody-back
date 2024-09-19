@@ -11,6 +11,7 @@ import team9499.commitbody.domain.Member.dto.response.MemberMyPageResponse;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.Member.service.MemberDocService;
 import team9499.commitbody.domain.Member.service.MemberService;
+import team9499.commitbody.domain.article.service.ElsArticleService;
 import team9499.commitbody.domain.block.servcice.BlockMemberService;
 import team9499.commitbody.domain.follow.domain.FollowType;
 import team9499.commitbody.domain.follow.repository.FollowRepository;
@@ -18,6 +19,7 @@ import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.aws.s3.S3Service;
+import team9499.commitbody.global.redis.RedisService;
 
 import java.time.LocalDate;
 
@@ -31,6 +33,8 @@ public class MemberServiceImpl implements MemberService {
     private final FollowRepository followRepository;
     private final BlockMemberService blockMemberService;
     private final MemberDocService memberDocService;
+    private final ElsArticleService elsArticleService;
+    private final RedisService redisService;
     private final S3Service s3Service;
 
 
@@ -78,10 +82,14 @@ public class MemberServiceImpl implements MemberService {
     public void updateProfile(Long memberId, String nickname, Gender gender, LocalDate birthDay, Float height, Float weight, Float boneMineralDensity,
                               Float bodyFatPercentage, boolean deleteProfile,MultipartFile file) {
         Member member = getMember(memberId);
+        String beforeNickname = member.getNickname();   // 변경하기전 닉네임
         String profile = s3Service.updateProfile(file, member.getProfile(),deleteProfile);
         member.updateProfile(nickname,gender,birthDay,height,weight,boneMineralDensity,bodyFatPercentage,profile);
+        
+        redisService.updateMember(String.valueOf(memberId),member); // 레디스 회원 정보 업데이트
 
-        memberDocService.updateMemberDocAsync(String.valueOf(memberId),nickname,profile);
+        memberDocService.updateMemberDocAsync(String.valueOf(memberId),nickname,profile);   // 사용자 인덱스 업데이트
+        elsArticleService.updateWriterAsync(beforeNickname,nickname);   // 게시글의 작성된 사용자 닉네임 업데이트
     }
 
 
