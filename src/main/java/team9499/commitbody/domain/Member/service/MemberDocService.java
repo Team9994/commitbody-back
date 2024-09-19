@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.UpdateRequest;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import team9499.commitbody.domain.Member.repository.MemberDocRepository;
 import team9499.commitbody.domain.block.servcice.ElsBlockMemberService;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +43,26 @@ public class MemberDocService {
     @Async
     public void saveMemberDocAsync(MemberDoc memberDoc) {
         memberDocRepository.save(memberDoc);
+    }
+
+    /**
+     * 프로필 업데이트시 MemberDoc 인덱스 비동기 업데이트
+     * @param memberId 로그인한 사용자 ID
+     * @param nickname 변경한 닉네임
+     * @param profile 변경한 프로필 사진
+     */
+    @Async
+    public void updateMemberDocAsync(String memberId, String nickname, String profile){
+        Map<String,String> doc = new HashMap<>();
+        doc.put("nickname" , nickname);
+        doc.put("profile", profile);
+        
+        try{
+            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(MEMBER_INDEX).id(memberId).doc(doc));
+            elasticsearchClient.update(updateRequest,Map.class);
+        }catch (Exception e){
+            log.error("엘라스틱 사용자 닉네임 변경중 업데이트 발생");
+        }
     }
 
     /**

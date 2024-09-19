@@ -37,12 +37,25 @@ public class ArticleController {
 
     private final ArticleService articleService;
 
+    @Operation(summary = "게시글 조회", description = "작성된 게시글의 카테고리별로 게시글의 무한 스크롤 방식으로 조회합니다. 기본값: [type : EXERCISE, category : ALL , size : 12]",tags = "게시글")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200_1", description = "OK - 운동 인증 게시글 조회시", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"articles\": [{\"articleId\": 1, \"imageUrl\": \"https://d12ryzjapybmlj.cloudfront.net/images/test.png\"}]}}"))),
+            @ApiResponse(responseCode = "200_2", description = "OK - 정보 질문 게시글 조회시", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"조회 성공\", \"data\": {\"hasNext\": false, \"articles\": [{\"articleId\": 2, \"postOwner\": true, \"title\": \"게시글\", \"content\": \"내용\", \"articleCategory\": \"INFORMATION\", \"time\": \"3일 전\", \"likeCount\": 10, \"commentCount\": 0, \"imageUrl\": \"등록된 이미지가 없습니다.\", \"member\": {\"memberId\": 1, \"nickname\": \"닉네임1\", \"profile\": \"https://d12ryzjapybmlj.cloudfront.net/default.PNG\"}}]}}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 차단된 사용자 접근시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 차단한 상태입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
+
     @GetMapping("/article")
     public ResponseEntity<?> getAllArticle(@RequestParam(value = "type",required = false,defaultValue = "EXERCISE") ArticleType type,
                                            @RequestParam(value = "category",required = false,defaultValue = "ALL") ArticleCategory category,
                                            @RequestParam(value = "lastId",required = false) Long lastId,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails,
-                                           @PageableDefault(size = 12) Pageable pageable
+                                           @Parameter(example = "{\"size\":12}") @PageableDefault(size = 12) Pageable pageable
                                            ){
         Long memberId = getMemberId(principalDetails);
         AllArticleResponse allArticles = articleService.getAllArticles(memberId, type, category, lastId, pageable);

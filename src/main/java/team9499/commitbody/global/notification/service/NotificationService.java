@@ -1,9 +1,12 @@
 package team9499.commitbody.global.notification.service;
 
+import org.springframework.data.domain.Pageable;
 import team9499.commitbody.domain.Member.domain.Member;
-import team9499.commitbody.domain.article.domain.Article;
+import team9499.commitbody.global.notification.dto.response.NotificationResponse;
 
 public interface NotificationService {
+
+    NotificationResponse getAllNotification(Long memberId, Long lastId, Pageable pageable);
 
     void sendFollowing(Long followerId, Long followingId);
 
