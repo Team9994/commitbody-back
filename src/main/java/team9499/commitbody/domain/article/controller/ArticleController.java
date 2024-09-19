@@ -53,7 +53,6 @@ public class ArticleController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 차단한 상태입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
-
     @GetMapping("/article")
     public ResponseEntity<?> getAllArticle(@RequestParam(value = "type",required = false,defaultValue = "EXERCISE") ArticleType type,
                                            @RequestParam(value = "category",required = false,defaultValue = "ALL") ArticleCategory category,
@@ -186,6 +185,16 @@ public class ArticleController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
     }
 
+    @Operation(summary = "게시글 검색", description = "게시글 제목을 통한 게시글 검색을 합니다. category는 [INFORMATION,FEEDBACK,BODY_REVIEW]만 사용가능 ",tags = "게시글")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"검색 성공\", \"data\": {\"totalCount\": 5, \"hasNext\": true, \"articles\": [{\"articleId\": 1, \"title\": \"운동 게시글\", \"articleCategory\": \"FEEDBACK\", \"time\": \"25분 전\", \"likeCount\": 0, \"commentCount\": 0, \"imageUrl\": \"등록된 이미지가 없습니다.\", \"member\": {\"memberId\": 2, \"nickname\": \"닉네임\"}}]}}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 차단된 사용자 접근시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 차단한 상태입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/article/search")
     public ResponseEntity<?> searchArticle(@RequestParam(value = "title",required = false) String title,
                                            @RequestParam(value = "category",required = false) ArticleCategory category,
