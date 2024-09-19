@@ -27,12 +27,17 @@ public class FileServiceImpl implements FileService{
      * @param multipartFile 파일
      */
     @Override
-    public void saveArticleFile(Article article, MultipartFile multipartFile) {
-        String storedFilename = s3Service.uploadImage(multipartFile);
-        String originalFilename = multipartFile.getOriginalFilename();
-        FileType fileType = checkFileType(multipartFile);
-        File file = File.of(originalFilename, storedFilename, fileType, article);
-        fileRepository.save(file);
+    public String saveArticleFile(Article article, MultipartFile multipartFile) {
+        String storedFilename = null;
+        if (multipartFile != null) {
+            storedFilename = s3Service.uploadImage(multipartFile);
+            String originalFilename = multipartFile.getOriginalFilename();
+            FileType fileType = checkFileType(multipartFile);
+            File file = File.of(originalFilename, storedFilename, fileType, article);
+            fileRepository.save(file);
+        }else storedFilename = "등록된 이미지가 없습니다.";
+
+        return storedFilename;
     }
 
     /**
