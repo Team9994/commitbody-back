@@ -144,7 +144,8 @@ public class ArticleServiceImpl implements ArticleService{
      * @param file  – 사진
      */
     @Override
-    public void updateArticle(Long memberId, Long articleId, String title , String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
+    public ArticleDto updateArticle(Long memberId, Long articleId, String title , String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
+        Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
         Map<String, Object> articleAndFile = articleRepository.getArticleAndFile(articleId);
         Article article = (Article)articleAndFile.get("article");
         String previousFileName = (String) articleAndFile.get("storedName");
@@ -153,9 +154,9 @@ public class ArticleServiceImpl implements ArticleService{
         validWriter(memberId, article);
         article.update(title, content, articleType, articleCategory, visibility);
 
-        fileService.updateArticleFile(article, previousFileName, file);
+        String storedFileName = fileService.updateArticleFile(article, previousFileName, file);
 
-
+        return ArticleDto.of(article,member, storedFileName==null ? "등록된 이미지가 없습니다." : cloudUrl+storedFileName);
     }
 
     /**
@@ -164,11 +165,13 @@ public class ArticleServiceImpl implements ArticleService{
      * @param articleId 삭제할 게시글 ID
      */
     @Override
-    public void deleteArticle(Long memberId, Long articleId) {
+    public ArticleDto deleteArticle(Long memberId, Long articleId) {
         Article article = articleRepository.findById(articleId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        ArticleDto articleDto = ArticleDto.of(article,null);
         validWriter(memberId,article);  // 작성자 검증
 
         articleRepository.deleteArticle(articleId); //비동기를 통한 삭제
+        return articleDto;
     }
 
     private static void validWriter(Long memberId, Article article) {

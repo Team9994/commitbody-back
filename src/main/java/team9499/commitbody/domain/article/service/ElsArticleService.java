@@ -6,7 +6,11 @@ import team9499.commitbody.domain.article.dto.response.AllArticleResponse;
 
 public interface ElsArticleService {
 
-    void saveArticle(ArticleDto articleDto);
+    void saveArticleAsync(ArticleDto articleDto);
+
+    void updateArticleAsync(ArticleDto articleDto);
+
+    void deleteArticleAsync(Long articleId);
 
     AllArticleResponse searchArticleByTitle(Long memberId, String title, ArticleCategory category,Integer size, Long lastId);
 

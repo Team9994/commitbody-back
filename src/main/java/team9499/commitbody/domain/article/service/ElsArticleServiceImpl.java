@@ -5,10 +5,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.UpdateByQueryRequest;
-import co.elastic.clients.elasticsearch.core.UpdateByQueryResponse;
+import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +22,9 @@ import team9499.commitbody.domain.block.servcice.ElsBlockMemberService;
 import team9499.commitbody.global.utils.TimeConverter;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,12 +40,65 @@ public class ElsArticleServiceImpl implements ElsArticleService{
 
     private final String ARTICLE_INDEX  = "article_index";
 
+    /**
+     * 비동기를 통한 엘라스틱 게시글 저장
+     * @param articleDto 게시글DTO
+     */
     @Async
     @Override
-    public void saveArticle(ArticleDto articleDto) {
+    public void saveArticleAsync(ArticleDto articleDto) {
         ArticleDoc articleDoc = ArticleDoc.of(articleDto);
         elsArticleRepository.save(articleDoc);
     }
+
+    /**
+     * 비동기를 통한 엘라스틱 게시글명, 카테고리,이미지주소를 변경
+     * @param articleDto 게시글DTO
+     */
+    @Async
+    @Override
+    public void updateArticleAsync(ArticleDto articleDto) {
+
+        log.error("게시글 이미지 ={}",articleDto);
+        Map<String,String> doc = new HashMap<>();
+        doc.put("category",articleDto.getArticleCategory().toString());
+        doc.put("title",articleDto.getTitle());
+        doc.put("img_url",articleDto.getImageUrl());
+
+        try {
+            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(ARTICLE_INDEX).id(String.valueOf(articleDto.getArticleId())).doc(doc));
+            UpdateResponse<Object> updateResponse = elasticsearchClient.update(updateRequest, Map.class);
+            log.info("게시글 수정 성공 ID ={}",updateResponse.id());
+        }catch (Exception e){
+            log.error("업데이트중 오류 발생");
+        }
+    }
+
+    /**
+     * 비동기를 통한 게시글 ID를 통한 게시글 삭제
+     * @param articleId 삭제할 게시글 ID
+     */
+    @Async
+    @Override
+    public void deleteArticleAsync(Long articleId) {
+        DeleteRequest deleteRequest = DeleteRequest.of(d -> d.index(ARTICLE_INDEX).id(String.valueOf(articleId)));
+        try{
+            DeleteResponse deleteResponse = elasticsearchClient.delete(deleteRequest);
+            log.info("게시글 삭제 성공 ID ={} ",deleteResponse.id());
+        }catch (Exception e){
+            log.error("엘라스틱 게시글 삭제시 오류 발생");
+        }
+    }
+
+    /**
+     * 엘라스틱 게시글의 제목을 통한 검색 API
+     * @param memberId 로그인한 사용자 ID
+     * @param title 검색할 게시글 명
+     * @param category  필터링한 카테고리
+     * @param size  조회할 데이터 크기 기본 크기 10
+     * @param lastId 마지막 조회 ID
+     * @return  AllArticleResponse을 반환
+     */
 
     @Override
     public AllArticleResponse searchArticleByTitle(Long memberId, String title,ArticleCategory category, Integer size, Long lastId) {
@@ -131,6 +181,11 @@ public class ElsArticleServiceImpl implements ElsArticleService{
     }
 
 
+    /**
+     * 사용자 프로필 변경시 게시글의 작성된 작성자 명을 비동기로 변경
+     * @param beforeNickname    이전 사용자 닉네임
+     * @param afterNickname     변경한 사용자 닉네임
+     */
     @Async
     @Override
     public void updateWriterAsync(String beforeNickname, String afterNickname) {
@@ -153,6 +208,9 @@ public class ElsArticleServiceImpl implements ElsArticleService{
         }
     }
 
+    /*
+    저장된 사긴타입을 몇분전으로 변환하기 위한 컨버터
+     */
     private String convertTime(Object obTime) {
 
         String time = (String) obTime;

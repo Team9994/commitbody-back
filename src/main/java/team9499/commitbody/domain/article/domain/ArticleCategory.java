@@ -27,7 +27,6 @@ public enum ArticleCategory {
 
     public static ArticleCategory fromKorean(String value){
         for (ArticleCategory articleCategory : ArticleCategory.values()) {
-            log.info("value={}",value.equals(articleCategory.getDescription()));
             if (articleCategory.getDescription().equals(value)){
                 return articleCategory;
             }
