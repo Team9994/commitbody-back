@@ -59,7 +59,6 @@ public class ElsArticleServiceImpl implements ElsArticleService{
     @Override
     public void updateArticleAsync(ArticleDto articleDto) {
 
-        log.error("게시글 이미지 ={}",articleDto);
         Map<String,String> doc = new HashMap<>();
         doc.put("category",articleDto.getArticleCategory().toString());
         doc.put("title",articleDto.getTitle());
