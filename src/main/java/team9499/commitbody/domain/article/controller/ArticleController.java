@@ -25,6 +25,7 @@ import team9499.commitbody.domain.article.dto.ArticleDto;
 import team9499.commitbody.domain.article.dto.request.ArticleRequest;
 import team9499.commitbody.domain.article.dto.response.AllArticleResponse;
 import team9499.commitbody.domain.article.dto.response.ProfileArticleResponse;
+import team9499.commitbody.domain.article.event.ElsArticleEvent;
 import team9499.commitbody.domain.article.service.ArticleService;
 import team9499.commitbody.domain.article.service.ElsArticleService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
@@ -90,10 +91,9 @@ public class ArticleController {
         ArticleDto articleDto = articleService.saveArticle(memberId, request.getTitle(), request.getContent(), request.getArticleType(), request.getArticleCategory(), request.getVisibility(), file);
 
         // 정보&질문 게시글일때만 이벤트 발생
-        if (request.getArticleType().equals(ArticleType.INFO_QUESTION))
-            eventPublisher.publishEvent(articleDto);
+        articleEvent(request, articleDto,"등록");
 
-        return ResponseEntity.ok(new SuccessResponse<>(true,"둥록 성공",articleDto.getArticleId()));
+        return ResponseEntity.ok(new SuccessResponse<>(true,"등록 성공",articleDto.getArticleId()));
     }
 
     @Operation(summary = "게시글 상세 조회 - 기본 게시글 정보", description = "댓글을 제외한 게시글의 정보를 조회합니다. 차단된 사용자가 접근시 예외 발생",tags = "게시글")
@@ -161,7 +161,9 @@ public class ArticleController {
                                            @RequestPart(required = false) MultipartFile file,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        articleService.updateArticle(memberId,articleId,request.getContent(), request.getTitle(), request.getArticleType(), request.getArticleCategory(),request.getVisibility(),file);
+        ArticleDto articleDto = articleService.updateArticle(memberId, articleId, request.getContent(), request.getTitle(), request.getArticleType(), request.getArticleCategory(), request.getVisibility(), file);
+
+        articleEvent(request, articleDto,"수정");
         return ResponseEntity.ok(new SuccessResponse<>(true,"수정 성공"));
     }
 
@@ -181,7 +183,9 @@ public class ArticleController {
     public ResponseEntity<?> deleteArticle(@PathVariable("articleId") Long articleId,
                                            @AuthenticationPrincipal PrincipalDetails  principalDetails){
         Long memberId = getMemberId(principalDetails);
-        articleService.deleteArticle(memberId, articleId);
+        ArticleDto articleDto = articleService.deleteArticle(memberId, articleId);
+
+        eventPublisher.publishEvent(new ElsArticleEvent(articleDto,"삭제"));
         return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
     }
 
@@ -210,5 +214,10 @@ public class ArticleController {
     private static Long getMemberId(PrincipalDetails principalDetails) {
         Long memberId = principalDetails.getMember().getId();
         return memberId;
+    }
+
+    private void articleEvent(ArticleRequest request, ArticleDto articleDto,String type) {
+        if (request.getArticleType().equals(ArticleType.INFO_QUESTION))
+            eventPublisher.publishEvent(new ElsArticleEvent(articleDto,type));
     }
 }

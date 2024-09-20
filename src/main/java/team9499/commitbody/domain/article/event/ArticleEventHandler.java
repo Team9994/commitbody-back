@@ -14,7 +14,18 @@ public class ArticleEventHandler {
 
     @EventListener
     public void saveElsArticle(ArticleDto articleDto){
-        elsArticleService.saveArticle(articleDto);
+        elsArticleService.saveArticleAsync(articleDto);
+    }
+    
+    @EventListener
+    public void ElsArticle(ElsArticleEvent elsArticleEvent){
+        String type = elsArticleEvent.getType();
+        ArticleDto articleDto = elsArticleEvent.getArticleDto();
+        switch (type) {
+            case "등록" -> elsArticleService.saveArticleAsync(articleDto);
+            case "수정" -> elsArticleService.updateArticleAsync(articleDto);
+            case "삭제" -> elsArticleService.deleteArticleAsync(articleDto.getArticleId());
+        }
     }
 }
 

@@ -8,8 +8,9 @@ import team9499.commitbody.domain.article.dto.ArticleDto;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SaveElsArticleEvent {
+public class ElsArticleEvent {
 
     private ArticleDto articleDto;
 
+    private String type;
 }
