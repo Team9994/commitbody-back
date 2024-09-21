@@ -3,6 +3,7 @@ package team9499.commitbody.global.redis;
 import team9499.commitbody.domain.Member.domain.Member;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 public interface RedisService {
@@ -13,7 +14,7 @@ public interface RedisService {
 
     String getValue(String key);
 
-    void deleteValue(String key);
+    void deleteValue(String key,String type);
 
     void setMember(Member member,Duration duration);
 
@@ -26,4 +27,10 @@ public interface RedisService {
     void setFCM(String memberId, String token);
 
     String getFCMToken(String key);
+
+    void setRecentSearchLog(String memberId, String title);
+
+    List<Object> getRecentSearchLogs(String memberId);
+
+    void deleteRecentSearchLog(String memberId, String title,String type);
 }
