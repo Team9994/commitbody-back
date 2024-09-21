@@ -15,4 +15,6 @@ public interface ElsArticleService {
     AllArticleResponse searchArticleByTitle(Long memberId, String title, ArticleCategory category,Integer size, Long lastId);
 
     void updateWriterAsync(String beforeNickname, String afterNickname);
+
+    void updateArticleCountAsync(Long articleId, Integer count,String type);
 }

@@ -230,6 +230,30 @@ public class ElsArticleServiceImpl implements ElsArticleService{
         }
     }
 
+    /**
+     * 게시글 인덱스의 댓글 수와 좋아요수를 MySQL에 저장된 데이터와 일관성을 유지하기 위해 댓글,좋아요(삭제,추가)기능 동작시 업데이트 하는 로직을 실행
+     * @param articleId 게시글 ID
+     * @param count 변경된 수
+     * @param type  댓글, 좋아요
+     */
+    @Async
+    @Override
+    public void updateArticleCountAsync(Long articleId, Integer count, String type) {
+        Map<String,Integer> doc = new HashMap<>();
+
+        switch (type){
+            case "댓글" -> doc.put("comment_count",count);
+        }
+        
+        try {
+            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(ARTICLE_INDEX).id(String.valueOf(articleId)).doc(doc));
+            elasticsearchClient.update(updateRequest,Map.class);
+        }catch (Exception e){
+            log.error("게시글 댓글 수 업데이트중 오류 발생");
+        }
+    }
+
+
     /*
     저장된 사긴타입을 몇분전으로 변환하기 위한 컨버터
      */

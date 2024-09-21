@@ -27,5 +27,10 @@ public class ArticleEventHandler {
             case "삭제" -> elsArticleService.deleteArticleAsync(articleDto.getArticleId());
         }
     }
+
+    @EventListener
+    public void updateElsArticleCount(ElsArticleCountEvent elsArticleCountEvent){
+        elsArticleService.updateArticleCountAsync(elsArticleCountEvent.getArticleId(),elsArticleCountEvent.getCount(),elsArticleCountEvent.getType());
+    }
 }
 

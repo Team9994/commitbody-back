@@ -2,12 +2,13 @@ package team9499.commitbody.domain.comment.article.service;
 
 import org.springframework.data.domain.Pageable;
 import team9499.commitbody.domain.comment.article.domain.OrderType;
+import team9499.commitbody.domain.comment.article.dto.response.ArticleCommentCountResponse;
 import team9499.commitbody.domain.comment.article.dto.response.ArticleCommentResponse;
 
 
 public interface ArticleCommentService {
 
-    String saveArticleComment(Long memberId, Long ArticleId,Long commentParentId,String content,String replyNickname);
+    ArticleCommentCountResponse saveArticleComment(Long memberId, Long ArticleId, Long commentParentId, String content, String replyNickname);
 
     void updateArticleComment(Long memberId, Long commentId,String content);
 
@@ -15,6 +16,6 @@ public interface ArticleCommentService {
 
     ArticleCommentResponse getReplyComments(Long commentId, Long memberId,Long lastId,Pageable pageable);
 
-    void deleteArticleComment(Long memberId, Long commentId);
+    ArticleCommentCountResponse deleteArticleComment(Long memberId, Long commentId);
 
 }
