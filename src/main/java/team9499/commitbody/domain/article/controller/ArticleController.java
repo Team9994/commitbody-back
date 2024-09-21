@@ -31,6 +31,10 @@ import team9499.commitbody.domain.article.service.ElsArticleService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
+import team9499.commitbody.global.redis.RedisService;
+
+import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -40,6 +44,7 @@ public class ArticleController {
 
     private final ArticleService articleService;
     private final ElsArticleService elsArticleService;
+    private final RedisService redisService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Operation(summary = "게시글 조회", description = "작성된 게시글의 카테고리별로 게시글의 무한 스크롤 방식으로 조회합니다. 기본값: [type : EXERCISE, category : ALL , size : 12]",tags = "게시글")
@@ -209,6 +214,30 @@ public class ArticleController {
 
         AllArticleResponse allArticleResponse = elsArticleService.searchArticleByTitle(memberId, title, category,size, lastId);
         return ResponseEntity.ok(new SuccessResponse<>(true,"검색 성공",allArticleResponse));
+    }
+
+    @GetMapping("/article/search-record")
+    public ResponseEntity<?> getSearchRecord(@AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        List<Object> recentSearchLogs = redisService.getRecentSearchLogs(String.valueOf(memberId));
+        return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",recentSearchLogs));
+    }
+
+    @PostMapping("/article/search-record")
+    public ResponseEntity<?> saveSearchRecord(@RequestBody Map<String,String> searchRecordRequest,
+                                              @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        redisService.setRecentSearchLog(String.valueOf(memberId),searchRecordRequest.get("title"));
+        return ResponseEntity.ok(new SuccessResponse<>(true,"등록 성공"));
+    }
+
+    @DeleteMapping("/article/search-record")
+    public ResponseEntity<?> deleteSearchRecord(@RequestParam(value = "title",required = false) String title,
+                                                @RequestParam(value = "type",required = false) String type,
+                                                @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        redisService.deleteRecentSearchLog(String.valueOf(memberId),title,type);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
     }
 
     private static Long getMemberId(PrincipalDetails principalDetails) {
