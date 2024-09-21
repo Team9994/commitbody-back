@@ -216,6 +216,16 @@ public class ArticleController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"검색 성공",allArticleResponse));
     }
 
+    @Operation(summary = "최근 검색어 - 조회", description = "최근 검색어 기록 10개를 조회합니다.",tags = "게시글")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"조회 성공\", \"data\": [\"9\", \"8\", \"7\", \"6\", \"5\", \"4\", \"3\", \"2\", \"1\"]}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 차단된 사용자 접근시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 차단한 상태입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @GetMapping("/article/search-record")
     public ResponseEntity<?> getSearchRecord(@AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
@@ -223,14 +233,34 @@ public class ArticleController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",recentSearchLogs));
     }
 
+    @Operation(summary = "최근 검색어 - 등록", description = "최근 검색어 기록을 등록 합니다. 최대 30개를 저장 가능하며 그이상 데이터는 마지막 데이터를 삭제하여 새롭게 저장합니다.",tags = "게시글")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"등록 성공\"}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 차단된 사용자 접근시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 차단한 상태입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @PostMapping("/article/search-record")
-    public ResponseEntity<?> saveSearchRecord(@RequestBody Map<String,String> searchRecordRequest,
+    public ResponseEntity<?> saveSearchRecord(@Parameter(schema = @Schema(example = "{\"title\":\"최근 검색어\"}"))@RequestBody Map<String,String> searchRecordRequest,
                                               @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
         redisService.setRecentSearchLog(String.valueOf(memberId),searchRecordRequest.get("title"));
         return ResponseEntity.ok(new SuccessResponse<>(true,"등록 성공"));
     }
 
+    @Operation(summary = "최근 검색어 - 삭제", description = "최근 검색어 기록을 삭제 합니다. 선택 삭제시에는 title 사용, 전체 삭제시에는 type의 all을 사용합니다.",tags = "게시글")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"삭제 성공\"}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 차단된 사용자 접근시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 차단한 상태입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @DeleteMapping("/article/search-record")
     public ResponseEntity<?> deleteSearchRecord(@RequestParam(value = "title",required = false) String title,
                                                 @RequestParam(value = "type",required = false) String type,
