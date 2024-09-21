@@ -1,5 +1,6 @@
 package team9499.commitbody.domain.article.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -8,9 +9,12 @@ import team9499.commitbody.domain.Member.dto.MemberDto;
 import team9499.commitbody.domain.article.domain.Article;
 import team9499.commitbody.domain.article.domain.ArticleCategory;
 import team9499.commitbody.domain.article.domain.ArticleType;
+import team9499.commitbody.domain.article.domain.Visibility;
 import team9499.commitbody.domain.follow.domain.Follow;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
 import team9499.commitbody.global.utils.TimeConverter;
+
+import java.time.LocalDateTime;
 
 @Slf4j
 @Data
@@ -42,6 +46,11 @@ public class ArticleDto {
 
     private MemberDto member;       // 사용자
 
+    @JsonIgnore
+    private LocalDateTime localDateTime;
+
+    @JsonIgnore
+    private Visibility visibility;
 
     public static ArticleDto of(Long articleId, String imageUrl){
         return ArticleDto.builder().articleId(articleId).imageUrl(imageUrl).build();
@@ -50,6 +59,13 @@ public class ArticleDto {
     public static ArticleDto of(Article article, String imageUrl){
         return ArticleDto.builder().articleId(article.getId()).title(article.getTitle()).articleCategory(article.getArticleCategory()).time(TimeConverter.converter(article.getCreatedAt())).likeCount(article.getLikeCount())
                 .commentCount(article.getCommentCount()).imageUrl(imageUrl).build();
+    }
+
+    public static ArticleDto of(Article article,Member member, String imageUrl){
+        log.info("of ={}",article.getVisibility());
+        MemberDto memberDTO = MemberDto.toMemberDTO(member);
+        return ArticleDto.builder().articleId(article.getId()).title(article.getTitle()).articleCategory(article.getArticleCategory()).time(TimeConverter.converter(article.getCreatedAt())).likeCount(article.getLikeCount())
+                .commentCount(article.getCommentCount()).member(memberDTO).imageUrl(imageUrl).localDateTime(article.getCreatedAt()).visibility(article.getVisibility()).build();
     }
 
     public static ArticleDto of(Long loginMemberId,Article article, String imageUrl, Follow follow){

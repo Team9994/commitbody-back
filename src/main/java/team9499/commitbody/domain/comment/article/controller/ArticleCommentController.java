@@ -9,12 +9,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import team9499.commitbody.domain.article.dto.response.ArticleCountResponse;
+import team9499.commitbody.domain.article.event.ElsArticleCountEvent;
 import team9499.commitbody.domain.comment.article.domain.OrderType;
 import team9499.commitbody.domain.comment.article.dto.request.SaveArticleCommentRequest;
 import team9499.commitbody.domain.comment.article.dto.response.ArticleCommentResponse;
@@ -32,6 +35,7 @@ import java.util.Map;
 public class ArticleCommentController {
 
     private final ArticleCommentService articleCommentService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Operation(summary = "게시글 - 댓글 등록", description = "운동 게시글의 댓글을 작성하는 API 입니다. (replyNickname,parentId) 필요시에만 작성합니다.",tags = "게시글")
     @ApiResponses(value = {
@@ -51,9 +55,14 @@ public class ArticleCommentController {
     public ResponseEntity<?> save(@Valid @RequestBody SaveArticleCommentRequest request, BindingResult result,
                                   @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        String commentType = articleCommentService.saveArticleComment(memberId, request.getArticleId(), request.getParentId(), request.getContent(), request.getReplyNickname());
+        ArticleCountResponse response = articleCommentService.saveArticleComment(memberId, request.getArticleId(), request.getParentId(), request.getContent(), request.getReplyNickname());
 
-        return ResponseEntity.ok(new SuccessResponse<>(true,commentType));
+        // 댓글일 경우에만 업데이트 이벤트 실행
+        Integer count = response.getCount();
+        if (count != null)
+            eventPublisher.publishEvent(new ElsArticleCountEvent(request.getArticleId(),count,"댓글"));
+
+        return ResponseEntity.ok(new SuccessResponse<>(true,response.getType()));
     }
     
     @Operation(summary = "게시글 - 대/댓글 수정", description = "작성자만 작성한 댓글을 수정 가능합니다.",tags = "게시글")
@@ -94,7 +103,12 @@ public class ArticleCommentController {
     public ResponseEntity<?> deleteComment(@PathVariable("commentId") Long commentId,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        articleCommentService.deleteArticleComment(memberId, commentId);
+        ArticleCountResponse response = articleCommentService.deleteArticleComment(memberId, commentId);
+
+        // 댓글일 경우에만 업데이트 이벤트 발생
+        if (response != null)
+            eventPublisher.publishEvent(new ElsArticleCountEvent(response.getArticleId(), response.getCount(), "댓글"));
+
         return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
                                            }
 

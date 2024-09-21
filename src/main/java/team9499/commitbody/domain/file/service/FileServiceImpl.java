@@ -27,12 +27,17 @@ public class FileServiceImpl implements FileService{
      * @param multipartFile 파일
      */
     @Override
-    public void saveArticleFile(Article article, MultipartFile multipartFile) {
-        String storedFilename = s3Service.uploadImage(multipartFile);
-        String originalFilename = multipartFile.getOriginalFilename();
-        FileType fileType = checkFileType(multipartFile);
-        File file = File.of(originalFilename, storedFilename, fileType, article);
-        fileRepository.save(file);
+    public String saveArticleFile(Article article, MultipartFile multipartFile) {
+        String storedFilename = null;
+        if (multipartFile != null) {
+            storedFilename = s3Service.uploadImage(multipartFile);
+            String originalFilename = multipartFile.getOriginalFilename();
+            FileType fileType = checkFileType(multipartFile);
+            File file = File.of(originalFilename, storedFilename, fileType, article);
+            fileRepository.save(file);
+        }else storedFilename = "등록된 이미지가 없습니다.";
+
+        return storedFilename;
     }
 
     /**
@@ -41,18 +46,19 @@ public class FileServiceImpl implements FileService{
      * @param article 파일의 저장된 게시글
      * @param previousFileName  S3에 저장된 이전 파일명
      * @param multipartFile 파일
+     * @return 저장된 파일명 반환
      */
     @Override
-    public void updateArticleFile(Article article, String previousFileName, MultipartFile multipartFile) {
+    public String updateArticleFile(Article article, String previousFileName, MultipartFile multipartFile) {
         // 파일이 없을시 저장 안함
         if (multipartFile == null) {
-            return;
+            return null;
         }
 
         // 파일명이 "" 일경우 새롭게 파일을 저장
         if (previousFileName.isEmpty()) {
             saveArticleFile(article, multipartFile);
-            return;
+            return null;
         }
 
         File file = fileRepository.findByArticleId(article.getId());
@@ -63,12 +69,14 @@ public class FileServiceImpl implements FileService{
         if ( !file.getOriginName().equals(originalFilename)) {
             file.update(originalFilename, storedFileName, fileType);
         }
+        
+        return storedFileName;
     }
 
 
     /**
      * 파일의 유형을 검사합니다.
-     * @param multipartFile
+     * @param multipartFile 파일객체
      * @return  사진파일시 IMAGE, 비디오 파일일시 VIDEO
      */
     @Override

@@ -56,7 +56,7 @@ public class RedisServiceImpl implements RedisService{
 
     @Override
     public Optional<Member> getMemberDto(String key) {
-        Object o = redisTemplate.opsForValue().get(MEMBER_ID+key);
+        Object o = redisTemplate.opsForValue().get(getKey(key));
         if (o!=null){
             CustomMapper<Member> customMapper = new CustomMapper<>();
             return Optional.of(customMapper.to(o, Member.class));
@@ -66,6 +66,12 @@ public class RedisServiceImpl implements RedisService{
             return Optional.of(member);
         }
 
+    }
+
+    @Override
+    public void updateMember(String key,Member member) {
+        deleteValue(getKey(key));
+        setMember(member,Duration.ofDays(30));
     }
 
     @Override
@@ -90,5 +96,9 @@ public class RedisServiceImpl implements RedisService{
             return "";
         }
         return (String) fcm;
+    }
+
+    private String getKey(String key) {
+        return MEMBER_ID + key;
     }
 }

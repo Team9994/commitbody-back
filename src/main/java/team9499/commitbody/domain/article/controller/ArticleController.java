@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
@@ -24,7 +25,9 @@ import team9499.commitbody.domain.article.dto.ArticleDto;
 import team9499.commitbody.domain.article.dto.request.ArticleRequest;
 import team9499.commitbody.domain.article.dto.response.AllArticleResponse;
 import team9499.commitbody.domain.article.dto.response.ProfileArticleResponse;
+import team9499.commitbody.domain.article.event.ElsArticleEvent;
 import team9499.commitbody.domain.article.service.ArticleService;
+import team9499.commitbody.domain.article.service.ElsArticleService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
@@ -36,6 +39,8 @@ import team9499.commitbody.global.payload.SuccessResponse;
 public class ArticleController {
 
     private final ArticleService articleService;
+    private final ElsArticleService elsArticleService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Operation(summary = "게시글 조회", description = "작성된 게시글의 카테고리별로 게시글의 무한 스크롤 방식으로 조회합니다. 기본값: [type : EXERCISE, category : ALL , size : 12]",tags = "게시글")
     @ApiResponses(value = {
@@ -49,7 +54,6 @@ public class ArticleController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 차단한 상태입니다.\"}"))),
             @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
-
     @GetMapping("/article")
     public ResponseEntity<?> getAllArticle(@RequestParam(value = "type",required = false,defaultValue = "EXERCISE") ArticleType type,
                                            @RequestParam(value = "category",required = false,defaultValue = "ALL") ArticleCategory category,
@@ -81,11 +85,15 @@ public class ArticleController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
     @PostMapping(value = "/article",consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> saveArticle(@Valid @RequestPart("articleSaveRequest") ArticleRequest request, BindingResult result,
-                                         @RequestPart("file")MultipartFile file,
+                                         @RequestPart(value = "file",required = false)MultipartFile file,
                                          @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        Long articleId = articleService.saveArticle(memberId, request.getTitle(), request.getContent(), request.getArticleType(), request.getArticleCategory(), request.getVisibility(), file);
-        return ResponseEntity.ok(new SuccessResponse<>(true,"둥록 성공",articleId));
+        ArticleDto articleDto = articleService.saveArticle(memberId, request.getTitle(), request.getContent(), request.getArticleType(), request.getArticleCategory(), request.getVisibility(), file);
+
+        // 정보&질문 게시글일때만 이벤트 발생
+        articleEvent(request, articleDto,"등록");
+
+        return ResponseEntity.ok(new SuccessResponse<>(true,"등록 성공",articleDto.getArticleId()));
     }
 
     @Operation(summary = "게시글 상세 조회 - 기본 게시글 정보", description = "댓글을 제외한 게시글의 정보를 조회합니다. 차단된 사용자가 접근시 예외 발생",tags = "게시글")
@@ -153,7 +161,9 @@ public class ArticleController {
                                            @RequestPart(required = false) MultipartFile file,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        articleService.updateArticle(memberId,articleId,request.getContent(), request.getTitle(), request.getArticleType(), request.getArticleCategory(),request.getVisibility(),file);
+        ArticleDto articleDto = articleService.updateArticle(memberId, articleId, request.getContent(), request.getTitle(), request.getArticleType(), request.getArticleCategory(), request.getVisibility(), file);
+
+        articleEvent(request, articleDto,"수정");
         return ResponseEntity.ok(new SuccessResponse<>(true,"수정 성공"));
     }
 
@@ -173,12 +183,41 @@ public class ArticleController {
     public ResponseEntity<?> deleteArticle(@PathVariable("articleId") Long articleId,
                                            @AuthenticationPrincipal PrincipalDetails  principalDetails){
         Long memberId = getMemberId(principalDetails);
-        articleService.deleteArticle(memberId, articleId);
+        ArticleDto articleDto = articleService.deleteArticle(memberId, articleId);
+
+        eventPublisher.publishEvent(new ElsArticleEvent(articleDto,"삭제"));
         return ResponseEntity.ok(new SuccessResponse<>(true,"삭제 성공"));
+    }
+
+    @Operation(summary = "게시글 검색", description = "게시글 제목을 통한 게시글 검색을 합니다. category는 [INFORMATION,FEEDBACK,BODY_REVIEW]만 사용가능 ",tags = "게시글")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\": true, \"message\": \"검색 성공\", \"data\": {\"totalCount\": 5, \"hasNext\": true, \"articles\": [{\"articleId\": 1, \"title\": \"운동 게시글\", \"articleCategory\": \"FEEDBACK\", \"time\": \"25분 전\", \"likeCount\": 0, \"commentCount\": 0, \"imageUrl\": \"등록된 이미지가 없습니다.\", \"member\": {\"memberId\": 2, \"nickname\": \"닉네임\"}}]}}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 차단된 사용자 접근시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 차단한 상태입니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))})
+    @GetMapping("/article/search")
+    public ResponseEntity<?> searchArticle(@RequestParam(value = "title",required = false) String title,
+                                           @RequestParam(value = "category",required = false) ArticleCategory category,
+                                           @RequestParam(value = "lastId",required = false) Long lastId,
+                                           @RequestParam(value = "size",required = false,defaultValue = "10") Integer size,
+                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+
+        AllArticleResponse allArticleResponse = elsArticleService.searchArticleByTitle(memberId, title, category,size, lastId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"검색 성공",allArticleResponse));
     }
 
     private static Long getMemberId(PrincipalDetails principalDetails) {
         Long memberId = principalDetails.getMember().getId();
         return memberId;
+    }
+
+    private void articleEvent(ArticleRequest request, ArticleDto articleDto,String type) {
+        if (request.getArticleType().equals(ArticleType.INFO_QUESTION))
+            eventPublisher.publishEvent(new ElsArticleEvent(articleDto,type));
     }
 }

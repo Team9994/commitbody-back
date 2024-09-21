@@ -170,6 +170,18 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
                 .execute();
     }
 
+    /**
+     * 팔로잉한 사용자의 ID를 반환
+     * @param followerId 팔로워 ID
+     * @return 팔로잉 사용자 목록
+     */
+    @Override
+    public List<Long> followings(Long followerId) {
+        return jpaQueryFactory.select(follow.following.id)
+                .from(follow)
+                .where(follow.follower.id.eq(followerId).and(follow.status.eq(FollowStatus.MUTUAL_FOLLOW).or(follow.status.eq(FollowStatus.FOLLOWING)))).fetch();
+    }
+
     private static BooleanBuilder lastIdBuilder(Long lastId) {
         BooleanBuilder builder = new BooleanBuilder();
         if (lastId !=null){

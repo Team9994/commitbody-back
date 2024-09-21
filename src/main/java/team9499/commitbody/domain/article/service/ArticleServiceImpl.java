@@ -65,10 +65,10 @@ public class ArticleServiceImpl implements ArticleService{
                             TimeConverter.converter(((Timestamp) o[1]).toLocalDateTime()), converterImgUrl((String) o[12]), (String) o[13], (String) o[14]))
                     .collect(Collectors.toList());
 
-            allArticleResponse= new AllArticleResponse(false,articleDtoList);
+            allArticleResponse= new AllArticleResponse(null,false,articleDtoList);
         }else{  // 인기게시글이 아닐때
             Slice<ArticleDto> test = articleRepository.getAllArticles(memberId, type, articleCategory, lastId, pageable);
-            allArticleResponse= new AllArticleResponse(test.hasNext(),test.getContent());
+            allArticleResponse= new AllArticleResponse(null,test.hasNext(),test.getContent());
         }
 
         return allArticleResponse;
@@ -86,12 +86,13 @@ public class ArticleServiceImpl implements ArticleService{
      * @return  저장된 게시글 ID
      */
     @Override
-    public Long saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
+    public ArticleDto saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
         Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
         Article article = Article.of(title,content,articleType,articleCategory,visibility,member);
-        articleRepository.save(article);
-        fileService.saveArticleFile(article,file);
-        return article.getId();
+        Article save = articleRepository.save(article);
+        String filename = fileService.saveArticleFile(article, file);
+
+        return ArticleDto.of(save, member,filename.equals("등록된 이미지가 없습니다.") ? "등록된 이미지가 없습니다." : cloudUrl+filename);
     }
 
     /**
@@ -143,7 +144,8 @@ public class ArticleServiceImpl implements ArticleService{
      * @param file  – 사진
      */
     @Override
-    public void updateArticle(Long memberId, Long articleId, String title , String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
+    public ArticleDto updateArticle(Long memberId, Long articleId, String title , String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
+        Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
         Map<String, Object> articleAndFile = articleRepository.getArticleAndFile(articleId);
         Article article = (Article)articleAndFile.get("article");
         String previousFileName = (String) articleAndFile.get("storedName");
@@ -152,9 +154,9 @@ public class ArticleServiceImpl implements ArticleService{
         validWriter(memberId, article);
         article.update(title, content, articleType, articleCategory, visibility);
 
-        fileService.updateArticleFile(article, previousFileName, file);
+        String storedFileName = fileService.updateArticleFile(article, previousFileName, file);
 
-
+        return ArticleDto.of(article,member, storedFileName==null ? "등록된 이미지가 없습니다." : cloudUrl+storedFileName);
     }
 
     /**
@@ -163,11 +165,13 @@ public class ArticleServiceImpl implements ArticleService{
      * @param articleId 삭제할 게시글 ID
      */
     @Override
-    public void deleteArticle(Long memberId, Long articleId) {
+    public ArticleDto deleteArticle(Long memberId, Long articleId) {
         Article article = articleRepository.findById(articleId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        ArticleDto articleDto = ArticleDto.of(article,null);
         validWriter(memberId,article);  // 작성자 검증
 
         articleRepository.deleteArticle(articleId); //비동기를 통한 삭제
+        return articleDto;
     }
 
     private static void validWriter(Long memberId, Article article) {

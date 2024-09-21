@@ -24,6 +24,6 @@ public class BlockMemberDoc {
     @Id
     private String id;
 
-    @Field(type = FieldType.Long,name = "blockedId")
+    @Field(type = FieldType.Long,name = "blockerId")
     private List<Long> blockerId;   // 나를 차단한 사용자 ID 리스트
 }

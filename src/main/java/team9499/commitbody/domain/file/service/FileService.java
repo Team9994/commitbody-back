@@ -6,9 +6,9 @@ import team9499.commitbody.domain.file.domain.FileType;
 
 public interface FileService {
 
-    void saveArticleFile(Article article, MultipartFile file);
+    String saveArticleFile(Article article, MultipartFile file);
 
-    void updateArticleFile(Article article, String previousFileName, MultipartFile file);
+    String updateArticleFile(Article article, String previousFileName, MultipartFile file);
 
     FileType checkFileType(MultipartFile file);
 }

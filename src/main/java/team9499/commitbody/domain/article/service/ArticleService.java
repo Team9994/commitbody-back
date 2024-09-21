@@ -13,13 +13,13 @@ public interface ArticleService {
 
     AllArticleResponse getAllArticles(Long memberId,ArticleType type, ArticleCategory articleCategory,Long lastId,Pageable pageable);
 
-    Long saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file);
+    ArticleDto saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file);
 
     ArticleDto getDetailArticle(Long memberId, Long articleId);
 
     ProfileArticleResponse getAllProfileArticle(Long loginMemberId, Long findMemberId, ArticleType articleType, Long lastId, Pageable pageable);
 
-    void updateArticle(Long memberId, Long articleId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file);
+    ArticleDto updateArticle(Long memberId, Long articleId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file);
 
-    void deleteArticle(Long memberId, Long articleId);
+    ArticleDto deleteArticle(Long memberId, Long articleId);
 }

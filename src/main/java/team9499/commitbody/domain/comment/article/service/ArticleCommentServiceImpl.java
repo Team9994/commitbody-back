@@ -1,13 +1,13 @@
 package team9499.commitbody.domain.comment.article.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.article.domain.Article;
+import team9499.commitbody.domain.article.dto.response.ArticleCountResponse;
 import team9499.commitbody.domain.article.repository.ArticleRepository;
 import team9499.commitbody.domain.comment.article.domain.ArticleComment;
 import team9499.commitbody.domain.comment.article.domain.OrderType;
@@ -23,8 +23,6 @@ import team9499.commitbody.global.redis.RedisService;
 
 import java.util.List;
 
-
-@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -44,9 +42,10 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
      * @param commentParentId   부모댓글 ID
      * @param content   댓글 내용
      * @param replyNickname 멘션할 사용자 닉네임
+     * @return ArticleCommentCountResponse 반환
      */
     @Override
-    public String saveArticleComment(Long memberId, Long articleId, Long commentParentId, String content,String replyNickname) {
+    public ArticleCountResponse saveArticleComment(Long memberId, Long articleId, Long commentParentId, String content, String replyNickname) {
         // 게시글 조회
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
@@ -57,6 +56,7 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
 
         ArticleComment articleComment;
         String commentType ="";
+        Integer commentCount = null;
 
         // 부모 댓글이 존재하는 경우 대댓글로 처리
         if (commentParentId != null) {
@@ -74,9 +74,11 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
             ArticleComment save = articleCommentRepository.save(articleComment);// 댓글 저장
             commentType ="댓글 작성 성공";
             notificationService.sendComment(member,article.getMember().getId(),article.getTitle(),content,String.valueOf(save.getId()),articleId);    // 댓글 알림 전송
+            commentCount = article.getCommentCount() + 1;
+            article.updateCommentCount(commentCount);
         }
-        article.updateCommentCount(article.getCommentCount()+1);
-        return commentType;
+
+        return ArticleCountResponse.of(articleId,commentCount,commentType);
     }
 
     /**
@@ -132,9 +134,10 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
      * 작성자가 아닐시 삭제 요청이오면 403 예외를 발생합니다.
      * @param memberId 로그인한 사용자 ID
      * @param commentId 삭제할 댓글 ID
+     * @return ArticleCommentCountResponse 반환
      */
     @Override
-    public void deleteArticleComment(Long memberId, Long commentId) {
+    public ArticleCountResponse deleteArticleComment(Long memberId, Long commentId) {
         ArticleComment articleComment = articleCommentRepository.findById(commentId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
         
         //작성자가 아닐시 예외 발생
@@ -143,11 +146,15 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
         // 부모 댓글을 삭제하려는 경우
         if (articleComment.getParent()==null){
             Article article = articleRepository.findById(articleComment.getArticle().getId()).get();       // 작성된 게시글의 객체를 조호
-            article.updateCommentCount(article.getCommentCount()-1);  // 부모 댓글 삭제시에는 게시글의 작성된 댓글수 -1
+            int count = article.getCommentCount() - 1;
+            article.updateCommentCount(count);  // 부모 댓글 삭제시에는 게시글의 작성된 댓글수 -1
             List<Long> deleteIds = articleCommentRepository.getAllChildComment(commentId);  // 작성된 댓글의 대댓글의 ID를 리스트화
             articleCommentBatchService.deleteCommentBatch(commentId,deleteIds); // 배치를 통해 댓글과 관련된 모든 데이터 삭제
+
+            return ArticleCountResponse.of(article.getId(),count,null);
         }else { // 대댓글을 삭제하는 경우
             articleCommentBatchService.deleteChildCommentBatch(commentId);
+            return null;
         }
     }
 
