@@ -19,6 +19,7 @@ import team9499.commitbody.domain.article.dto.ArticleDto;
 import team9499.commitbody.domain.article.dto.response.AllArticleResponse;
 import team9499.commitbody.domain.article.repository.ElsArticleRepository;
 import team9499.commitbody.domain.block.servcice.ElsBlockMemberService;
+import team9499.commitbody.domain.follow.repository.FollowRepository;
 import team9499.commitbody.global.utils.TimeConverter;
 
 import java.time.LocalDateTime;
@@ -37,6 +38,7 @@ public class ElsArticleServiceImpl implements ElsArticleService{
     private final ElsArticleRepository elsArticleRepository;
     private final ElasticsearchClient elasticsearchClient;
     private final ElsBlockMemberService elsBlockMemberService;
+    private final FollowRepository followRepository;
 
     private final String ARTICLE_INDEX  = "article_index";
 
@@ -103,44 +105,66 @@ public class ElsArticleServiceImpl implements ElsArticleService{
     public AllArticleResponse searchArticleByTitle(Long memberId, String title,ArticleCategory category, Integer size, Long lastId) {
         List<Long> blockedIds = elsBlockMemberService.findBlockedIds(memberId);
         List<Long> blockerIds = elsBlockMemberService.getBlockerIds(memberId);
-
-        // 차단된 사용자 차단한 사용자 ID 합치기
+        List<Long> followings = followRepository.followings(memberId);
+        // 차단된 사용자와 차단한 사용자 ID 합치기
         blockedIds.addAll(blockerIds);
-
+        followings.add(memberId);   // 자신의 게시물을 확인하기 위해 추가
+   
         BoolQuery.Builder builder = new BoolQuery.Builder();
 
-        // 게시글 검색시 사용 되는 동적 로직
-        if (title!=null){
+        // 제목 필터링 (동적 조건)
+        if (title != null) {
             QueryStringQuery titleQuery = new QueryStringQuery.Builder()
                     .query("*" + title + "*")
                     .fields("title")
                     .defaultOperator(Operator.And).build();
             builder.must(Query.of(q -> q.queryString(titleQuery)));
         }
-        
-        // 카테고리를 필터링하는 동적 로직
-        if (category!=null){
+
+        // 카테고리 필터링 (동적 조건)
+        if (category != null) {
             TermQuery categoryTerm = new TermQuery.Builder()
                     .field("category")
                     .value(category.toString()).build();
             builder.must(Query.of(q -> q.term(categoryTerm)));
         }
 
-        TermsQueryField termsQueryField = new TermsQueryField.Builder().value(blockedIds.stream().map(FieldValue::of).toList()).build();
+        // 'PUBLIC' 게시글 조건 추가
+        builder.should(Query.of(q -> q.term(t -> t.field("visibility").value("PUBLIC"))));
 
-        //차단 사용자의 게시물을 제외
-        builder.mustNot(Query.of(q -> q.terms(t -> t.field("member_id").terms(termsQueryField))));
-        
-        SearchRequest searchRequest = new SearchRequest.Builder()
+        // 'FOLLOWERS_ONLY' 게시글 조건 추가 (팔로우한 사용자들만)
+        TermsQueryField followingQueryField = new TermsQueryField.Builder()
+                .value(followings.stream().map(FieldValue::of).toList()).build();
+
+        // 팔로워한 사용자들에게만 공개
+        builder.should(Query.of(q -> q.bool(b -> b
+                .must(Query.of(q2 -> q2.term(t -> t.field("visibility").value("FOLLOWERS_ONLY"))))
+                .must(Query.of(q2 -> q2.terms(t -> t.field("member_id").terms(followingQueryField))))
+        )));
+
+        TermsQueryField termsQueryField = new TermsQueryField.Builder()
+                .value(blockedIds.stream().map(FieldValue::of).toList()).build();
+
+        builder.mustNot(Query.of(q -> q.terms(t -> t.field("member_id").terms(termsQueryField))),
+                Query.of(b -> b.bool(bq -> bq
+                        .must(m -> m.term(t -> t.field("visibility").value("PRIVATE")))
+                        .mustNot(m -> m.term(t -> t.field("member_id").value(memberId))))));
+
+        // Elasticsearch 검색 요청 빌드
+        SearchRequest.Builder searchRequestBuilder = new SearchRequest.Builder()
                 .index(ARTICLE_INDEX)
                 .query(Query.of(q -> q.bool(builder.build())))
-                .size(size+1)
-                .sort(SortOptions.of(s -> s.field(f -> f.field("id.keyword").order(SortOrder.Desc))))
-                .searchAfter(builder1 -> builder1.stringValue(String.valueOf(lastId)))
-                .trackTotalHits(tth -> tth.enabled(true))  // track_total_hits 하여 조회하는 전체 데이터 수 조회
-                .build();
+                .size(size + 1)  // 한 페이지에 나오는 게시물 수
+                .sort(SortOptions.of(s -> s.field(f -> f.field("id").order(SortOrder.Desc))))  // 내림차순 정렬
+                .trackTotalHits(tth -> tth.enabled(true));  // 전체 데이터 수 조회
 
 
+
+        if (lastId != null) {
+            searchRequestBuilder.searchAfter(builder1 -> builder1.longValue(lastId));  // search_after로 페이징 처리
+        }
+
+        SearchRequest searchRequest = searchRequestBuilder.build();
         try {
             SearchResponse<Object> response = elasticsearchClient.search(searchRequest, Object.class);
             long totalCount = response.hits().total().value();
@@ -149,32 +173,31 @@ public class ElsArticleServiceImpl implements ElsArticleService{
 
             boolean hasNext = false;
             if (hits.size() > size) {
-                hits.remove(hits.size()-1);
-                hasNext = true;     // 다음 페이지가 있음을 나타내는 플래그 설정
+                hits.remove(hits.size() - 1);
+                hasNext = true;  // 다음 페이지가 있음을 나타내는 플래그 설정
             }
 
             List<ArticleDto> articleDtoList = new ArrayList<>();
             for (Hit<Object> hit : hits) {
-                Map<String,Object> source = (Map<String, Object>) hit.source();
+                Map<String, Object> source = (Map<String, Object>) hit.source();
                 ArticleDto articleDto = ArticleDto.of(
-                        convertToLong(source.get("id")),                    // Long으로 변환
+                        convertToLong(source.get("id")),
                         convertToLong(source.get("member_id")),
                         ArticleCategory.stringToEnum((String) source.get("category")),
                         (String) source.get("content"),
-                        (String)source.get("title"),
+                        (String) source.get("title"),
                         (Integer) source.get("like_count"),
-                        (Integer)source.get("comment_count"),
+                        (Integer) source.get("comment_count"),
                         convertTime(source.get("time")),
                         (String) source.get("img_url"),
-                        (String)source.get("writer"),
+                        (String) source.get("writer"),
                         null);
                 articleDtoList.add(articleDto);
             }
 
-            return new AllArticleResponse((int) totalCount,hasNext,articleDtoList);
+            return new AllArticleResponse((int) totalCount, hasNext, articleDtoList);
         } catch (Exception e) {
             log.error("에러", e);
-            e.printStackTrace();
         }
         return null;
     }

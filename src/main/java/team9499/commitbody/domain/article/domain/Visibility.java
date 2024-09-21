@@ -31,6 +31,7 @@ public enum Visibility {
             return null;
         }
         return Arrays.stream(values())
+                .filter(visibility -> visibility.name().equalsIgnoreCase(val))
                 .findFirst()
                 .orElse(null);
     }

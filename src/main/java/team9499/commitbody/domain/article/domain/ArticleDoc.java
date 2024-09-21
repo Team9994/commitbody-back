@@ -21,7 +21,7 @@ import java.time.format.DateTimeFormatter;
 public class ArticleDoc {
 
     @Id
-    private String id;
+    private Long id;
 
     @Field(type = FieldType.Keyword,name = "category")
     private ArticleCategory articleCategory;
@@ -50,9 +50,11 @@ public class ArticleDoc {
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second)
     private String time;
 
+    @Field(type = FieldType.Keyword,name = "visibility")
+    private Visibility visibility;
 
     public static ArticleDoc of(ArticleDto articleDto){
-        return ArticleDoc.builder().id(String.valueOf(articleDto.getArticleId()))
+        return ArticleDoc.builder().id(articleDto.getArticleId())
                 .articleCategory(articleDto.getArticleCategory())
                 .title(articleDto.getTitle())
                 .content(articleDto.getContent())
@@ -62,6 +64,7 @@ public class ArticleDoc {
                 .memberId(articleDto.getMember().getMemberId())
                 .time(converterTime(articleDto.getLocalDateTime()))
                 .imgUrl(articleDto.getImageUrl())
+                .visibility(articleDto.getVisibility())
                 .build();
     }
     static String converterTime(LocalDateTime localDateTime){
