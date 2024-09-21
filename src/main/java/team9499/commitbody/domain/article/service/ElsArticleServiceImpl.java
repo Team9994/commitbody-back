@@ -243,6 +243,7 @@ public class ElsArticleServiceImpl implements ElsArticleService{
 
         switch (type){
             case "댓글" -> doc.put("comment_count",count);
+            case "좋아요" -> doc.put("like_count",count);
         }
         
         try {

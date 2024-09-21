@@ -8,9 +8,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import team9499.commitbody.domain.article.dto.response.ArticleCountResponse;
+import team9499.commitbody.domain.article.event.ElsArticleCountEvent;
 import team9499.commitbody.domain.like.service.LikeService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
@@ -24,6 +27,7 @@ import java.util.Map;
 public class LikeController {
 
     private final LikeService exerciseCommentLikeService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Operation(summary = "운동 댓글 좋아요", description = "운동 상세 페이지의 작성된 댓글을 좋아요/취소가 가능합니다. ",tags = "운동 상세")
     @ApiResponses(value = {
@@ -59,8 +63,11 @@ public class LikeController {
     public ResponseEntity<?> articleLike(@Parameter(schema = @Schema(example = "{\"articleId\": 1}"))@RequestBody Map<String, Long> articleLikeRequest,
                                          @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = principalDetails.getMember().getId();
-        String articleLike = exerciseCommentLikeService.articleLike(articleLikeRequest.get("articleId"), memberId);
-        return ResponseEntity.ok(new SuccessResponse<>(true,articleLike));
+        ArticleCountResponse response = exerciseCommentLikeService.articleLike(articleLikeRequest.get("articleId"), memberId);
+
+        eventPublisher.publishEvent(new ElsArticleCountEvent(response.getArticleId(),response.getCount(),"좋아요"));
+
+        return ResponseEntity.ok(new SuccessResponse<>(true,response.getType()));
     }
 
     @Operation(summary = "게시글 대/댓글 좋아요", description = "게시글의 작성된 대/댓글의 대해서 등록/해제 기능을 합니다.",tags = "게시글")

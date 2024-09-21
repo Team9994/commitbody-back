@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.article.domain.Article;
+import team9499.commitbody.domain.article.dto.response.ArticleCountResponse;
 import team9499.commitbody.domain.article.repository.ArticleRepository;
 import team9499.commitbody.domain.comment.article.domain.ArticleComment;
 import team9499.commitbody.domain.comment.article.repository.ArticleCommentRepository;
@@ -83,33 +84,36 @@ public class LikeServiceImpl implements LikeService {
      * @param memberId 로그인한 사용자 ID
      */
     @Override
-    public String articleLike(Long articleId, Long memberId) {
+    public ArticleCountResponse articleLike(Long articleId, Long memberId) {
         Optional<ContentLike> commentLikeOptional = commentLikeRepository.findByMemberIdAndArticleIdAndArticleCommentIdIsNull(memberId, articleId);
         Article article = articleRepository.findById(articleId).orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
         Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
 
 
+        String likeType = null;
         // 만약 좋아요한 데이터가 존재하지않는다면 좋아요를 ture를한 상태로 데이터 생성
         if (commentLikeOptional.isEmpty()){
             ContentLike articleLike = ContentLike.createArticleLike(member, article);
             getUpdateLikeCount(article,true);
             commentLikeRepository.save(articleLike);
             notificationService.sendArticleLike(member,article.getMember().getId(),article.getId(),true);
-            return ADD;
+            likeType = ADD;
         }else{          // 만약 좋아요한 데이터자 존재할때
             ContentLike exerciseCommentLike = commentLikeOptional.get();
             if (exerciseCommentLike.isLikeStatus()) {     // 만약 좋아요 상태가 true(좋아요 성공)이라면 false(좋아요 해제) 상태로 변경
                 getUpdateLikeCount(article,false);  // 게시글의 좋아요수를 -1
                 exerciseCommentLike.changeLike(false);
                 notificationService.sendArticleLike(member,article.getMember().getId(),article.getId(),false);
-                return CANCEL;
+                likeType = CANCEL;
             }else {     // 좋아요 상태가 false(취소) 상태라면 true(좋아요 성공)상태로 변경
                 exerciseCommentLike.changeLike(true);
                 getUpdateLikeCount(article,true);
                 notificationService.sendArticleLike(member,article.getMember().getId(),article.getId(),true);
-                return ADD;
+                likeType = ADD;
             }
         }
+
+        return ArticleCountResponse.of(articleId,article.getLikeCount(),likeType);
     }
 
     /**
