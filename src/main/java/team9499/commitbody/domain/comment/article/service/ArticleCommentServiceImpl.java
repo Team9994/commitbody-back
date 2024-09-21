@@ -7,11 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.article.domain.Article;
+import team9499.commitbody.domain.article.dto.response.ArticleCountResponse;
 import team9499.commitbody.domain.article.repository.ArticleRepository;
 import team9499.commitbody.domain.comment.article.domain.ArticleComment;
 import team9499.commitbody.domain.comment.article.domain.OrderType;
 import team9499.commitbody.domain.comment.article.dto.ArticleCommentDto;
-import team9499.commitbody.domain.comment.article.dto.response.ArticleCommentCountResponse;
 import team9499.commitbody.domain.comment.article.dto.response.ArticleCommentResponse;
 import team9499.commitbody.domain.comment.article.repository.ArticleCommentRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
@@ -45,7 +45,7 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
      * @return ArticleCommentCountResponse 반환
      */
     @Override
-    public ArticleCommentCountResponse saveArticleComment(Long memberId, Long articleId, Long commentParentId, String content, String replyNickname) {
+    public ArticleCountResponse saveArticleComment(Long memberId, Long articleId, Long commentParentId, String content, String replyNickname) {
         // 게시글 조회
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
@@ -78,7 +78,7 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
             article.updateCommentCount(commentCount);
         }
 
-        return ArticleCommentCountResponse.of(articleId,commentCount,commentType);
+        return ArticleCountResponse.of(articleId,commentCount,commentType);
     }
 
     /**
@@ -137,7 +137,7 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
      * @return ArticleCommentCountResponse 반환
      */
     @Override
-    public ArticleCommentCountResponse deleteArticleComment(Long memberId, Long commentId) {
+    public ArticleCountResponse deleteArticleComment(Long memberId, Long commentId) {
         ArticleComment articleComment = articleCommentRepository.findById(commentId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
         
         //작성자가 아닐시 예외 발생
@@ -151,7 +151,7 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
             List<Long> deleteIds = articleCommentRepository.getAllChildComment(commentId);  // 작성된 댓글의 대댓글의 ID를 리스트화
             articleCommentBatchService.deleteCommentBatch(commentId,deleteIds); // 배치를 통해 댓글과 관련된 모든 데이터 삭제
 
-            return ArticleCommentCountResponse.of(article.getId(),count,null);
+            return ArticleCountResponse.of(article.getId(),count,null);
         }else { // 대댓글을 삭제하는 경우
             articleCommentBatchService.deleteChildCommentBatch(commentId);
             return null;

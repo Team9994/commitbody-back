@@ -16,10 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import team9499.commitbody.domain.article.dto.response.ArticleCountResponse;
 import team9499.commitbody.domain.article.event.ElsArticleCountEvent;
 import team9499.commitbody.domain.comment.article.domain.OrderType;
 import team9499.commitbody.domain.comment.article.dto.request.SaveArticleCommentRequest;
-import team9499.commitbody.domain.comment.article.dto.response.ArticleCommentCountResponse;
 import team9499.commitbody.domain.comment.article.dto.response.ArticleCommentResponse;
 import team9499.commitbody.domain.comment.article.service.ArticleCommentService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
@@ -55,7 +55,7 @@ public class ArticleCommentController {
     public ResponseEntity<?> save(@Valid @RequestBody SaveArticleCommentRequest request, BindingResult result,
                                   @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        ArticleCommentCountResponse response = articleCommentService.saveArticleComment(memberId, request.getArticleId(), request.getParentId(), request.getContent(), request.getReplyNickname());
+        ArticleCountResponse response = articleCommentService.saveArticleComment(memberId, request.getArticleId(), request.getParentId(), request.getContent(), request.getReplyNickname());
 
         // 댓글일 경우에만 업데이트 이벤트 실행
         Integer count = response.getCount();
@@ -103,7 +103,7 @@ public class ArticleCommentController {
     public ResponseEntity<?> deleteComment(@PathVariable("commentId") Long commentId,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
-        ArticleCommentCountResponse response = articleCommentService.deleteArticleComment(memberId, commentId);
+        ArticleCountResponse response = articleCommentService.deleteArticleComment(memberId, commentId);
 
         // 댓글일 경우에만 업데이트 이벤트 발생
         if (response != null)
