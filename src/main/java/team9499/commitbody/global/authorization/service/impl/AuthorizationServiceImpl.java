@@ -106,12 +106,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             try {
                 Member member = memberRepository.existsByNickname(nickname);
                 if (member != null) {       // 닉네임 사용자 존재시
-                    redisService.deleteValue(redisKey);
+                    redisService.deleteValue(redisKey,"인증");
                     throw new InvalidUsageException(BAD_REQUEST, DUPLICATE_NICKNAME);
                 }else       // 존재 하지 않을시 저장
                     redisService.setValues(redisKey, nickname, Duration.ofHours(1));
             } catch (Exception e) {
-                redisService.deleteValue(redisKey);
+                redisService.deleteValue(redisKey,"인증");
                 throw e;
             }
         }
