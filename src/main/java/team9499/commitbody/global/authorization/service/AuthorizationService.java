@@ -16,4 +16,6 @@ public interface AuthorizationService {
     void registerNickname(String nickname);
 
     Map<String,String> refreshAccessToken(String refreshToken);
+
+    void logout(Long memberId, String jwtToken);
 }

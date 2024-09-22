@@ -3,6 +3,8 @@ package team9499.commitbody.global.authorization.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Gender;
@@ -19,6 +21,7 @@ import team9499.commitbody.global.authorization.dto.TokenInfoDto;
 import team9499.commitbody.global.authorization.dto.TokenUserInfoResponse;
 import team9499.commitbody.global.authorization.repository.RefreshTokenRepository;
 import team9499.commitbody.global.authorization.service.AuthorizationService;
+import team9499.commitbody.global.redis.AuthType;
 import team9499.commitbody.global.redis.RedisService;
 import team9499.commitbody.global.utils.JwtUtils;
 
@@ -106,12 +109,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             try {
                 Member member = memberRepository.existsByNickname(nickname);
                 if (member != null) {       // 닉네임 사용자 존재시
-                    redisService.deleteValue(redisKey,"인증");
+                    redisService.deleteValue(redisKey,AuthType.CERTIFICATION);
                     throw new InvalidUsageException(BAD_REQUEST, DUPLICATE_NICKNAME);
                 }else       // 존재 하지 않을시 저장
                     redisService.setValues(redisKey, nickname, Duration.ofHours(1));
             } catch (Exception e) {
-                redisService.deleteValue(redisKey,"인증");
+                redisService.deleteValue(redisKey,AuthType.CERTIFICATION);
                 throw e;
             }
         }
@@ -127,6 +130,20 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
         String newAccessToken = jwtUtils.generateAccessToken(MemberDto.builder().memberId(Long.valueOf(verifyMemberId)).build());
         return Map.of("accessToken",newAccessToken);
+    }
+
+    /**
+     * 현재 로그인한 사용자를 로그아웃 합니다. : 레디스의 사용자 정보 삭제 및 MySQL 저장된 리프레쉬 토큰을 삭제합니다.
+     * @param memberId  로그인한 사용자 ID
+     * @param jwtToken 현재 사용한 JWT 토큰
+     */
+    @Override
+    public void logout(Long memberId, String jwtToken) {
+        refreshTokenRepository.deleteByMemberId(memberId);  // 리프레쉬 토큰 삭제
+        redisService.setBlackListJwt(jwtToken); // JWT토큰을 블랙리스트의 등록
+        redisService.deleteValue(String.valueOf(memberId), AuthType.CERTIFICATION); // 삭제
+        redisService.deleteValue(String.valueOf(memberId), AuthType.FCM);   // FCM 토큰 삭제
+        SecurityContextHolder.clearContext();   // 시큐리티에 저장된 사용자 정보 삭제
     }
 
     /*

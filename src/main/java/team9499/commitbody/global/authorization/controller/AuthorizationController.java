@@ -12,11 +12,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
+import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.authorization.dto.AdditionalInfoReqeust;
 import team9499.commitbody.global.authorization.dto.JoinLoginRequest;
 import team9499.commitbody.global.authorization.dto.RegisterNicknameRequest;
@@ -116,6 +119,14 @@ public class AuthorizationController {
         String refreshToken = getJwtToken(request);
         Map<String, String> map = authorizationService.refreshAccessToken(refreshToken);
         return ResponseEntity.ok(new SuccessResponse<>(true,"재발급 성공",map));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request,
+                                    @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = principalDetails.getMember().getId();
+        authorizationService.logout(memberId,getJwtToken(request));
+        return ResponseEntity.ok(new SuccessResponse<>(true,"로그아웃 성공"));
     }
 
     private static String getJwtToken(HttpServletRequest request) {
