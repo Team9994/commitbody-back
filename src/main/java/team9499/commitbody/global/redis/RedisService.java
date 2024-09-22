@@ -14,7 +14,7 @@ public interface RedisService {
 
     String getValue(String key);
 
-    void deleteValue(String key,String type);
+    void deleteValue(String key,AuthType type);
 
     void setMember(Member member,Duration duration);
 
@@ -33,4 +33,8 @@ public interface RedisService {
     List<Object> getRecentSearchLogs(String memberId);
 
     void deleteRecentSearchLog(String memberId, String title,String type);
+
+    void setBlackListJwt(String jwtToken);
+
+    boolean validBlackListJwt(String jwtToken);
 }
