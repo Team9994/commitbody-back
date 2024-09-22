@@ -101,6 +101,22 @@ public class MemberController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"업데이트 성공"));
     }
 
+    @GetMapping("/notification/settings")
+    public ResponseEntity<?> getNotificationSetting(@AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+        boolean notification = memberService.getNotification(memberId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"알림 수신 유뮤",notification));
+    }
+
+
+    @PostMapping("/notification/settings")
+    public ResponseEntity<?> setNotificationSetting(@AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = getMemberId(principalDetails);
+
+        String updateNotification = memberService.updateNotification(memberId);
+        return ResponseEntity.ok(new SuccessResponse<>(true,updateNotification));
+    }
+
     private static Long getMemberId(PrincipalDetails principalDetails) {
         return principalDetails.getMember().getId();
     }

@@ -87,9 +87,11 @@ public class Member extends BaseTime {
         this.BoneMineralDensity = boneMineralDensity;
         this.BodyFatPercentage = bodyFatPercentage;
         if (!this.profile.equals(profile)) {
-            log.info("업데이;트 실행");
             this.profile = profile;
         }
+    }
 
+    public void updateNotification(boolean notificationEnabled){
+        this.notificationEnabled = notificationEnabled;
     }
 }

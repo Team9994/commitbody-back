@@ -12,4 +12,8 @@ public interface MemberService{
 
     void updateProfile(Long memberId, String nickname, Gender gender, LocalDate birthDay, Float height, Float weight, Float BoneMineralDensity,
                        Float BodyFatPercentage, boolean deleteProfile,MultipartFile file);
+
+    boolean getNotification(Long memberId);
+
+    String updateNotification(Long memberId);
 }
