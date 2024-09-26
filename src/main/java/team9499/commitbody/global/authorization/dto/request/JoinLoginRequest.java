@@ -1,4 +1,4 @@
-package team9499.commitbody.global.authorization.dto;
+package team9499.commitbody.global.authorization.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
