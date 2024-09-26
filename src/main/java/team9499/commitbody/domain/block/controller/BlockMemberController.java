@@ -49,7 +49,7 @@ public class BlockMemberController {
         Long blockerId = principalDetails.getMember().getId();
         String status = blockMemberService.blockMember(blockerId, blockedId);
         eventPublisher.publishEvent(new ElsBlockMemberEvent(blockerId,blockedId,status));
-        eventPublisher.publishEvent(new CancelBlockMemberEvent(blockedId,blockerId));
+        eventPublisher.publishEvent(new CancelBlockMemberEvent(blockedId,blockerId,status));
         return ResponseEntity.ok(new SuccessResponse<>(true,status));
     }
 }

@@ -10,4 +10,6 @@ public class CancelBlockMemberEvent {
     private Long followerId;
 
     private Long followIngId;
+
+    private String status;
 }
