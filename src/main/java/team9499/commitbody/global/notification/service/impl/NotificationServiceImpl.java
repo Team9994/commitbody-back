@@ -23,7 +23,7 @@ import team9499.commitbody.global.redis.RedisService;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
 

@@ -22,7 +22,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class ElasticExerciseServiceImpl implements ElasticExerciseService {
 

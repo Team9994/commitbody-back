@@ -25,7 +25,7 @@ import static team9499.commitbody.global.Exception.ExceptionStatus.BAD_REQUEST;
 import static team9499.commitbody.global.Exception.ExceptionType.*;
 
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class LikeServiceImpl implements LikeService {
 

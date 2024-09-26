@@ -8,7 +8,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
-import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.follow.domain.Follow;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
 import team9499.commitbody.domain.follow.domain.FollowType;
@@ -18,23 +17,19 @@ import team9499.commitbody.domain.follow.repository.FollowRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.InvalidUsageException;
-import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.redis.RedisService;
 
-import java.time.Duration;
 import java.util.Optional;
 
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class FollowServiceImpl implements FollowService{
 
     private final FollowRepository followRepository;
     private final RedisService redisService;
-    private final MemberRepository memberRepository;
-
 
     private final String TO ="to";
     private final String MUTUAL_FOLLOW = "맞팔로우";
@@ -109,19 +104,17 @@ public class FollowServiceImpl implements FollowService{
      */
     @Async
     @Override
-    public void cancelFollow(Long followerId, Long followingId) {
-        followRepository.cancelFollow(followerId,followingId);
+    public void cancelFollow(Long followerId, Long followingId,String status) {
+        if(status.equals("차단 성공")) {
+            followRepository.cancelFollow(followerId, followingId);
+        }
     }
 
     /*
     사용자 정보를 조회 redis에서 먼저 사용자 정보를 조회후 없을시에 db조회 후 저장후 member를 반환
      */
     private Member getRedisMember(Long followId) {
-        return redisService.getMemberDto(followId.toString()).orElseGet(() -> {
-            Member member = memberRepository.findById(followId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
-            redisService.setMember(member, Duration.ofDays(7));
-            return member;
-        });
+        return redisService.getMemberDto(followId.toString()).get();
     }
 
     /*

@@ -24,7 +24,7 @@ import team9499.commitbody.global.redis.RedisService;
 import java.util.List;
 
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class ArticleCommentServiceImpl implements ArticleCommentService{
 

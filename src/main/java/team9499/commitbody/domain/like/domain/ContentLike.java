@@ -13,6 +13,7 @@ import team9499.commitbody.domain.comment.exercise.domain.ExerciseComment;
 @NoArgsConstructor
 @Builder
 @ToString(exclude = {"articleComment,exercise_comment_id"})
+@Table(name = "content_like")
 public class ContentLike {
 
     @Id
@@ -20,6 +21,7 @@ public class ContentLike {
     @Column(name = "like_id")
     private Long id;
 
+    @Column(name = "like_status")
     private boolean likeStatus;     // 좋아요 상태
 
     @JoinColumn(name = "member_id",foreignKey = @ForeignKey (ConstraintMode.NO_CONSTRAINT))

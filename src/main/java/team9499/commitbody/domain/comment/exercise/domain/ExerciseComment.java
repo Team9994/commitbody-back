@@ -15,7 +15,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(indexes = {
+@Table(name = "exercise_comment", indexes = {
         @Index(name = "exercise_id_created_at_idx", columnList = "exercise_id, created_at DESC"),
         @Index(name = "custom_ex_id_created_at_idx", columnList = "custom_ex_id, created_at DESC"),
         @Index(name = "member_id_idx", columnList = "member_id")
@@ -46,8 +46,10 @@ public class ExerciseComment extends BaseTime {
     @OneToMany(mappedBy = "exerciseComment",cascade = CascadeType.REMOVE)
     private List<ContentLike> exerciseCommentLikes;
 
+    @Column(name = "like_count")
     private Integer likeCount;      // 좋아요수
 
+    @Column(name = "like_status")
     private boolean likeStatus;     // 좋아요 상태
 
     public static ExerciseComment of(Member member,Object exercise ,String content){

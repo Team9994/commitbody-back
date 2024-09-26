@@ -13,6 +13,7 @@ import team9499.commitbody.global.utils.BaseTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "exercise_interest")
 public class ExerciseInterest extends BaseTime {
 
     @Id
@@ -32,6 +33,7 @@ public class ExerciseInterest extends BaseTime {
     @JoinColumn(name = "custom_ex_id")
     private CustomExercise customExercise;
 
+    @Column(name = "is_interested")
     boolean isInterested;       // true : 관심 운동 , false : 비관심 운동
 
     public static ExerciseInterest exerciseInterest(Member member,Exercise exercise){

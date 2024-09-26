@@ -7,7 +7,7 @@ import team9499.commitbody.global.utils.BaseTime;
 
 @Entity
 @Data
-@Table(indexes = {
+@Table(name = "file", indexes = {
         @Index(name = "idx_file_article",columnList = "article_id")
 })
 @Builder(access = AccessLevel.PRIVATE)
@@ -19,10 +19,13 @@ public class File extends BaseTime {
     @Column(name = "file_id")
     private Long id;
 
+    @Column(name = "origin_name")
     private String originName;
 
+    @Column(name = "stored_name")
     private String storedName;
 
+    @Column(name = "file_type")
     @Enumerated(EnumType.STRING)
     private FileType fileType;
 

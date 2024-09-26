@@ -13,7 +13,7 @@ import team9499.commitbody.global.aws.s3.S3Service;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class FileServiceImpl implements FileService{
 

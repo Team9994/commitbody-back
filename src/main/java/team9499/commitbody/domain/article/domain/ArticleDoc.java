@@ -35,7 +35,7 @@ public class ArticleDoc {
     @Field(type = FieldType.Text,name = "img_url")
     private String imgUrl;
 
-    @Field(type = FieldType.Long, name = "member_id")
+    @Field(type = FieldType.Long, name = "memberId")
     private Long memberId;
 
     @Field(type = FieldType.Text,name = "writer")

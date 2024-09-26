@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class FcmService {
 

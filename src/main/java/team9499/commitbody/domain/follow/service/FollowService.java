@@ -12,5 +12,5 @@ public interface FollowService {
 
     FollowResponse getFollowings(Long followerId,Long followingId ,String nickName, Long lastId, Pageable pageable);
 
-    void cancelFollow(Long followerId, Long followingId);
+    void cancelFollow(Long followerId, Long followingId,String status);
 }
