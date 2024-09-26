@@ -68,11 +68,10 @@ public class RedisServiceImpl implements RedisService{
             CustomMapper<Member> customMapper = new CustomMapper<>();
             return Optional.of(customMapper.to(o, Member.class));
         }else {
-            Member member = memberRepository.findById(Long.valueOf(key)).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+            Member member = memberRepository.findById(Long.valueOf(key)).filter(member1 -> !member1.isWithdrawn()).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
             setMember(member,Duration.ofDays(7));
             return Optional.of(member);
         }
-
     }
 
     @Override
