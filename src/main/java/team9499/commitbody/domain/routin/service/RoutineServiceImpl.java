@@ -29,7 +29,7 @@ import java.util.*;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class RoutineServiceImpl implements RoutineService{
 

@@ -12,7 +12,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class RoutineBatchService {
 

@@ -9,6 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(exclude = "recordDetails")
+@Table(name = "record_sets")
 public class RecordSets {
 
     @Id

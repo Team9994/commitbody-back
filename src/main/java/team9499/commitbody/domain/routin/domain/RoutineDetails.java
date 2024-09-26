@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @ToString(exclude = "routine")
+@Table(name = "routine_details")
 public class RoutineDetails {
 
     @Id
@@ -31,7 +32,8 @@ public class RoutineDetails {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "routine_id")
     private Routine routine;
-    
+
+    @Column(name = "total_sets")
     private Integer totalSets;      // 총 세트수
 
     private Integer orders;         // 운동 순서
