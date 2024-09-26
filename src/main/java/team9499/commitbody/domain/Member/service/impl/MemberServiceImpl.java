@@ -25,7 +25,7 @@ import java.time.LocalDate;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService {
 
@@ -44,7 +44,7 @@ public class MemberServiceImpl implements MemberService {
      */
     @Override
     public MemberMyPageResponse getMyPage(Long memberId,String nickname) {
-        Member member = memberRepository.findByNickname(nickname).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+        Member member = memberRepository.findByNickname(nickname).filter(m -> !m.isWithdrawn()).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
 
         // 마이페이지 존재시 차단 상태 유무체크 상대방이 사용자를 차단된 상태일경우 예외 발생 
         boolean blockStatus = blockMemberService.checkBlock(member.getId(),memberId);   

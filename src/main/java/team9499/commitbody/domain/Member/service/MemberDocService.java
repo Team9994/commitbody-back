@@ -25,7 +25,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class MemberDocService {
 
@@ -84,8 +84,10 @@ public class MemberDocService {
             builder.must(Query.of(q -> q.queryString(query)));
         }
 
-        List<Long> blockerIds = elsBlockMemberService.getBlockerIds(memberId);
-        blockerIds.add(memberId);
+        List<Long> blockerIds = new ArrayList<>(elsBlockMemberService.getBlockerIds(memberId));
+        List<Long> blockedIds = elsBlockMemberService.findBlockedIds(memberId);
+        blockerIds.add(memberId);   // 자기 자신은 검색되지 않도록 추가
+        blockerIds.addAll(blockedIds);
 
         // 현재 검색할 사용자와 차단한 사용자는 검색에서 제외해야한다.
         TermsQueryField termsQueryField = new TermsQueryField.Builder()
@@ -112,7 +114,7 @@ public class MemberDocService {
             // hits의 hit 리스트를 돌면서 사용자 id와 사용자 닉네임을 memberDtos 리스트에 담습니다.
             for (Hit<Object> hit : hits) {
                 Map<String, Object> source = (Map<String, Object>) hit.source();
-                memberDtos.add(MemberDto.createNickname(Long.valueOf(source.get(ID).toString()), source.get(NICKNAME_FIELD).toString(),source.get("profile").toString()));
+                memberDtos.add(MemberDto.createNickname(Long.valueOf(source.get("memberId").toString()), source.get(NICKNAME_FIELD).toString(),source.get("profile").toString()));
             }
 
             memberInfoResponse.setTotalCount(value);
