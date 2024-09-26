@@ -64,6 +64,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                         .and(articleComment.parent.id.isNull())
                         .and(blockMember.id.isNull().or(blockMember.blockStatus.eq(false)))
                         .and(childBlock.id.isNull().or(childBlock.blockStatus.eq(false)))
+                        .and((articleComment.member.isWithdrawn.eq(false)))
                 ) // 차단되지 않았거나 차단이 해제된 경우
                 .orderBy(order) // 최신 댓글 우선 정렬
                 .limit(pageable.getPageSize() + 1)
@@ -107,6 +108,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                         .and(articleComment.parent.id.isNull())
                         .and(blockMember.id.isNull().or(blockMember.blockStatus.eq(false)))
                         .and(childBlock.id.isNull().or(childBlock.blockStatus.eq(false)))
+                        .and((articleComment.member.isWithdrawn.eq(false)))
                 ).fetch();
         return fetch.size();
     }
@@ -137,6 +139,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                 .where(builder,articleComment.parent.id.eq(commentId) // 부모 댓글 필터링
                         .and(blockMember.id.isNull().or(blockMember.blockStatus.eq(false)))
                         .and(childBlock.id.isNull().or(childBlock.blockStatus.eq(false)))
+                        .and((articleComment.member.isWithdrawn.eq(false)))
                 ) // 차단된 사용자가 아니거나 차단이 해제된 경우만
                 .limit(pageable.getPageSize() + 1)
                 .orderBy(articleComment.createdAt.desc())
@@ -160,7 +163,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
     }
 
     /**
-     * 부모 댓그르이 작성된 자식 댓글모두 조회
+     * 부모 댓글이 작성된 자식 댓글모두 조회
      * @param commentId 부모 댓글 ID
      * @return 자식댓글의 ID 리스트
      */
@@ -169,7 +172,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
         List<ArticleComment> fetch = jpaQueryFactory.select(articleComment)
                 .from(articleComment)
                 .leftJoin(articleComment.childComments, childComment).fetchJoin()
-                .where(articleComment.parent.id.eq(commentId))
+                .where(articleComment.parent.id.eq(commentId).and((articleComment.member.isWithdrawn.eq(false))))
                 .fetch();
         return fetch.stream().map(ArticleComment::getId).collect(Collectors.toList());
     }

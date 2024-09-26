@@ -5,7 +5,6 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberTemplate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -28,7 +27,6 @@ import static team9499.commitbody.domain.Member.domain.QMember.*;
 import static team9499.commitbody.domain.follow.domain.FollowType.FOLLOW_ONLY;
 import static team9499.commitbody.domain.follow.domain.QFollow.*;
 
-@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class CustomFollowRepositoryImpl implements CustomFollowRepository{
@@ -51,7 +49,10 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
         List<Follow> followList = jpaQueryFactory.select(follow)
                 .from(follow)
                 .join(follow.following,member).fetchJoin()
-                .where(builder,follow.follower.id.eq(followingId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW))))
+                .where(builder,follow.follower.id.eq(followingId)
+                        .and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW)))
+                        .and(follow.following.isWithdrawn.eq(false))
+                )
                 .limit(pageable.getPageSize()+1)
                 .orderBy(follow.id.asc())
                 .fetch();
@@ -85,7 +86,8 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
         List<Follow> followList= jpaQueryFactory.select(follow)
                 .from(follow)
                 .join(follow.follower, member).fetchJoin()
-                .where(builder,follow.following.id.eq(followId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW))))  // 올바른 조건
+                .where(builder,follow.following.id.eq(followId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW)))
+                        .and(follow.follower.isWithdrawn.eq(false)))
                 .limit(pageable.getPageSize()+1)
                 .orderBy(follow.id.asc())
                 .fetch();
@@ -110,7 +112,10 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
         return jpaQueryFactory.select(follow.count())
                 .from(follow)
                 .join(member).on(member.id.eq(follow.following.id))
-                .where(follow.follower.id.eq(followerId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW)))).fetchOne();
+                .where(follow.follower.id.eq(followerId)
+                        .and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW)))
+                        .and(follow.following.isWithdrawn.eq(false))
+                ).fetchOne();
     }
 
     @Override
@@ -119,7 +124,9 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
         return jpaQueryFactory.select(follow.count())
                 .from(follow)
                 .join(member).on(member.id.eq(follow.follower.id))  // 올바른 조인 조건
-                .where(follow.following.id.eq(followingId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW))))  // 올바른 조건
+                .where(follow.following.id.eq(followingId).and(follow.status.eq(FollowStatus.FOLLOWING).or(follow.status.eq(FollowStatus.MUTUAL_FOLLOW)))
+                        .and(follow.follower.isWithdrawn.eq(false))
+                )
                 .fetchOne();
     }
 
@@ -179,7 +186,8 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
     public List<Long> followings(Long followerId) {
         return jpaQueryFactory.select(follow.following.id)
                 .from(follow)
-                .where(follow.follower.id.eq(followerId).and(follow.status.eq(FollowStatus.MUTUAL_FOLLOW).or(follow.status.eq(FollowStatus.FOLLOWING)))).fetch();
+                .where(follow.follower.id.eq(followerId).and(follow.status.eq(FollowStatus.MUTUAL_FOLLOW).or(follow.status.eq(FollowStatus.FOLLOWING)))
+                        .and(follow.following.isWithdrawn.eq(false))).fetch();
     }
 
     private static BooleanBuilder lastIdBuilder(Long lastId) {

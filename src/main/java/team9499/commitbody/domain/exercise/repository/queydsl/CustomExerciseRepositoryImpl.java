@@ -65,7 +65,7 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
                 .join(member).on(member.id.eq(record.member.id))
                 .join(recordDetails).on(recordDetails.record.id.eq(record.id))
                 .join(recordSets).on(recordSets.recordDetails.id.eq(recordDetails.id))
-                .where(builder.and(record.member.id.eq(memberId)).and(record.startTime.between(startOfWeek, endOfWeek)))
+                .where(builder.and(record.member.id.eq(memberId)).and(record.startTime.between(startOfWeek, endOfWeek)).and(record.member.isWithdrawn.eq(false)))
                 .fetch();
 
         // 제공된 운동인지 커스텀 운동인지 동적 쿼리 생성
@@ -76,7 +76,8 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
                 .join(member).on(member.id.eq(record.member.id))
                 .join(recordDetails).on(recordDetails.record.id.eq(record.id))
                 .join(recordSets).on(recordSets.recordDetails.id.eq(recordDetails.id))
-                .where(newBooleanBuilder.and(record.member.id.eq(memberId))).fetch();
+                .where(newBooleanBuilder.and(record.member.id.eq(memberId))
+                        .and(record.member.isWithdrawn.eq(false))).fetch();
 
         int maxValue = 0;       // 운동의 최댓 값
         int totalValue = 0;     // 운동데이터의 총 합
@@ -246,7 +247,7 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
         if (exercise instanceof Exercise) {
             List<ExerciseMethod> exerciseMethodList = ((Exercise) exercise).getExerciseMethodList();
             for (ExerciseMethod exerciseMethod : exerciseMethodList) {
-                stringList.add(exerciseMethod.getExercise_content());
+                stringList.add(exerciseMethod.getExerciseContent());
             }
         }
         return stringList;

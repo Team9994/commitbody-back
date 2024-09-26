@@ -3,7 +3,6 @@ package team9499.commitbody.domain.comment.exercise.repository.impl;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -22,7 +21,6 @@ import static team9499.commitbody.domain.block.domain.QBlockMember.*;
 import static team9499.commitbody.domain.comment.exercise.domain.QExerciseComment.*;
 import static team9499.commitbody.domain.like.domain.QContentLike.*;
 
-@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommentRepository {
@@ -60,7 +58,8 @@ public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommen
                 .leftJoin(blockMember).on(blockMember.blocked.id.eq(exerciseComment.member.id).and(blockMember.blocker.id.eq(memberId)))
                 .leftJoin(fromBlock).on(fromBlock.blocked.id.eq(memberId).and(fromBlock.blocker.id.eq(exerciseComment.member.id)))
                 .where(builder,blockMember.id.isNull().or(blockMember.blockStatus.eq(false))
-                        .and(fromBlock.id.isNull().or(fromBlock.blockStatus.eq(false))))
+                        .and(fromBlock.id.isNull().or(fromBlock.blockStatus.eq(false)))
+                        .and(exerciseComment.member.isWithdrawn.eq(false)))
                 .limit(pageable.getPageSize()+1)
                 .orderBy(exerciseComment.createdAt.desc())      // 최신순을 유지하기 위해 내림차순
                 .fetch();

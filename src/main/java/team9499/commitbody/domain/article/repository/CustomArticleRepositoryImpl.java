@@ -5,7 +5,6 @@ import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -31,7 +30,6 @@ import static team9499.commitbody.domain.comment.article.domain.QArticleComment.
 import static team9499.commitbody.domain.file.domain.QFile.*;
 import static team9499.commitbody.domain.follow.domain.QFollow.*;
 
-@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class CustomArticleRepositoryImpl implements CustomArticleRepository {
@@ -152,7 +150,7 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
                 .from(article)
                 .leftJoin(file).on(article.id.eq(file.article.id)).fetchJoin()  // 파일 정보는 선택적이므로 LEFT JOIN
                 .leftJoin(follow).on(follow.follower.id.eq(loginMemberId).and(follow.following.id.eq(article.member.id)))
-                .where(article.id.eq(articleId)).fetch();
+                .where(article.id.eq(articleId).and(article.member.isWithdrawn.eq(false))).fetch();
 
         return list.stream()
                 .map(tuple -> ArticleDto.of(loginMemberId, tuple.get(article), converterImgUrl(tuple.get(file)), tuple.get(follow))).findFirst().get();
@@ -169,7 +167,7 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
         Tuple tuple = jpaQueryFactory.select(article, file.storedName)
                 .from(article)
                 .leftJoin(file).on(file.article.id.eq(article.id)).fetchJoin()
-                .where(article.id.eq(articleId))
+                .where(article.id.eq(articleId).and(article.member.isWithdrawn.eq(false)))
                 .fetchOne();
 
 
@@ -197,7 +195,7 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
                 .leftJoin(articleComment).on(articleComment.article.id.eq(article.id)).fetchJoin()  // 댓글 정보는 선택적이므로 LEFT JOIN
                 .leftJoin(follow).on(article.member.id.eq(follow.follower.id).and(follow.following.id.eq(loginMemberId)))  // 팔로우 정보
                 .where(builder, validArticleFollow, article.member.id.eq(findMemberId)
-                        .and(article.articleType.eq(ArticleType.INFO_QUESTION)))
+                        .and(article.articleType.eq(ArticleType.INFO_QUESTION)).and(article.member.isWithdrawn.eq(false)))
                 .limit(pageable.getPageSize() + 1)  // 페이지 크기 + 1
                 .groupBy(article.id, file.id, follow.id)  // 중복 제거를 위한 GROUP BY
                 .orderBy(article.createdAt.desc())  // 최신 순으로 정렬
