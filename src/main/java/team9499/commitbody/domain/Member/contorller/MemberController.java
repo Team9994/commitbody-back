@@ -101,6 +101,19 @@ public class MemberController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"업데이트 성공"));
     }
 
+    @Operation(summary = "알림 수신 여부 - 조회", description = "사용자의 알림 수신 여부를 조회합니다. [true : 알림 수신, false : 알림 미수신]",tags = "프로필")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"알림 수신 유뮤\",\"data\":true}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 값 입렵 검증", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":{\"필드명\": \"오류 내용\"}}"))),
+            @ApiResponse(responseCode = "400_3", description = "BADREQUEST - 사용자 존재하지 않을시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
+    })
     @GetMapping("/notification/settings")
     public ResponseEntity<?> getNotificationSetting(@AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
@@ -109,6 +122,19 @@ public class MemberController {
     }
 
 
+    @Operation(summary = "알림 수신 여부 - 설정", description = "알림 설정을 업데이트 합니다. [수신시 : 알림 수신 , 미수신시 : 알림 미수신]",tags = "프로필")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"알림 수신\""))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "BADREQUEST - 값 입렵 검증", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":{\"필드명\": \"오류 내용\"}}"))),
+            @ApiResponse(responseCode = "400_3", description = "BADREQUEST - 사용자 존재하지 않을시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
+    })
     @PostMapping("/notification/settings")
     public ResponseEntity<?> setNotificationSetting(@AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = getMemberId(principalDetails);
