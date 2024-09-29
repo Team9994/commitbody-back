@@ -68,16 +68,17 @@ public class ArticleDto {
     }
 
     public static ArticleDto of(Long loginMemberId,Article article, String imageUrl, Follow follow){
-        ArticleDtoBuilder builder = ArticleDto.builder();
+        Member member = article.getMember();
+        ArticleDtoBuilder builder = ArticleDto.builder()
+                .articleId(article.getId())
+                .articleCategory(article.getArticleCategory())
+                .time(TimeConverter.converter(article.getCreatedAt()))
+                .postOwner(loginMemberId.equals(member.getId()))
+                .member(MemberDto.builder().memberId(member.getId()).nickname(member.getNickname()).profile(member.getProfile()).build());
         if (article.getArticleType().equals(ArticleType.EXERCISE)){
-            builder.imageUrl(imageUrl).articleCategory(article.getArticleCategory()).articleId(article.getId()).postOwner(null);
+            builder.imageUrl(imageUrl).followStatus(follow == null ? null : follow.getStatus());
         }else{
-            Member member = article.getMember();
-            MemberDto memberDto = MemberDto.builder().memberId(member.getId()).nickname(member.getNickname()).profile(member.getProfile()).build();
-            builder.articleId(article.getId()).title(article.getTitle()).content(article.getContent()).articleCategory(article.getArticleCategory()).time(TimeConverter.converter(article.getCreatedAt())).likeCount(article.getLikeCount())
-                    .commentCount(article.getCommentCount()).imageUrl(imageUrl).member(memberDto)
-                    .postOwner(!loginMemberId.equals(member.getId()) ? false : true)
-                    .followStatus(follow == null ? null : follow.getStatus()).build();
+            builder.title(article.getTitle()).content(article.getContent()).likeCount(article.getLikeCount()).build();
         }
         return builder.build();
     }
