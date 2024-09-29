@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static team9499.commitbody.domain.Member.domain.QMember.*;
+import static team9499.commitbody.domain.article.domain.QArticle.*;
 import static team9499.commitbody.domain.block.domain.QBlockMember.blockMember;
 import static team9499.commitbody.domain.comment.article.domain.QArticleComment.*;
 
@@ -175,6 +176,21 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                 .where(articleComment.parent.id.eq(commentId).and((articleComment.member.isWithdrawn.eq(false))))
                 .fetch();
         return fetch.stream().map(ArticleComment::getId).collect(Collectors.toList());
+    }
+
+    /**
+     * 사용자가 게시글의 작성한 게시글의 ID를 리스트로 조회
+     * @param memberId  탈퇴하는 사용자 ID
+     * @return  조회된 ID값 리스트
+     */
+    @Override
+    public List<Long> findCommentArticleIdsByMemberId(Long memberId) {
+        return jpaQueryFactory.select(articleComment.article.id)
+                .from(articleComment)
+                .join(article).on(article.id.eq(articleComment.article.id)).fetchJoin()
+                .where(articleComment.member.id.eq(memberId)
+                        .and(articleComment.member.id.ne(article.member.id))
+                        .and(articleComment.parent.isNull())).fetch();
     }
 
     /**

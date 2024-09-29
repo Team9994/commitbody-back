@@ -3,10 +3,9 @@ package team9499.commitbody.domain.Member.service;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.UpdateRequest;
+import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.json.JsonData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -95,6 +94,8 @@ public class MemberDocService {
 
         builder.mustNot(Query.of(q -> q.terms(t -> t.field("_"+ID).terms(termsQueryField))));
 
+        builder.must(Query.of(q -> q.term(t -> t.field("withDraw").value(false))));
+
         // 검색 요청 빌더 생성
         SearchRequest searchRequest = new SearchRequest.Builder()
                 .index(MEMBER_INDEX)
@@ -124,5 +125,27 @@ public class MemberDocService {
             log.error("회원 검색중 오류 발생");
         }
         return memberInfoResponse;
+    }
+
+    /**
+     * 사용자 인덱스에서 탈퇴한/재가입의 따라 사용자의 withDraw 값을 false/TRUE 로 변경
+     * @param memberId  탈퇴한 사용자 ID
+     * @param type  true : 탈퇴 , false : 재가입
+     */
+    @Async
+    public void updateMemberWithDrawAsync(Long memberId, Boolean type){
+        UpdateByQueryRequest queryRequest = new UpdateByQueryRequest.Builder()
+                .index(MEMBER_INDEX)
+                .query(Query.of(q -> q.bool(b -> b.must(m -> m.term(t -> t.field("memberId").value(memberId))))))
+                .script(s -> s.inline(i -> i.source("ctx._source.withDraw = params.writDraw")
+                        .lang("painless")
+                        .params("writDraw", JsonData.of(type)))).build();
+        try {
+            UpdateByQueryResponse updateByQueryResponse = elasticsearchClient.updateByQuery(queryRequest);
+            log.info("탈퇴한 사용자의 정보 수 ={}",updateByQueryResponse.updated());
+        }catch (Exception e){
+            log.error("업데이트 도중 에러 발생 = {}",e.getMessage());
+        }
+
     }
 }

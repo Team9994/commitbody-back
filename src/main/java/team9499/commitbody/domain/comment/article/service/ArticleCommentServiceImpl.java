@@ -158,6 +158,12 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
         }
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public List<Long> getWriteDrawArticleIdsByComment(Long memberId) {
+        return articleCommentRepository.findCommentArticleIdsByMemberId(memberId);
+    }
+
     /*
     작성자인지 검증하는 메서드
      */

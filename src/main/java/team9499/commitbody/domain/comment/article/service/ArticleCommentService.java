@@ -5,6 +5,8 @@ import team9499.commitbody.domain.article.dto.response.ArticleCountResponse;
 import team9499.commitbody.domain.comment.article.domain.OrderType;
 import team9499.commitbody.domain.comment.article.dto.response.ArticleCommentResponse;
 
+import java.util.List;
+
 
 public interface ArticleCommentService {
 
@@ -17,5 +19,7 @@ public interface ArticleCommentService {
     ArticleCommentResponse getReplyComments(Long commentId, Long memberId,Long lastId,Pageable pageable);
 
     ArticleCountResponse deleteArticleComment(Long memberId, Long commentId);
+
+    List<Long> getWriteDrawArticleIdsByComment(Long memberId);
 
 }

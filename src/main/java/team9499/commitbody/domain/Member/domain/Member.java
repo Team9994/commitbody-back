@@ -5,14 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import team9499.commitbody.global.utils.BaseTime;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
-@Slf4j
 @Data
 @Builder
 @AllArgsConstructor
@@ -66,6 +63,9 @@ public class Member extends BaseTime {
     @Column(name = "account_status")
     private AccountStatus accountStatus;        // 계정 상태 - PUBLIC : 공개(기본 값) , PRIVATE : 비공개
 
+    @Column(name = "withdrawal_revoke_period")
+    private LocalDate withdrawalRevokePeriod;       // 회원 탈퇴 철회 기간 15일
+    
     @Column(name = "withdrawn_at")
     private LocalDate withdrawnAt; // 탈퇴 만료시간
 
@@ -113,5 +113,12 @@ public class Member extends BaseTime {
     public void updateWithdrawn(){
         this.isWithdrawn = true;
         this.withdrawnAt = LocalDate.now().plusMonths(3);
+        this.withdrawalRevokePeriod = LocalDate.now().plusDays(15);
+    }
+
+    public void cancelWithDrawn(){
+        this.isWithdrawn = false;
+        this.withdrawnAt = null;
+        this.withdrawalRevokePeriod = null;
     }
 }

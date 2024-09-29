@@ -28,7 +28,10 @@ public class MemberDoc {
     @Field(type = FieldType.Text, name = "profile")
     private String profile;
 
+    @Field(type = FieldType.Boolean, name = "withDraw")
+    private Boolean withDraw;
+
     public static MemberDoc create(Long id,String nickname, String profile){
-        return new MemberDoc(id,nickname,profile);
+        return new MemberDoc(id,nickname,profile,false);
     }
 }
