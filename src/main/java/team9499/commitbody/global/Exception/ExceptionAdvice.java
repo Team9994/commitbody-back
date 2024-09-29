@@ -1,6 +1,5 @@
 package team9499.commitbody.global.Exception;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,7 +27,7 @@ public class ExceptionAdvice {
     @ExceptionHandler
     public ResponseEntity<ErrorResponse> jwtTokenException(JwtTokenException e){
         ErrorResponse er = new ErrorResponse(false, e.getMessage());
-        e.printStackTrace();
+//        e.printStackTrace();
         return ResponseEntity.status(e.getExceptionStatus()).body(er);
     }
 
@@ -55,6 +54,12 @@ public class ExceptionAdvice {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         ErrorResponse er = new ErrorResponse(false,"올바른 타입이나 값을 작성해주세요");
+        return ResponseEntity.status(400).body(er);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> withDrawException(WithDrawException e){
+        ErrorResponse er = new ErrorResponse(false,e.getMessage());
         return ResponseEntity.status(400).body(er);
     }
 }
