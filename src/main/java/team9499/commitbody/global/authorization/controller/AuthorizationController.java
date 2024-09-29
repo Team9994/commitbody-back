@@ -151,6 +151,19 @@ public class AuthorizationController {
         return ResponseEntity.ok(new SuccessResponse<>(true,"로그아웃 성공"));
     }
 
+    @Operation(summary = "회원 탈퇴", description = "탈퇴 약관 동의을 필수로 동의해야합니다. 탈퇴시 15일이내 재가입을 허용하며 이후 3개월 동안 재가입이 불가하며, 3개월 이후 모든 데이터는 삭제됩니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"탈퇴 성공\"}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "사용자 미존재시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "401_1", description = "UNAUTHORIZED - 토큰 만료", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"만료된 토큰 입니다.\"}"))),
+            @ApiResponse(responseCode = "401_2", description = "UNAUTHORIZED - 미존재 토큰 사용", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
+    })
     @PostMapping("/withdraw")
     public ResponseEntity<?> withdraw(@Valid @RequestBody MemberWithdrawRequest withdrawRequest, BindingResult result,
                                       @AuthenticationPrincipal PrincipalDetails principalDetails,
