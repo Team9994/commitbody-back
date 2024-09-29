@@ -3,7 +3,6 @@ package team9499.commitbody.domain.exercise.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,7 +20,6 @@ import team9499.commitbody.global.Exception.ServerException;
 import java.util.ArrayList;
 import java.util.List;
 
-@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -106,7 +104,7 @@ public class SchedulingService {
             String id;
             Long exerciseId = (exerciseInterest.getExercise() != null) ? exerciseInterest.getExercise().getId() : exerciseInterest.getCustomExercise().getId();
             id = (exerciseInterest.getExercise() != null ? DEFAULT : CUSTOM) + exerciseId +"-"+ memberId;
-            exerciseInterestDocList.add(new ExerciseInterestDoc(id, memberId, exerciseId, exerciseInterest.isInterested()));
+            exerciseInterestDocList.add(ExerciseInterestDoc.of(id, memberId, exerciseId, exerciseInterest.isInterested(),false));
         }
 
         exerciseElsRepository.saveAll(exerciseDocList);

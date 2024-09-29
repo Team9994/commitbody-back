@@ -20,7 +20,7 @@ import org.springframework.data.elasticsearch.annotations.WriteTypeHint;
 public class MemberDoc {
 
     @Id
-    private String id;
+    private Long memberId;
 
     @Field(type = FieldType.Text, name = "nickname")
     private String nickname;
@@ -28,7 +28,10 @@ public class MemberDoc {
     @Field(type = FieldType.Text, name = "profile")
     private String profile;
 
-    public static MemberDoc create(String id,String nickname, String profile){
-        return new MemberDoc(id,nickname,profile);
+    @Field(type = FieldType.Boolean, name = "withDraw")
+    private Boolean withDraw;
+
+    public static MemberDoc create(Long id,String nickname, String profile){
+        return new MemberDoc(id,nickname,profile,false);
     }
 }

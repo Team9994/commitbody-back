@@ -25,7 +25,7 @@ import java.time.LocalDate;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService {
 
@@ -44,7 +44,7 @@ public class MemberServiceImpl implements MemberService {
      */
     @Override
     public MemberMyPageResponse getMyPage(Long memberId,String nickname) {
-        Member member = memberRepository.findByNickname(nickname).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+        Member member = memberRepository.findByNickname(nickname).filter(m -> !m.isWithdrawn()).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
 
         // 마이페이지 존재시 차단 상태 유무체크 상대방이 사용자를 차단된 상태일경우 예외 발생 
         boolean blockStatus = blockMemberService.checkBlock(member.getId(),memberId);   
@@ -92,9 +92,34 @@ public class MemberServiceImpl implements MemberService {
         elsArticleService.updateWriterAsync(beforeNickname,nickname);   // 게시글의 작성된 사용자 닉네임 업데이트
     }
 
+    /**
+     * 현자 사용자의 알림 유뮤를 조회합니다.
+     * @param memberId 로그인한 사용자 아이디
+     * @return  true 알림 수신 false 알림 미수신
+     */
+    @Override
+    public boolean getNotification(Long memberId) {
+        Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
+        return member.isNotificationEnabled();
+    }
+
+    /**
+     * 사용자가 알림 수신 여부를 선택합니다.
+     * @param memberId  현재 로그인한 사용자 ID
+     * @return  알림 수신 , 알림 미수신
+     */
+    @Override
+    public String updateNotification(Long memberId) {
+        Member member = memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+
+        boolean notificationEnabled = member.isNotificationEnabled();
+        member.updateNotification(!notificationEnabled);        // 알림 수신 유무 반대로 저장
+        redisService.updateMember(String.valueOf(member),member);       // 레디시의 정보 업데이트
+
+        return notificationEnabled ? "알림 미수신" : "알림 수신";
+    }
 
     private Member getMember(Long memberId) {
-        Member member = memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
-        return member;
+        return memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
     }
 }

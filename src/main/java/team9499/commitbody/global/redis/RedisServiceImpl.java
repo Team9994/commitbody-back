@@ -46,11 +46,12 @@ public class RedisServiceImpl implements RedisService{
     }
 
     @Override
-    public void deleteValue(String key, String type) {
+    public void deleteValue(String key, AuthType type) {
         String redisKey = "";
         switch (type){
-            case "인증" -> redisKey = getValue(key);
-            case "검색기록" -> redisKey = getSearchKey(key);
+            case CERTIFICATION -> redisKey = getKey(key);
+            case SEARCH -> redisKey = getSearchKey(key);
+            case FCM -> redisKey = "fcm_"+key;
         }
         redisTemplate.delete(redisKey);
     }
@@ -67,16 +68,15 @@ public class RedisServiceImpl implements RedisService{
             CustomMapper<Member> customMapper = new CustomMapper<>();
             return Optional.of(customMapper.to(o, Member.class));
         }else {
-            Member member = memberRepository.findById(Long.valueOf(key)).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+            Member member = memberRepository.findById(Long.valueOf(key)).filter(member1 -> !member1.isWithdrawn()).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
             setMember(member,Duration.ofDays(7));
             return Optional.of(member);
         }
-
     }
 
     @Override
     public void updateMember(String key,Member member) {
-        deleteValue(getKey(key),"인증");
+        deleteValue(getKey(key),AuthType.CERTIFICATION);
         setMember(member,Duration.ofDays(30));
     }
 
@@ -154,9 +154,28 @@ public class RedisServiceImpl implements RedisService{
     public void deleteRecentSearchLog(String memberId, String title,String type) {
         String searchKey = getSearchKey(memberId);
         if (type!=null){
-            if (type.equals("all")) deleteValue(memberId,"검색기록");
+            if (type.equals("all")) deleteValue(memberId,AuthType.SEARCH);
         }else
             redisTemplate.opsForList().remove(searchKey,0,title);
+    }
+
+    /**
+     * 로그아웃시 현재 사용한 JWT토큰을 블랙리스트의 1시간동안 추가합니다.
+     * @param jwtToken 현재 사용한 JWT 토큰
+     */
+    @Override
+    public void setBlackListJwt(String jwtToken) {
+        redisTemplate.opsForValue().set(jwtToken,"blackList",Duration.ofHours(1));
+    }
+
+    /**
+     * 현재 블랙리스트의 토큰이 저장되어있는지 확인
+     * @param jwtToken  현재 사용한 JWT 토큰
+     * @return  존재시 TRUE, 미존재시 FALSE
+     */
+    @Override
+    public boolean validBlackListJwt(String jwtToken) {
+        return redisTemplate.hasKey(jwtToken);
     }
 
     private String getKey(String key) {

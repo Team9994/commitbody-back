@@ -20,6 +20,6 @@ public class ElsBlockMemberHandler {
 
     @EventListener
     public void cancelFollowBlockMember(CancelBlockMemberEvent cancelBlockMemberEvent){
-        followService.cancelFollow(cancelBlockMemberEvent.getFollowerId(), cancelBlockMemberEvent.getFollowIngId());
+        followService.cancelFollow(cancelBlockMemberEvent.getFollowerId(), cancelBlockMemberEvent.getFollowIngId(), cancelBlockMemberEvent.getStatus());
     }
 }

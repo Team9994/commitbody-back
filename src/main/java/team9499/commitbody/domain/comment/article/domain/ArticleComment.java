@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
-@Table(indexes = {
+@Table(name = "article_comment", indexes = {
         @Index(name = "idx_article_comment_created_desc",columnList = "parent_id, created_at desc")
 })
 @ToString(exclude = {"childComments"})
@@ -28,6 +28,7 @@ public class ArticleComment extends BaseTime {
     @Column(length = 4999)
     private String content;
 
+    @Column(name = "like_count")
     private Integer likeCount;
 
     @JoinColumn(name = "article_id",foreignKey =  @ForeignKey(ConstraintMode.NO_CONSTRAINT))

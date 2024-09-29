@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "refresh_token")
 public class RefreshToken {
 
     @Id
@@ -19,9 +20,11 @@ public class RefreshToken {
     @Column(name = "token_id")
     private Long id;
 
+    @Column(name = "refresh_token")
     private String refreshToken;
+
     @OneToOne
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "member_id",foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Member member;
 
     private LocalDateTime expired;

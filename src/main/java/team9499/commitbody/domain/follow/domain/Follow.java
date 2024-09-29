@@ -10,6 +10,7 @@ import team9499.commitbody.domain.Member.domain.Member;
 @Builder
 @Data
 @ToString(exclude = {"follower", "following"})
+@Table(name = "follow")
 public class Follow {
 
     @Id

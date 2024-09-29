@@ -14,6 +14,7 @@ import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.JwtTokenException;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.redis.RedisService;
@@ -42,6 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String jwtToken = header.replace("Bearer ", "");
 
         String accessTokenValid = jwtUtils.accessTokenValid(jwtToken);
+        boolean validBlackListJwt = redisService.validBlackListJwt(jwtToken);
+        if (validBlackListJwt) throw new JwtTokenException(ExceptionStatus.FORBIDDEN,ExceptionType.LOGIN_REQUIRED);
 
         Optional<Member> optionalMember = redisService.getMemberDto(accessTokenValid);
         if (optionalMember.isEmpty()){

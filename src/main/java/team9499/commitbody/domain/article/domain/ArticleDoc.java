@@ -35,7 +35,7 @@ public class ArticleDoc {
     @Field(type = FieldType.Text,name = "img_url")
     private String imgUrl;
 
-    @Field(type = FieldType.Long, name = "member_id")
+    @Field(type = FieldType.Long, name = "memberId")
     private Long memberId;
 
     @Field(type = FieldType.Text,name = "writer")
@@ -53,6 +53,9 @@ public class ArticleDoc {
     @Field(type = FieldType.Keyword,name = "visibility")
     private Visibility visibility;
 
+    @Field(type = FieldType.Boolean, name = "withDraw")
+    private Boolean withDraw;
+
     public static ArticleDoc of(ArticleDto articleDto){
         return ArticleDoc.builder().id(articleDto.getArticleId())
                 .articleCategory(articleDto.getArticleCategory())
@@ -65,6 +68,7 @@ public class ArticleDoc {
                 .time(converterTime(articleDto.getLocalDateTime()))
                 .imgUrl(articleDto.getImageUrl())
                 .visibility(articleDto.getVisibility())
+                .withDraw(false)
                 .build();
     }
     static String converterTime(LocalDateTime localDateTime){

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Table(indexes = {
+@Table(name = "record", indexes = {
         @Index(name = "idx_member_id_end_time",columnList = "member_id, end_time ASC")
 })
 @Data
@@ -26,16 +26,22 @@ public class Record {
     @Column(name = "record_id")
     private Long id;
 
+    @Column(name = "record_name")
     private String recordName;          // 운동명
 
+    @Column(name = "record_volume")
     private Integer recordVolume;       // 총 볼륨
 
+    @Column(name = "record_sets")
     private Integer recordSets;         // 총 횟수
 
+    @Column(name = "record_calorie")
     private Integer recordCalorie;      // 총 칼로리
 
+    @Column(name = "start_time")
     private LocalDateTime startTime;    // 운동 시작 시간
 
+    @Column(name = "end_time")
     private LocalDateTime endTime;      // 운동 끝 시간
 
     private Integer duration;           // 진행시간

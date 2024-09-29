@@ -15,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(exclude = "record")
+@Table(name = "record_details")
 public class RecordDetails {
 
     @Id
@@ -22,16 +23,21 @@ public class RecordDetails {
     @Column(name = "record_details_id")
     private Long id;
 
+    @Column(name = "details_sets")
     private Integer detailsSets;        // 기록별 총 세트수
 
+    @Column(name = "details_reps")
     private Integer detailsReps;        // 기록별 총 횟수
 
+    @Column(name = "details_volume")
     private Integer detailsVolume;      // 기록별 총 볼륨
 
     private Integer max1RM;              // 최대1RM
-    
+
+    @Column(name = "max_reps")
     private Integer maxReps;            // 최대 세트수
 
+    @Column(name = "sum_times")
     private Integer sumTimes;       // 기록별 총 수행 시간
 
     private Integer orders;         // 운동 기록 순서

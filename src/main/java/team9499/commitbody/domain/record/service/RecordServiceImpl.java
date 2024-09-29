@@ -37,7 +37,7 @@ import static team9499.commitbody.global.Exception.ExceptionType.*;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class RecordServiceImpl implements RecordService{
 

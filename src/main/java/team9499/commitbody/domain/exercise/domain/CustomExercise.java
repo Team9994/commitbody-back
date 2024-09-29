@@ -15,6 +15,7 @@ import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "custom_exercise")
 public class CustomExercise {
 
     @Id
@@ -22,13 +23,17 @@ public class CustomExercise {
     @Column(name = "custom_ex_id")
     private Long id;
 
+    @Column(name = "custom_ex_name")
     private String customExName;
 
+    @Column(name = "custom_gif_url")
     private String customGifUrl;
 
+    @Column(name = "exercise_target")
     @Enumerated(EnumType.STRING)
     private ExerciseTarget exerciseTarget;
 
+    @Column(name = "exercise_equipment")
     @Convert(converter = ExerciseEquipmentConverter.class)
     private ExerciseEquipment exerciseEquipment;
 

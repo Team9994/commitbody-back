@@ -2,6 +2,8 @@ package team9499.commitbody.domain.like.service;
 
 import team9499.commitbody.domain.article.dto.response.ArticleCountResponse;
 
+import java.util.List;
+
 public interface LikeService {
 
     String updateCommentLike(Long exCommentId, Long memberId);
@@ -9,4 +11,6 @@ public interface LikeService {
     ArticleCountResponse articleLike(Long articleId, Long memberId);
 
     String articleCommentLike(Long memberId,Long commentId);
+
+    List<Long> getWriteDrawArticleIds(Long memberId);
 }

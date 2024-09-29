@@ -4,7 +4,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.elasticsearch.sql.QueryRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -19,7 +18,7 @@ import java.util.List;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class ElsBlockMemberServiceImpl implements ElsBlockMemberService{
 

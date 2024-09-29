@@ -11,20 +11,27 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
-import team9499.commitbody.global.authorization.dto.AdditionalInfoReqeust;
-import team9499.commitbody.global.authorization.dto.JoinLoginRequest;
-import team9499.commitbody.global.authorization.dto.RegisterNicknameRequest;
-import team9499.commitbody.global.authorization.dto.TokenUserInfoResponse;
+import team9499.commitbody.global.authorization.domain.PrincipalDetails;
+import team9499.commitbody.global.authorization.dto.TokenInfoDto;
+import team9499.commitbody.global.authorization.dto.request.AdditionalInfoReqeust;
+import team9499.commitbody.global.authorization.dto.request.JoinLoginRequest;
+import team9499.commitbody.global.authorization.dto.request.MemberWithdrawRequest;
+import team9499.commitbody.global.authorization.dto.request.RegisterNicknameRequest;
+import team9499.commitbody.global.authorization.dto.response.TokenUserInfoResponse;
+import team9499.commitbody.global.authorization.event.DeleteMemberEvent;
 import team9499.commitbody.global.authorization.service.AuthorizationService;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 
@@ -36,6 +43,7 @@ import java.util.Map;
 public class AuthorizationController {
 
     private final AuthorizationService authorizationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Operation(summary = "회원가입/로그인", description = "매 요청마다 소셜 로그인 정보를 전달해야합니다. 최초 로그인 시에는 회원가입이 진행되며, 이후 로그인이 진행됩니다. 로그인 시에만 tokenInfo에 사용자 정보가 포함됩니다.(authMode: [로그인,회원가입])")
     @ApiResponses(value = {
@@ -51,6 +59,12 @@ public class AuthorizationController {
         Map<String, Object> jwtTokenMap = authorizationService.authenticateOrRegisterUser(
                 joinLoginRequest.getLoginType(), joinLoginRequest.getSocialId(),joinLoginRequest.getFcmToken()
         );
+
+        TokenInfoDto tokenInfo = (TokenInfoDto) jwtTokenMap.get("tokenInfo");
+        String authMode = (String) jwtTokenMap.get("authMode");
+        Long memberId = tokenInfo.getMemberId();  
+        if (authMode.equals("재가입"))
+            eventPublisher.publishEvent(new DeleteMemberEvent(memberId,"재가입",LocalDateTime.now()));
 
         return ResponseEntity.ok().body(new SuccessResponse<>(true,"성공",jwtTokenMap));
     }
@@ -116,6 +130,48 @@ public class AuthorizationController {
         String refreshToken = getJwtToken(request);
         Map<String, String> map = authorizationService.refreshAccessToken(refreshToken);
         return ResponseEntity.ok(new SuccessResponse<>(true,"재발급 성공",map));
+    }
+
+    @Operation(summary = "로그아웃", description = "로그아웃을 진행합니다. 현재 사용한 AccessToken 및 RefreshToken 은 다시 사용 할수 없습니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"로그아웃 성공\"}"))),
+            @ApiResponse(responseCode = "400", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "401_1", description = "UNAUTHORIZED - 토큰 만료", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"만료된 토큰 입니다.\"}"))),
+            @ApiResponse(responseCode = "401_2", description = "UNAUTHORIZED - 미존재 토큰 사용", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request,
+                                    @AuthenticationPrincipal PrincipalDetails principalDetails){
+        Long memberId = principalDetails.getMember().getId();
+        authorizationService.logout(memberId,getJwtToken(request));
+        return ResponseEntity.ok(new SuccessResponse<>(true,"로그아웃 성공"));
+    }
+
+    @Operation(summary = "회원 탈퇴", description = "탈퇴 약관 동의을 필수로 동의해야합니다. 탈퇴시 15일이내 재가입을 허용하며 이후 3개월 동안 재가입이 불가하며, 3개월 이후 모든 데이터는 삭제됩니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
+                    examples = @ExampleObject(value = "{\"success\":true,\"message\":\"탈퇴 성공\"}"))),
+            @ApiResponse(responseCode = "400_1", description = "BADREQUEST - 사용 불가 토큰",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용할 수 없는 토큰입니다.\"}"))),
+            @ApiResponse(responseCode = "400_2", description = "사용자 미존재시",content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"사용자를 찾을수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "401_1", description = "UNAUTHORIZED - 토큰 만료", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"만료된 토큰 입니다.\"}"))),
+            @ApiResponse(responseCode = "401_2", description = "UNAUTHORIZED - 미존재 토큰 사용", content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
+    })
+    @PostMapping("/withdraw")
+    public ResponseEntity<?> withdraw(@Valid @RequestBody MemberWithdrawRequest withdrawRequest, BindingResult result,
+                                      @AuthenticationPrincipal PrincipalDetails principalDetails,
+                                      HttpServletRequest request){
+        Long memberId = principalDetails.getMember().getId();
+        authorizationService.withdrawMember(memberId,getJwtToken(request));
+        eventPublisher.publishEvent(new DeleteMemberEvent(memberId,"탈퇴",LocalDateTime.now()));
+        return ResponseEntity.ok(new SuccessResponse<>(true,"탈퇴 성공"));
     }
 
     private static String getJwtToken(HttpServletRequest request) {

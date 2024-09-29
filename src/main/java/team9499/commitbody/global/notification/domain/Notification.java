@@ -9,7 +9,7 @@ import static ch.qos.logback.classic.spi.ThrowableProxyVO.build;
 
 @Data
 @Entity
-@Table(indexes = {
+@Table(name = "notification", indexes = {
         @Index(name = "idx_receiver_created",columnList = "receiver_id, created_at desc")
 })
 @Builder
@@ -26,8 +26,10 @@ public class Notification extends BaseTime {
     @Column(length = 1000)
     private String content;  // 알림 내용
 
+    @Column(name = "is_read")
     private Integer isRead;       // 알림 읽음 상태   (0 : 안읽음 상태 , 1 : 읽은 상태)
 
+    @Column(name = "notification_type")
     @Enumerated(EnumType.STRING)
     private NotificationType notificationType;  // 알림 종류(팔로우, 댓글 , 좋아요, 전체알림)
 
@@ -39,8 +41,10 @@ public class Notification extends BaseTime {
     @ManyToOne(fetch = FetchType.LAZY)
     private Member sender;      // 발신자
 
+    @Column(name = "comment_id")
     private Long commentId;     // 댓글 ID
 
+    @Column(name = "article_id")
     private Long articleId;     // 게시글 ID
 
     public static Notification of(String content,NotificationType notificationType,Member receiver,Member sender,Long commentId,Long articleId){

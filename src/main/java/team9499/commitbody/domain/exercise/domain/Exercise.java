@@ -16,22 +16,28 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "exercise")
 public class Exercise {
 
     @Id
     @Column(name = "exercise_id")
     private Long id;
 
+    @Column(name = "exercise_name")
     private String exerciseName;
 
+    @Column(name = "gif_url")
     private String gifUrl;
 
+    @Column(name = "exercise_target")
     @Enumerated(EnumType.STRING)
     private ExerciseTarget exerciseTarget;
 
+    @Column(name = "exercise_type")
     @Convert(converter = ExerciseTypeConverter.class)
     private ExerciseType exerciseType;
 
+    @Column(name = "exercise_equipment")
     @Convert(converter = ExerciseEquipmentConverter.class)
     private ExerciseEquipment exerciseEquipment;
 

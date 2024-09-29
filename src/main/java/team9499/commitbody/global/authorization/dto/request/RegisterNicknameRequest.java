@@ -1,4 +1,4 @@
-package team9499.commitbody.global.authorization.dto;
+package team9499.commitbody.global.authorization.dto.request;
 
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;

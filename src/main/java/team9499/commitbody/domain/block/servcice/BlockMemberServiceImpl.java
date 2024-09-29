@@ -12,7 +12,7 @@ import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.redis.RedisService;
 
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class BlockMemberServiceImpl implements BlockMemberService{
 

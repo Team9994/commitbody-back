@@ -10,6 +10,7 @@ import team9499.commitbody.domain.exercise.domain.Exercise;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString(exclude = "exercise")
+@Table(name = "exercise_method")
 public class ExerciseMethod {
 
     @Id
@@ -17,8 +18,8 @@ public class ExerciseMethod {
     @Column(name = "exercise_method")
     private Long id;
 
-    @Column(length = 2000)
-    private String exercise_content;
+    @Column(name = "exercise_content", length = 2000)
+    private String exerciseContent;
 
     @JoinColumn(name = "exercise_id")
     @ManyToOne(fetch = FetchType.LAZY)

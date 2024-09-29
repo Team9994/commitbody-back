@@ -17,4 +17,8 @@ public interface ElsArticleService {
     void updateWriterAsync(String beforeNickname, String afterNickname);
 
     void updateArticleCountAsync(Long articleId, Integer count,String type);
+
+    void updateArticleWithDrawAsync(Long memberId, Boolean type);
+
+    void updateArticleLikeAndCommentCountAsync(Long memberId, Boolean type);
 }

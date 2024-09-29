@@ -19,7 +19,9 @@ import team9499.commitbody.domain.article.dto.ArticleDto;
 import team9499.commitbody.domain.article.dto.response.AllArticleResponse;
 import team9499.commitbody.domain.article.repository.ElsArticleRepository;
 import team9499.commitbody.domain.block.servcice.ElsBlockMemberService;
+import team9499.commitbody.domain.comment.article.service.ArticleCommentService;
 import team9499.commitbody.domain.follow.repository.FollowRepository;
+import team9499.commitbody.domain.like.service.LikeService;
 import team9499.commitbody.global.utils.TimeConverter;
 
 import java.time.LocalDateTime;
@@ -31,16 +33,19 @@ import java.util.Map;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class ElsArticleServiceImpl implements ElsArticleService{
 
     private final ElsArticleRepository elsArticleRepository;
-    private final ElasticsearchClient elasticsearchClient;
+    private final ElasticsearchClient client;
     private final ElsBlockMemberService elsBlockMemberService;
+    private final LikeService likeService;
+    private final ArticleCommentService articleCommentService;
     private final FollowRepository followRepository;
 
     private final String ARTICLE_INDEX  = "article_index";
+    private final String LANG ="painless";
 
     /**
      * 비동기를 통한 엘라스틱 게시글 저장
@@ -68,7 +73,7 @@ public class ElsArticleServiceImpl implements ElsArticleService{
 
         try {
             UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(ARTICLE_INDEX).id(String.valueOf(articleDto.getArticleId())).doc(doc));
-            UpdateResponse<Object> updateResponse = elasticsearchClient.update(updateRequest, Map.class);
+            UpdateResponse<Object> updateResponse = client.update(updateRequest, Map.class);
             log.info("게시글 수정 성공 ID ={}",updateResponse.id());
         }catch (Exception e){
             log.error("업데이트중 오류 발생");
@@ -84,7 +89,7 @@ public class ElsArticleServiceImpl implements ElsArticleService{
     public void deleteArticleAsync(Long articleId) {
         DeleteRequest deleteRequest = DeleteRequest.of(d -> d.index(ARTICLE_INDEX).id(String.valueOf(articleId)));
         try{
-            DeleteResponse deleteResponse = elasticsearchClient.delete(deleteRequest);
+            DeleteResponse deleteResponse = client.delete(deleteRequest);
             log.info("게시글 삭제 성공 ID ={} ",deleteResponse.id());
         }catch (Exception e){
             log.error("엘라스틱 게시글 삭제시 오류 발생");
@@ -129,6 +134,9 @@ public class ElsArticleServiceImpl implements ElsArticleService{
             builder.must(Query.of(q -> q.term(categoryTerm)));
         }
 
+        // 탈퇴하지 않은 사용자의 게시글만 조회
+        builder.must(Query.of(q -> q.term(t -> t.field("withDraw").value(false))));
+        
         // 'PUBLIC' 게시글 조건 추가
         builder.should(Query.of(q -> q.term(t -> t.field("visibility").value("PUBLIC"))));
 
@@ -166,7 +174,7 @@ public class ElsArticleServiceImpl implements ElsArticleService{
 
         SearchRequest searchRequest = searchRequestBuilder.build();
         try {
-            SearchResponse<Object> response = elasticsearchClient.search(searchRequest, Object.class);
+            SearchResponse<Object> response = client.search(searchRequest, Object.class);
             long totalCount = response.hits().total().value();
 
             List<Hit<Object>> hits = new ArrayList<>(response.hits().hits());
@@ -182,7 +190,7 @@ public class ElsArticleServiceImpl implements ElsArticleService{
                 Map<String, Object> source = (Map<String, Object>) hit.source();
                 ArticleDto articleDto = ArticleDto.of(
                         convertToLong(source.get("id")),
-                        convertToLong(source.get("member_id")),
+                        convertToLong(source.get("memberId")),
                         ArticleCategory.stringToEnum((String) source.get("category")),
                         (String) source.get("content"),
                         (String) source.get("title"),
@@ -218,12 +226,12 @@ public class ElsArticleServiceImpl implements ElsArticleService{
                                 .query(beforeNickname)))
                 .script(s -> s.inline(i -> i
                                 .source("ctx._source.writer = params.newWriter")
-                                .lang("painless")
+                                .lang(LANG)
                                 .params("newWriter", JsonData.of(afterNickname))))
                 .build();
 
         try {
-            UpdateByQueryResponse updateByQueryResponse = elasticsearchClient.updateByQuery(request);
+            UpdateByQueryResponse updateByQueryResponse = client.updateByQuery(request);
             log.info("게시글 작성자 닉네임 업데이트 성공,  변경한 게시글 수 = {}",updateByQueryResponse.updated());
         } catch (Exception e) {
             log.error("업데이트 도중 에러 발생 = {}",e.getMessage());
@@ -248,12 +256,81 @@ public class ElsArticleServiceImpl implements ElsArticleService{
         
         try {
             UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(ARTICLE_INDEX).id(String.valueOf(articleId)).doc(doc));
-            elasticsearchClient.update(updateRequest,Map.class);
+            client.update(updateRequest,Map.class);
         }catch (Exception e){
             log.error("게시글 댓글 수 업데이트중 오류 발생");
         }
     }
 
+    @Async
+    @Override
+    public void updateArticleWithDrawAsync(Long memberId, Boolean type) {
+        UpdateByQueryRequest queryRequest = new UpdateByQueryRequest.Builder()
+                .index(ARTICLE_INDEX)
+                .query(Query.of(q -> q.bool(b -> b.must(m -> m.term(t -> t.field("memberId").value(memberId))))))
+                .script(s -> s.inline(i -> i.source("ctx._source.withDraw = params.writDraw")
+                        .lang(LANG)
+                        .params("writDraw", JsonData.of(type)))).build();
+        try {
+            UpdateByQueryResponse updateByQueryResponse = client.updateByQuery(queryRequest);
+            log.info("탈퇴한 사용자의 게시글 수 ={}",updateByQueryResponse.updated());
+        }catch (Exception e){
+            log.error("업데이트 도중 에러 발생 = {}",e.getMessage());
+        }
+    }
+
+    /**
+     * 사용자 탈퇴및 재가입시 발생
+     * - 탈퇴 및 재가입의 대한 사용자가 작성한 게시글의 대한 좋아요, 댓글의대한 카운트수를 감소및 증가
+     * @param memberId 사용자 ID
+     * @param type  true : 탈퇴 , false : 재가입
+     */
+    @Override
+    public void updateArticleLikeAndCommentCountAsync(Long memberId,Boolean type) {
+        List<Long> writeDrawArticleIds = likeService.getWriteDrawArticleIds(memberId);
+        List<Long> writeDrawArticleIdsByComment = articleCommentService.getWriteDrawArticleIdsByComment(memberId);
+
+        final String likecScript = type ? "ctx._source.like_count -= 1" : "ctx._source.like_count += 1";
+        final String commentScript = type ? "ctx._source.comment_count -= params.count" : "ctx._source.comment_count += params.count";
+
+        Map<Long,Integer> map = new HashMap<>();
+        for (Long l : writeDrawArticleIdsByComment) {
+            map.put(l, map.getOrDefault(l, 0)+1);
+        }
+        BulkRequest.Builder br = new BulkRequest.Builder();
+
+        for (Map.Entry<Long, Integer> entry : map.entrySet()) {
+            Long id = entry.getKey();
+            Integer decrementCount = entry.getValue();
+
+            br.operations(op -> op.update(u -> u
+                    .index(ARTICLE_INDEX)
+                    .id(id.toString())
+                    .action(a -> a.script(s ->
+                            s.inline(i -> i
+                                    .source(commentScript)
+                                    .lang(LANG)
+                                    .params("count",JsonData.of(decrementCount))
+                            )
+                    ))));
+        }
+
+        TermsQueryField likeTermsQuery = new TermsQueryField.Builder().value(writeDrawArticleIds.stream().map(FieldValue::of).toList()).build();
+
+        UpdateByQueryRequest likeQueryRequest = new UpdateByQueryRequest.Builder()
+                .index(ARTICLE_INDEX)
+                .query(Query.of(q -> q.terms(t -> t.field("_id").terms(likeTermsQuery))))
+                .script(s -> s.inline(i -> i.source(likecScript).lang(LANG))).build();
+        
+        try {
+            UpdateByQueryResponse likeResponse = client.updateByQuery(likeQueryRequest);
+            BulkResponse bulk = client.bulk(br.build());;
+            log.info("변경된 게시글 수 좋아요 ={}" ,likeResponse.updated());
+        }catch (Exception e){
+            log.error("게시글 카운트 변경중 오류 발생 = {}", e.getMessage());
+        }
+
+    }
 
     /*
     저장된 사긴타입을 몇분전으로 변환하기 위한 컨버터

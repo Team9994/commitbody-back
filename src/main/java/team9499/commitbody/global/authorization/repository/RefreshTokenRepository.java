@@ -8,4 +8,6 @@ import team9499.commitbody.global.authorization.domain.RefreshToken;
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 
     boolean existsByMemberId(Long memberId);
+
+    void deleteByMemberId(Long memberId);
 }

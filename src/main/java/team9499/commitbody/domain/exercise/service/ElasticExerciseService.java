@@ -9,4 +9,6 @@ public interface ElasticExerciseService {
     void deleteExercise(Long customExerciseId,Long memberId);
 
     void changeInterest(Long exerciseId,String source,String status,Long memberId);
+
+    void updateExerciseInterestWithDrawAsync(Long memberId , boolean type);
 }

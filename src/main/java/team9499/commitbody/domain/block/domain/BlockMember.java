@@ -8,7 +8,7 @@ import team9499.commitbody.global.utils.BaseTime;
 @Entity
 @Data
 @Builder
-@Table(indexes ={
+@Table(name = "block_member", indexes ={
         @Index(name = "idx_blocker_id",columnList = "blocker_id"),
         @Index(name = "idx_blocked_id",columnList = "blocked_id")
 })
@@ -30,6 +30,7 @@ public class BlockMember extends BaseTime {
     @ManyToOne(fetch = FetchType.LAZY)
     private Member blocked;         // 차단 당한 사람
 
+    @Column(name = "block_status")
     private boolean blockStatus;    // 차단 상태
 
     public static BlockMember of(Member blocker,Member blocked){

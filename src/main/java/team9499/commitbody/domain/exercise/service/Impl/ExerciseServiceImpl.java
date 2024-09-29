@@ -39,7 +39,7 @@ import java.util.*;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class ExerciseServiceImpl implements ExerciseService {
     

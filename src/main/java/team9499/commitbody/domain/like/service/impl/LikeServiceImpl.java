@@ -19,13 +19,13 @@ import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.notification.service.NotificationService;
 import team9499.commitbody.global.redis.RedisService;
 
-import java.util.Optional;
+import java.util.*;
 
 import static team9499.commitbody.global.Exception.ExceptionStatus.BAD_REQUEST;
 import static team9499.commitbody.global.Exception.ExceptionType.*;
 
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class LikeServiceImpl implements LikeService {
 
@@ -151,11 +151,16 @@ public class LikeServiceImpl implements LikeService {
         }
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public List<Long> getWriteDrawArticleIds(Long memberId) {
+        return likeRepository.findArticleIdsByDeleteMember(memberId);
+    }
+
     /*
     게시글의 좋아요 수를 조절하는 메서드
     type true = 일때 +1 , false = -1
      */
-
     private static void getUpdateLikeCount(Object object,boolean type) {
         if (object instanceof  Article){
             Integer count = type ? ((Article) object).getLikeCount() + 1 : ((Article) object).getLikeCount()  -1;

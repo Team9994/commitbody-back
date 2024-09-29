@@ -24,7 +24,7 @@ import team9499.commitbody.global.redis.RedisService;
 import java.util.List;
 
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class ArticleCommentServiceImpl implements ArticleCommentService{
 
@@ -156,6 +156,12 @@ public class ArticleCommentServiceImpl implements ArticleCommentService{
             articleCommentBatchService.deleteChildCommentBatch(commentId);
             return null;
         }
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<Long> getWriteDrawArticleIdsByComment(Long memberId) {
+        return articleCommentRepository.findCommentArticleIdsByMemberId(memberId);
     }
 
     /*

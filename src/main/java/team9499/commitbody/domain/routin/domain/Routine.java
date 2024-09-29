@@ -14,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Table(name = "routine")
 public class Routine {
 
     @Id
@@ -25,6 +26,7 @@ public class Routine {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    @Column(name = "routine_name")
     private String routineName;
 
     @OneToMany(mappedBy = "routine",cascade = CascadeType.REMOVE)

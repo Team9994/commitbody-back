@@ -5,23 +5,23 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import team9499.commitbody.global.utils.BaseTime;
 
 import java.time.LocalDate;
 
 @Entity
-@Slf4j
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "member")
 public class Member extends BaseTime {
 
     @Id@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_id")
     private Long id;
 
+    @Column(name = "social_id")
     private String socialId;    // 소셜로그인 사용자 ID
 
     private String profile; // 사용자 프로필
@@ -39,20 +39,35 @@ public class Member extends BaseTime {
 
     private String email;       // 이메일
 
+    @Column(name = "bone_mineral_density")
     private Float BoneMineralDensity; // 골극격량
 
+    @Column(name = "body_fat_percentage")
     private Float BodyFatPercentage; // 체지방량
 
+    @Column(name = "notification_enabled")
     private boolean notificationEnabled; //알림 유무
 
+    @Column(name = "is_withdrawn", nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
+    private boolean isWithdrawn; // 사용자 회원 탈퇴 여부
+
     @Enumerated(EnumType.STRING)
+    @Column(name = "weight_unit")
     private WeightUnit weightUnit; // 무게 타입 (KG : 1, LB : 0)
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "login_type")
     private LoginType loginType;        //로그인 타입 (KAKAO, GOOGLE)
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "account_status")
     private AccountStatus accountStatus;        // 계정 상태 - PUBLIC : 공개(기본 값) , PRIVATE : 비공개
+
+    @Column(name = "withdrawal_revoke_period")
+    private LocalDate withdrawalRevokePeriod;       // 회원 탈퇴 철회 기간 15일
+    
+    @Column(name = "withdrawn_at")
+    private LocalDate withdrawnAt; // 탈퇴 만료시간
 
     public static Member createSocialId(String socialId,LoginType loginType,String profile){
         return Member.builder().socialId(socialId).loginType(loginType).profile(profile).accountStatus(AccountStatus.PUBLIC).build();
@@ -87,9 +102,23 @@ public class Member extends BaseTime {
         this.BoneMineralDensity = boneMineralDensity;
         this.BodyFatPercentage = bodyFatPercentage;
         if (!this.profile.equals(profile)) {
-            log.info("업데이;트 실행");
             this.profile = profile;
         }
+    }
 
+    public void updateNotification(boolean notificationEnabled){
+        this.notificationEnabled = notificationEnabled;
+    }
+
+    public void updateWithdrawn(){
+        this.isWithdrawn = true;
+        this.withdrawnAt = LocalDate.now().plusMonths(3);
+        this.withdrawalRevokePeriod = LocalDate.now().plusDays(15);
+    }
+
+    public void cancelWithDrawn(){
+        this.isWithdrawn = false;
+        this.withdrawnAt = null;
+        this.withdrawalRevokePeriod = null;
     }
 }

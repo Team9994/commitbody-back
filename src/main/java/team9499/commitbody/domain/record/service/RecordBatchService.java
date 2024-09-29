@@ -16,7 +16,7 @@ import java.util.List;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class RecordBatchService {
 

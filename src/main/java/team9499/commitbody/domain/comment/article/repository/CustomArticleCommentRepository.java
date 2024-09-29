@@ -17,4 +17,6 @@ public interface CustomArticleCommentRepository {
     Slice<ArticleCommentDto> getAllReplyComments(Long commentId, Long memberId,Long lastId ,Pageable pageable);
 
     List<Long> getAllChildComment(Long commentId);
+
+    List<Long> findCommentArticleIdsByMemberId(Long memberId);
 }
