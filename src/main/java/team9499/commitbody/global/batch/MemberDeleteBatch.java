@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import team9499.commitbody.domain.Member.domain.Member;
+import team9499.commitbody.global.authorization.service.AuthorizationElsService;
+import team9499.commitbody.global.batch.mapper.CustomMemberRowMapper;
 
 import javax.sql.DataSource;
 import java.util.Map;
@@ -29,13 +31,16 @@ public class MemberDeleteBatch {
     private final PlatformTransactionManager dataTransactionManager;
     private final JobRepository jobRepository;
     private final DataSource dataDBSource;
+    private final AuthorizationElsService authorizationElsService;
 
     public MemberDeleteBatch(@Qualifier("dataTransactionManager") PlatformTransactionManager dataTransactionManager,
                              JobRepository jobRepository,
-                             @Qualifier("dataDBSource") DataSource dataDBSource) {
+                             @Qualifier("dataDBSource") DataSource dataDBSource,
+                             AuthorizationElsService authorizationElsService) {
         this.dataTransactionManager = dataTransactionManager;
         this.jobRepository = jobRepository;
         this.dataDBSource = dataDBSource;
+        this.authorizationElsService = authorizationElsService;
     }
 
     @Bean
@@ -74,10 +79,11 @@ public class MemberDeleteBatch {
     @Bean
     public ItemProcessor<Member,Member> itemProcessor (){
         return member -> {
-            log.info("탈퇴 사용자 Id ={}",member.getId());
+            authorizationElsService.deleteElsByMemberId(member.getId());
             return member;
         };
     }
+
     @Bean
     public JdbcBatchItemWriter<Member> deleteWriters() {
         String sql = "CALL delete_member_data(:id)";

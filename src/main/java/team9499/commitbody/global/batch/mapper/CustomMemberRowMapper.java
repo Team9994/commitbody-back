@@ -1,4 +1,4 @@
-package team9499.commitbody.global.batch;
+package team9499.commitbody.global.batch.mapper;
 
 import org.springframework.jdbc.core.RowMapper;
 import team9499.commitbody.domain.Member.domain.Member;
@@ -11,8 +11,7 @@ public class CustomMemberRowMapper implements RowMapper<Member> {
 
     @Override
     public Member mapRow(ResultSet rs, int rowNum) throws SQLException {
-        Member member = Member.builder()
+        return Member.builder()
                 .id(rs.getLong("member_id")).build();
-        return member;
     }
 }

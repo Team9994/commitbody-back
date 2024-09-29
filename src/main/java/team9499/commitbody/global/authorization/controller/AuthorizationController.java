@@ -11,23 +11,27 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
-import team9499.commitbody.global.authorization.dto.AdditionalInfoReqeust;
-import team9499.commitbody.global.authorization.dto.JoinLoginRequest;
-import team9499.commitbody.global.authorization.dto.RegisterNicknameRequest;
-import team9499.commitbody.global.authorization.dto.TokenUserInfoResponse;
+import team9499.commitbody.global.authorization.dto.TokenInfoDto;
+import team9499.commitbody.global.authorization.dto.request.AdditionalInfoReqeust;
+import team9499.commitbody.global.authorization.dto.request.JoinLoginRequest;
+import team9499.commitbody.global.authorization.dto.request.MemberWithdrawRequest;
+import team9499.commitbody.global.authorization.dto.request.RegisterNicknameRequest;
+import team9499.commitbody.global.authorization.dto.response.TokenUserInfoResponse;
+import team9499.commitbody.global.authorization.event.DeleteMemberEvent;
 import team9499.commitbody.global.authorization.service.AuthorizationService;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 
@@ -39,6 +43,7 @@ import java.util.Map;
 public class AuthorizationController {
 
     private final AuthorizationService authorizationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Operation(summary = "회원가입/로그인", description = "매 요청마다 소셜 로그인 정보를 전달해야합니다. 최초 로그인 시에는 회원가입이 진행되며, 이후 로그인이 진행됩니다. 로그인 시에만 tokenInfo에 사용자 정보가 포함됩니다.(authMode: [로그인,회원가입])")
     @ApiResponses(value = {
@@ -54,6 +59,12 @@ public class AuthorizationController {
         Map<String, Object> jwtTokenMap = authorizationService.authenticateOrRegisterUser(
                 joinLoginRequest.getLoginType(), joinLoginRequest.getSocialId(),joinLoginRequest.getFcmToken()
         );
+
+        TokenInfoDto tokenInfo = (TokenInfoDto) jwtTokenMap.get("tokenInfo");
+        String authMode = (String) jwtTokenMap.get("authMode");
+        Long memberId = tokenInfo.getMemberId();  
+        if (authMode.equals("재가입"))
+            eventPublisher.publishEvent(new DeleteMemberEvent(memberId,"재가입",LocalDateTime.now()));
 
         return ResponseEntity.ok().body(new SuccessResponse<>(true,"성공",jwtTokenMap));
     }
@@ -138,6 +149,16 @@ public class AuthorizationController {
         Long memberId = principalDetails.getMember().getId();
         authorizationService.logout(memberId,getJwtToken(request));
         return ResponseEntity.ok(new SuccessResponse<>(true,"로그아웃 성공"));
+    }
+
+    @PostMapping("/withdraw")
+    public ResponseEntity<?> withdraw(@Valid @RequestBody MemberWithdrawRequest withdrawRequest, BindingResult result,
+                                      @AuthenticationPrincipal PrincipalDetails principalDetails,
+                                      HttpServletRequest request){
+        Long memberId = principalDetails.getMember().getId();
+        authorizationService.withdrawMember(memberId,getJwtToken(request));
+        eventPublisher.publishEvent(new DeleteMemberEvent(memberId,"탈퇴",LocalDateTime.now()));
+        return ResponseEntity.ok(new SuccessResponse<>(true,"탈퇴 성공"));
     }
 
     private static String getJwtToken(HttpServletRequest request) {
