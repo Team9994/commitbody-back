@@ -17,6 +17,9 @@ import team9499.commitbody.domain.block.domain.QBlockMember;
 import team9499.commitbody.domain.file.domain.File;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
 import team9499.commitbody.domain.like.domain.QContentLike;
+import team9499.commitbody.global.Exception.ExceptionStatus;
+import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.notification.domain.QNotification;
 
 import java.util.ArrayList;
@@ -153,7 +156,8 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
                 .where(article.id.eq(articleId).and(article.member.isWithdrawn.eq(false))).fetch();
 
         return list.stream()
-                .map(tuple -> ArticleDto.of(loginMemberId, tuple.get(article), converterImgUrl(tuple.get(file)), tuple.get(follow))).findFirst().get();
+                .map(tuple -> ArticleDto.of(loginMemberId, tuple.get(article), converterImgUrl(tuple.get(file)), tuple.get(follow))).findFirst()
+                .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
     }
 
     /**
