@@ -9,6 +9,7 @@ import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.exercise.domain.converter.ExerciseEquipmentConverter;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseEquipment;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
+import team9499.commitbody.domain.exercise.dto.CustomExerciseDto;
 
 @Data
 @Entity

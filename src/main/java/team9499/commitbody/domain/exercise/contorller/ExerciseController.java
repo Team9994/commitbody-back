@@ -16,10 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import team9499.commitbody.domain.exercise.dto.CustomExerciseRequest;
-import team9499.commitbody.domain.exercise.dto.CustomUpdateExerciseRequest;
-import team9499.commitbody.domain.exercise.dto.InterestExerciseRequest;
-import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
+import team9499.commitbody.domain.exercise.dto.*;
 import team9499.commitbody.domain.exercise.dto.response.ExerciseResponse;
 import team9499.commitbody.domain.exercise.event.ElasticDeleteExerciseEvent;
 import team9499.commitbody.domain.exercise.event.ElasticExerciseInterest;
@@ -83,10 +80,10 @@ public class ExerciseController {
                                           @RequestPart(name ="file" , required = false) MultipartFile file,
                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long id = principalDetails.getMember().getId();
-        Long customExerciseId = exerciseService.saveCustomExercise(customExerciseRequest.getExerciseName(), customExerciseRequest.getExerciseTarget(),
+        CustomExerciseDto customExerciseDto = exerciseService.saveCustomExercise(customExerciseRequest.getExerciseName(), customExerciseRequest.getExerciseTarget(),
                 customExerciseRequest.getExerciseEquipment(), id, file);
 
-        eventPublisher.publishEvent(new ElasticSaveExerciseEvent(customExerciseId));
+        eventPublisher.publishEvent(new ElasticSaveExerciseEvent(customExerciseDto));
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"저장 성공"));
 
@@ -112,9 +109,9 @@ public class ExerciseController {
                                             @RequestPart(name ="file" , required = false) MultipartFile file,
                                             @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long id = principalDetails.getMember().getId();
-        Long customExerciseId = exerciseService.updateCustomExercise(customUpdateExerciseRequest.getExerciseName(), customUpdateExerciseRequest.getExerciseTarget(),
-                customUpdateExerciseRequest.getExerciseEquipment(), id, customUpdateExerciseRequest.getCustomExerciseId(),file);
-        eventPublisher.publishEvent(new ElasticUpdateExerciseEvent(customExerciseId,customUpdateExerciseRequest.getSource()));
+        CustomExerciseDto customExerciseDto = exerciseService.updateCustomExercise(customUpdateExerciseRequest.getExerciseName(), customUpdateExerciseRequest.getExerciseTarget(),
+                customUpdateExerciseRequest.getExerciseEquipment(), id, customUpdateExerciseRequest.getCustomExerciseId(), file);
+        eventPublisher.publishEvent(new ElasticUpdateExerciseEvent(customExerciseDto,customUpdateExerciseRequest.getSource()));
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"업데이트 성공"));
 

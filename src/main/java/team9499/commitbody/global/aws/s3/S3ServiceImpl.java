@@ -68,12 +68,11 @@ public class S3ServiceImpl implements S3Service{
      */
     @Override
     public String updateImage(MultipartFile file, String previousFileName) {
-        String previous = previousFileName;
-        if (file!=null) {
+        if (file!=null && previousFileName!=null) {
             deleteImage(previousFileName);
-            previous = uploadImage(file);
+            return null;
         }
-        return previous;
+        return uploadImage(file);
     }
 
     /**
@@ -108,7 +107,7 @@ public class S3ServiceImpl implements S3Service{
         try {
             amazonS3.deleteObject(bucketImage,fileName);
         }catch (Exception e){
-            log.error("이미지 삭제중 오류 발생");
+            log.error("이미지 e삭제중 오류 발생");
             throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR,SERVER_ERROR);
         }
     }
