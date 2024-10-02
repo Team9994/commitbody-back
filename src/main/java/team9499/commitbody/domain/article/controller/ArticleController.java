@@ -173,7 +173,8 @@ public class ArticleController {
                                            @RequestPart("updateArticleRequest") ArticleRequest request,
                                            @RequestPart(required = false) MultipartFile file,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
-        getArticleValidTitleAndCategory(request);
+        ResponseEntity<ErrorResponse<Map<String, String>>> errorMap = getArticleValidTitleAndCategory(request);
+        if (errorMap != null) return errorMap;
         Long memberId = getMemberId(principalDetails);
         ArticleDto articleDto = articleService.updateArticle(memberId, articleId, request.getContent(), request.getTitle(), request.getArticleType(), request.getArticleCategory(), request.getVisibility(), file);
 
@@ -292,13 +293,17 @@ public class ArticleController {
     private static ResponseEntity<ErrorResponse<Map<String, String>>> getArticleValidTitleAndCategory(ArticleRequest request) {
         if (request.getArticleType().equals(ArticleType.INFO_QUESTION)){
             Map<String,String> errorMap = new LinkedHashMap<>();
+            boolean check = false;
             if (request.getTitle()==null){
+                check = true;
                 errorMap.put("title","게시글의 제목을 작성해주세요");
             }
             if (request.getArticleCategory()==null){
+                check = true;
                 errorMap.put("category","카테고리를 선택해주세요");
             }
-            return ResponseEntity.status(400).body(new ErrorResponse<>(false, errorMap));
+            if (check)
+                return ResponseEntity.status(400).body(new ErrorResponse<>(false, errorMap));
         }
         return null;
     }
