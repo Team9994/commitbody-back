@@ -13,7 +13,6 @@ import team9499.commitbody.global.annotations.ValidEnum;
 public class ArticleRequest {
 
     @Schema(description = "게시글 제목")
-    @NotBlank(message = "게시글 제목을 작성해주세요")
     private String title;
     
     @Schema(description = "게시글 내용 작성")
@@ -28,5 +27,6 @@ public class ArticleRequest {
     private ArticleCategory articleCategory;
 
     @Schema(description = "게시글 작성시 게시글 공개범위를 선택합니다.[PUBLIC(전체 공개), FOLLOWERS_ONLY(팔로워만 공개), PRIVATE(비공개)]")
+    @ValidEnum(message = "공개범위를 선택해주세요",enumClass = Visibility.class)
     private Visibility visibility;
 }

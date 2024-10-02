@@ -207,7 +207,7 @@ public class ArticleServiceImpl implements ArticleService{
     카테고리가 몸평이 아닌 경우에는 이미지만 등록가능 하도록 400 예외 발생
      */
     private static void checkCategoryFileType(ArticleCategory articleCategory, MultipartFile file) {
-        if (!articleCategory.equals(ArticleCategory.BODY_REVIEW) && file !=null){
+        if (articleCategory!=null && !articleCategory.equals(ArticleCategory.BODY_REVIEW) && file !=null){
             if (file.getContentType().contains("video")) throw new InvalidUsageException(ExceptionStatus.BAD_REQUEST,ExceptionType.ONLY_IMAGE);
         }
     }
