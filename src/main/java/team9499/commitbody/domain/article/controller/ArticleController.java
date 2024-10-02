@@ -33,6 +33,7 @@ import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
 import team9499.commitbody.global.redis.RedisService;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -94,6 +95,9 @@ public class ArticleController {
     public ResponseEntity<?> saveArticle(@Valid @RequestPart("articleSaveRequest") ArticleRequest request, BindingResult result,
                                          @RequestPart(value = "file",required = false)MultipartFile file,
                                          @AuthenticationPrincipal PrincipalDetails principalDetails){
+        ResponseEntity<ErrorResponse<Map<String, String>>> errorMap = getArticleValidTitleAndCategory(request);
+        if (errorMap != null) return errorMap;
+
         Long memberId = getMemberId(principalDetails);
         ArticleDto articleDto = articleService.saveArticle(memberId, request.getTitle(), request.getContent(), request.getArticleType(), request.getArticleCategory(), request.getVisibility(), file);
 
@@ -143,7 +147,7 @@ public class ArticleController {
         ProfileArticleResponse articles = articleService.getAllProfileArticle(memberId, findMemberId, articleType,lastId, pageable);
         return ResponseEntity.ok(new SuccessResponse<>(true,"조회 성공",articles));
     }
-    
+
     @Operation(summary = "게시글 수정", description = "게시글을 수정하는 API 입니다. 질문&정보 게시글 등록시에는 'articleCategory' 필드를 사용하지 않아도 됩니다.",tags = "게시글")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SuccessResponse.class),
@@ -169,6 +173,7 @@ public class ArticleController {
                                            @RequestPart("updateArticleRequest") ArticleRequest request,
                                            @RequestPart(required = false) MultipartFile file,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
+        getArticleValidTitleAndCategory(request);
         Long memberId = getMemberId(principalDetails);
         ArticleDto articleDto = articleService.updateArticle(memberId, articleId, request.getContent(), request.getTitle(), request.getArticleType(), request.getArticleCategory(), request.getVisibility(), file);
 
@@ -282,5 +287,19 @@ public class ArticleController {
     private void articleEvent(ArticleRequest request, ArticleDto articleDto,String type) {
         if (request.getArticleType().equals(ArticleType.INFO_QUESTION))
             eventPublisher.publishEvent(new ElsArticleEvent(articleDto,type));
+    }
+
+    private static ResponseEntity<ErrorResponse<Map<String, String>>> getArticleValidTitleAndCategory(ArticleRequest request) {
+        if (request.getArticleType().equals(ArticleType.INFO_QUESTION)){
+            Map<String,String> errorMap = new LinkedHashMap<>();
+            if (request.getTitle()==null){
+                errorMap.put("title","게시글의 제목을 작성해주세요");
+            }
+            if (request.getArticleCategory()==null){
+                errorMap.put("category","카테고리를 선택해주세요");
+            }
+            return ResponseEntity.status(400).body(new ErrorResponse<>(false, errorMap));
+        }
+        return null;
     }
 }

@@ -51,11 +51,11 @@ public class Article extends BaseTime {
 
 
     public static Article of(String title, String content, ArticleType articleType,ArticleCategory articleCategory,Visibility visibility,Member member){
-        ArticleBuilder articleBuilder = Article.builder().title(title).content(content).likeCount(0).commentCount(0).visibility(visibility).member(member);
+        ArticleBuilder articleBuilder = Article.builder().content(content).likeCount(0).commentCount(0).visibility(visibility).member(member);
         if (articleType.equals(ArticleType.EXERCISE)){
             articleBuilder.articleType(ArticleType.EXERCISE);
         }else if (articleType.equals(ArticleType.INFO_QUESTION)){
-            articleBuilder.articleType(ArticleType.INFO_QUESTION).articleCategory(articleCategory);
+            articleBuilder.title(title).articleType(ArticleType.INFO_QUESTION).articleCategory(articleCategory);
         }
         return articleBuilder.build();
     }
