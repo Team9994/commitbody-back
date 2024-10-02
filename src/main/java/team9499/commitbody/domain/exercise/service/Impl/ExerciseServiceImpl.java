@@ -10,6 +10,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +19,7 @@ import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseEquipment;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
+import team9499.commitbody.domain.exercise.dto.CustomExerciseDto;
 import team9499.commitbody.domain.exercise.dto.SearchExerciseResponse;
 import team9499.commitbody.domain.exercise.dto.response.ExerciseResponse;
 import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
@@ -53,6 +55,9 @@ public class ExerciseServiceImpl implements ExerciseService {
     private final RedisService redisService;
     private final MemberRepository memberRepository;
     private final S3Service s3Service;
+
+    @Value("${cloud.aws.cdn.url}")
+    private String CDN_RUL;
 
     private final String INDEX_NAME = "exercise_index";
     private final String INTEREST_INDEX_NAME = "exercise_interest_index";
@@ -137,7 +142,8 @@ public class ExerciseServiceImpl implements ExerciseService {
         // 관심운동의 대한 동적 쿼리
         if (favorites!=null){
             BoolQuery favoriteQuery = new BoolQuery.Builder()
-                    .must(m -> m.term(t -> t.field(MEMBER_FILED).value(memberId))).build();
+                    .must(m -> m.term(t -> t.field(MEMBER_FILED).value(memberId)))
+                    .must(m -> m.term(t -> t.field("status").value(true))).build();
 
             SearchRequest favoriteRequest = new SearchRequest.Builder()
                     .index(INTEREST_INDEX_NAME)
@@ -276,24 +282,24 @@ public class ExerciseServiceImpl implements ExerciseService {
      * 이미지는 s3에 업로드
      */
     @Override
-    public Long saveCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment,Long memberId, MultipartFile file) {
+    public CustomExerciseDto saveCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment,Long memberId, MultipartFile file) {
         String storedFileName = s3Service.uploadImage(file);
         Optional<Member> redisMember = getRedisMember(memberId);
 
         CustomExercise customExercise = new CustomExercise().save(exerciseName, storedFileName, exerciseTarget, exerciseEquipment,redisMember.get());
         CustomExercise exercise = customExerciseRepository.save(customExercise);
-        return exercise.getId();
+        return CustomExerciseDto.fromDto(exercise, getImgUrl(storedFileName));
     }
 
     /**
      * 커스텀 운동 업데이트 메서드
      */
     @Override
-    public Long updateCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, Long customExerciseId, MultipartFile file) {
+    public CustomExerciseDto updateCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, Long customExerciseId, MultipartFile file) {
         CustomExercise customExercise = getCustomExercise(customExerciseId,memberId);
         String updateImage = s3Service.updateImage(file, customExercise.getCustomGifUrl());
         customExercise.update(exerciseName,exerciseTarget,exerciseEquipment,updateImage);
-        return customExercise.getId();
+        return CustomExerciseDto.fromDto(customExercise,getImgUrl(updateImage));
     }
 
     /**
@@ -340,4 +346,8 @@ public class ExerciseServiceImpl implements ExerciseService {
         return customExercise;
     }
 
+
+    private String getImgUrl(String storedFileName) {
+        return storedFileName != null ? CDN_RUL + storedFileName : null;
+    }
 }

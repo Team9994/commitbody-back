@@ -71,14 +71,14 @@ public class ArticleDto {
         Member member = article.getMember();
         ArticleDtoBuilder builder = ArticleDto.builder()
                 .articleId(article.getId())
-                .articleCategory(article.getArticleCategory())
+                .content(article.getContent())
                 .time(TimeConverter.converter(article.getCreatedAt()))
                 .postOwner(loginMemberId.equals(member.getId()))
+                .imageUrl(imageUrl).followStatus(follow == null ? FollowStatus.CANCEL : follow.getStatus())
+                .likeCount(article.getLikeCount())
                 .member(MemberDto.builder().memberId(member.getId()).nickname(member.getNickname()).profile(member.getProfile()).build());
-        if (article.getArticleType().equals(ArticleType.EXERCISE)){
-            builder.imageUrl(imageUrl).followStatus(follow == null ? null : follow.getStatus());
-        }else{
-            builder.title(article.getTitle()).content(article.getContent()).likeCount(article.getLikeCount()).build();
+        if (article.getArticleType().equals(ArticleType.INFO_QUESTION)){
+            builder.title(article.getTitle()).articleCategory(article.getArticleCategory()).build();
         }
         return builder.build();
     }
@@ -91,7 +91,7 @@ public class ArticleDto {
             MemberDto memberDto = MemberDto.builder().memberId(member.getId()).nickname(member.getNickname()).profile(member.getProfile()).build();
             builder.articleId(article.getId()).title(article.getTitle()).content(article.getContent()).articleCategory(article.getArticleCategory()).time(TimeConverter.converter(article.getCreatedAt())).likeCount(article.getLikeCount())
                     .commentCount(article.getCommentCount()).imageUrl(imageUrl).member(memberDto)
-                    .postOwner(!loginMemberId.equals(member.getId()) ? false : true)
+                    .postOwner(loginMemberId.equals(member.getId()))
                     .followStatus(follow == null ? null : follow.getStatus()).build();
         }
         return builder.build();

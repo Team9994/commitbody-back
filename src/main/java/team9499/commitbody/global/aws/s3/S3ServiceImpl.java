@@ -9,11 +9,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import team9499.commitbody.domain.file.domain.FileType;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.InvalidUsageException;
 import team9499.commitbody.global.Exception.ServerException;
 
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -30,11 +32,17 @@ public class S3ServiceImpl implements S3Service{
     @Value("${cloud.aws.s3.bucket.image}")
     private String bucketImage;
 
+    @Value("${cloud.aws.s3.bucket.video}")
+    private String bucketVideo;
+
     @Value("${default.profile}")
     private String defaultProfile;
 
     @Value("${cloud.aws.cdn.url}")
-    private String cdnUrl;
+    private String imageUrl;
+
+    @Value("${cloud.aws.cdn.video}")
+    private String videoUrl;
 
     /**
      * 파일 업로드
@@ -46,14 +54,23 @@ public class S3ServiceImpl implements S3Service{
         if (file!=null) {
             String originalFilename = file.getOriginalFilename();
 
-            storedFileName = createUUID(originalFilename);
+            Map<String, String> uuid = createUUID(originalFilename);
+            storedFileName = uuid.get("fileName");
             ObjectMetadata objectMetadata = new ObjectMetadata();
             objectMetadata.setContentLength(file.getSize());
             objectMetadata.setContentType(file.getContentType());
 
             try {
                 InputStream inputStream = file.getInputStream();
-                amazonS3.putObject(new PutObjectRequest(bucketImage, storedFileName, inputStream, objectMetadata));
+                String type = uuid.get("type");
+                if (type.equals("mp4") || type.equals("gif")){
+                    amazonS3.putObject(new PutObjectRequest(bucketVideo, storedFileName, inputStream, objectMetadata));
+                    storedFileName = videoUrl + storedFileName;
+                }else{
+                    amazonS3.putObject(new PutObjectRequest(bucketImage, storedFileName, inputStream, objectMetadata));
+                    storedFileName = imageUrl + storedFileName;
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR, SERVER_ERROR);
@@ -68,12 +85,15 @@ public class S3ServiceImpl implements S3Service{
      */
     @Override
     public String updateImage(MultipartFile file, String previousFileName) {
-        String previous = previousFileName;
-        if (file!=null) {
-            deleteImage(previousFileName);
-            previous = uploadImage(file);
+        if (file!=null && previousFileName!=null) {
+            String fileName = file.getOriginalFilename();
+            String extension = getFileTypeToString(fileName);
+            FileType type = FileType.IMAGE;
+
+            if (extension.equals("mp4") || extension.equals("gif")) type = FileType.VIDEO;
+            deleteImage(previousFileName,type);
         }
-        return previous;
+        return uploadImage(file);
     }
 
     /**
@@ -88,13 +108,13 @@ public class S3ServiceImpl implements S3Service{
         String previous = previousFileName;
         if (deleteProfile){     // 기본 프로필 적용시
             previous = defaultProfile;
-            deleteImage(previousFileName.replace(cdnUrl, ""));
+            deleteImage(previousFileName.replace(imageUrl, ""),FileType.IMAGE);
         }
         if (file!=null) {
             if (!previous.equals(defaultProfile)){      // 기본 프로필 사진이 아닐 경우 기존 프로필 사진을 삭제
-                deleteImage(previousFileName.replace(cdnUrl, ""));
+                deleteImage(previousFileName.replace(imageUrl, ""),FileType.IMAGE);
             }
-            previous = cdnUrl+uploadImage(file);
+            previous = imageUrl +uploadImage(file);
         }
 
         return previous;
@@ -104,27 +124,33 @@ public class S3ServiceImpl implements S3Service{
      * 파일 삭제
      */
     @Override
-    public void deleteImage(String fileName) {
+    public void deleteImage(String fileName,FileType type) {
         try {
-            amazonS3.deleteObject(bucketImage,fileName);
+            if (type.equals(FileType.IMAGE))
+                amazonS3.deleteObject(bucketImage,fileName);
+            else if (type.equals(FileType.VIDEO)){
+                amazonS3.deleteObject(bucketVideo,fileName);
+            }
         }catch (Exception e){
             log.error("이미지 삭제중 오류 발생");
             throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR,SERVER_ERROR);
         }
     }
 
-
-
-
-    private String createUUID(String fileName){
+    private static String getFileTypeToString(String fileName) {
         int indexOf = fileName.lastIndexOf(".");
-        String extension = fileName.substring(indexOf + 1).toLowerCase();
+        return fileName.substring(indexOf + 1).toLowerCase();
+    }
 
-        Set<String> allowedExtensions = Set.of("jpeg", "jpg", "png","gif");
+
+    private Map<String,String> createUUID(String fileName){
+        String extension = getFileTypeToString(fileName);
+
+        Set<String> allowedExtensions = Set.of("jpeg", "jpg", "png","gif","mp4");
         if (!allowedExtensions.contains(extension)){
             throw new InvalidUsageException(ExceptionStatus.BAD_REQUEST, INVALID_IMAGE_FORMAT);
         }
         String uuid = UUID.randomUUID().toString();
-        return uuid+"."+extension;
+        return Map.of("fileName",uuid+"."+extension,"type",extension);
     }
 }

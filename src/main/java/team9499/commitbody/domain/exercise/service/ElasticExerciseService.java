@@ -1,10 +1,12 @@
 package team9499.commitbody.domain.exercise.service;
 
+import team9499.commitbody.domain.exercise.dto.CustomExerciseDto;
+
 public interface ElasticExerciseService {
 
-    void saveExercise(Long customExerciseId);
+    void saveExercise(CustomExerciseDto customExerciseDto);
 
-    void updateExercise(Long customExerciseId,String source);
+    void updateExercise(CustomExerciseDto customExerciseDto,String source);
 
     void deleteExercise(Long customExerciseId,Long memberId);
 

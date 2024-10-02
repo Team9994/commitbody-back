@@ -13,12 +13,12 @@ public class ExerciseHandler {
 
     @EventListener
     public void ElSaveExercise(ElasticSaveExerciseEvent elasticSaveExerciseEvent){
-       exerciseService.saveExercise(elasticSaveExerciseEvent.getCustomExerciseId());
+       exerciseService.saveExercise(elasticSaveExerciseEvent.getCustomExerciseDto());
     }
 
     @EventListener
     public void ElUpdateExercise(ElasticUpdateExerciseEvent elasticUpdateExerciseEvent){
-        exerciseService.updateExercise(elasticUpdateExerciseEvent.getCustomExerciseId(),elasticUpdateExerciseEvent.getSource());
+        exerciseService.updateExercise(elasticUpdateExerciseEvent.getCustomExerciseDto(), elasticUpdateExerciseEvent.getSource());
     }
 
     @EventListener

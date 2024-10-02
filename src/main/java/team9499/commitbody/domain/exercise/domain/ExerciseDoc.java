@@ -11,6 +11,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.WriteTypeHint;
+import team9499.commitbody.domain.exercise.dto.CustomExerciseDto;
 
 @Data
 @Builder
@@ -51,13 +52,15 @@ public class ExerciseDoc {
     private Boolean interest;
 
 
-    public ExerciseDoc customExercise(CustomExercise customExercise,String gifUrl){
+    public static ExerciseDoc customExercise(CustomExerciseDto customExerciseDto){
         return ExerciseDoc.builder()
-                .id("custom_"+customExercise.getId()+"-"+customExercise.getMember().getId())
-                .exerciseId(customExercise.getId()).exerciseName(customExercise.getCustomExName()).gifUrl(gifUrl)
-                .exerciseType(null).exerciseEquipment(customExercise.getExerciseEquipment().getKoreanName())
-                .exerciseTarget(customExercise.getExerciseTarget().name())
-                .memberId(String.valueOf(customExercise.getMember().getId()))
+                .id("custom_"+customExerciseDto.getExerciseId()+"-"+customExerciseDto.getMemberId())
+                .exerciseId(customExerciseDto.getExerciseId())
+                .exerciseName(customExerciseDto.getExerciseName())
+                .gifUrl(customExerciseDto.getGifUrl())
+                .exerciseType(null).exerciseEquipment(customExerciseDto.getExerciseEquipment().getKoreanName())
+                .exerciseTarget(customExerciseDto.getExerciseTarget().name())
+                .memberId(String.valueOf(customExerciseDto.getMemberId()))
                 .source("custom").interest(false).build();
     }
 

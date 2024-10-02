@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.ExerciseDoc;
 import team9499.commitbody.domain.exercise.domain.ExerciseInterestDoc;
+import team9499.commitbody.domain.exercise.dto.CustomExerciseDto;
 import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseElsInterestRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseElsRepository;
@@ -31,7 +32,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ElasticExerciseServiceImpl implements ElasticExerciseService {
 
-    private final CustomExerciseRepository customExerciseRepository;
     private final ExerciseElsInterestRepository exerciseElsInterestRepository;
     private final ElasticsearchClient elasticsearchClient;
     private final ExerciseElsRepository exerciseElsRepository;
@@ -45,28 +45,26 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
     /**
      * 커스텀 운동 저장
      */
+    @Async
     @Override
-    public void saveExercise(Long customExerciseId) {
-        CustomExercise customExercise = getCustomExercise(customExerciseId);
-        ExerciseDoc exerciseDoc = new ExerciseDoc().customExercise(customExercise,getCustomGifUrl(customExercise));
+    public void saveExercise(CustomExerciseDto customExerciseDto) {
+        ExerciseDoc exerciseDoc = ExerciseDoc.customExercise(customExerciseDto);
         exerciseElsRepository.save(exerciseDoc);
     }
 
+    @Async
     @Override
-    public void updateExercise(Long customExerciseId,String source) {
-        CustomExercise customExercise = getCustomExercise(customExerciseId);
-
+    public void updateExercise(CustomExerciseDto customExerciseDto,String source) {
         Map<String,String> doc = new HashMap<>();
-        doc.put("exerciseName",customExercise.getCustomExName());
-        doc.put("gifUrl",customExercise.getCustomGifUrl());
-        doc.put("exerciseEquipment",customExercise.getExerciseEquipment().getKoreanName());
-        doc.put("exerciseTarget",customExercise.getExerciseTarget().name());
-
-        HashMap<String, Object> updateBody = new HashMap<>();
-        updateBody.put("doc",doc);
+        doc.put("exerciseName",customExerciseDto.getExerciseName());
+        doc.put("gifUrl",customExerciseDto.getGifUrl());
+        doc.put("exerciseEquipment",customExerciseDto.getExerciseEquipment().getKoreanName());
+        doc.put("exerciseTarget",customExerciseDto.getExerciseTarget().name());
 
         try {
-            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(INDEX).id(source+customExercise.getId()).doc(doc));
+            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u
+                    .index(INDEX).id(source+"_"+customExerciseDto.getExerciseId()+"-"+customExerciseDto.getMemberId())
+                    .doc(doc));
             elasticsearchClient.update(updateRequest, Map.class);
         }catch (Exception e){
             log.error("엘라스틱 업데이트시 문제 발생");
@@ -76,6 +74,7 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
     /**
      * 엘라스틱 커스텀 운동 삭제 메서드
      */
+    @Async
     @Override
     public void deleteExercise(Long customExerciseId,Long memberId) {
         DeleteRequest deleteRequest = DeleteRequest.of(u -> u.index(INDEX).id("custom_"+customExerciseId+"-"+memberId));
@@ -88,7 +87,7 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
 
     @Override
     public void changeInterest(Long exerciseId, String source,String status,Long memberId) {
-        ExerciseInterestDoc exerciseInterestDoc = ExerciseInterestDoc.of(source + exerciseId+"-"+memberId,memberId, exerciseId, status.equals("등록") ? true : false,false);
+        ExerciseInterestDoc exerciseInterestDoc = ExerciseInterestDoc.of(source + exerciseId+"-"+memberId,memberId, exerciseId, status.equals("등록"),false);
         exerciseElsInterestRepository.save(exerciseInterestDoc);
     }
 
@@ -118,10 +117,5 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
 
     private String getCustomGifUrl(CustomExercise customExercise) {
         return customExercise.getCustomGifUrl() ==null ? "등록된 이미지 파일이 없습니다." : cdnUrl+customExercise.getCustomGifUrl();
-    }
-
-    private CustomExercise getCustomExercise(Long customExerciseId) {
-        CustomExercise customExercise = customExerciseRepository.findById(customExerciseId).orElse(null);
-        return customExercise;
     }
 }

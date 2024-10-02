@@ -1,8 +1,13 @@
 package team9499.commitbody.domain.exercise.service;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Time;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,17 +24,16 @@ import team9499.commitbody.global.Exception.ServerException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+@Slf4j
 @Service
-@Transactional
+@Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class SchedulingService {
 
+    private final ElasticsearchClient elasticsearchClient;
     private final ExerciseRepository exerciseRepository;
-    private final CustomExerciseRepository customExerciseRepository;
-    private final ExerciseElsRepository exerciseElsRepository;
-    private final ExerciseInterestRepository exerciseInterestRepository;
-    private final ExerciseElsInterestRepository exerciseElsInterestRepository;
     private final ObjectMapper objectMapper;
 
     @Value("${api.key}")
@@ -39,6 +43,8 @@ public class SchedulingService {
 
     private final String DEFAULT = "default_";
     private final String CUSTOM = "custom_";
+
+
     /**
      * gifurl이 새벽 3시마다 초기화 되기때문에 새벽 3시 이후에 서버에서 이미지 url을 새롭게 업데이트 하기위한 메서드
      */
@@ -58,14 +64,20 @@ public class SchedulingService {
             try{
                 JsonNode jsonNode = objectMapper.readTree(response.getBody());
                 if (jsonNode.isArray()){
+                    List<Exercise> exercisesToUpdate = new ArrayList<>();
                     for (JsonNode node : jsonNode){
                         String gifUrl = node.get("gifUrl").asText();
                         long id = node.get("id").asLong();
-                        boolean existsById = exerciseRepository.existsById(id);
-                        if (existsById){
-                            Exercise exercise = exerciseRepository.findById(id).get();
+
+                        Optional<Exercise> optionalExercise = exerciseRepository.findById(id);
+                        if (optionalExercise.isPresent()) {
+                            Exercise exercise = optionalExercise.get();
                             exercise.updateGifUrl(gifUrl);
+                            exercisesToUpdate.add(exercise);
                         }
+                    }
+                    if (!exercisesToUpdate.isEmpty()) {
+                        exerciseRepository.saveAll(exercisesToUpdate);
                     }
                 }
             }catch (Exception e){
@@ -80,34 +92,27 @@ public class SchedulingService {
      */
     public void updateElData(){
         List<Exercise> exerciseList = exerciseRepository.findAll();
-        List<CustomExercise> customExercises = customExerciseRepository.findAll();
-        List<ExerciseInterest> exerciseInterests = exerciseInterestRepository.findAll();
-        List<ExerciseDoc> exerciseDocList = new ArrayList<>();
-        List<ExerciseInterestDoc> exerciseInterestDocList = new ArrayList<>();
+
+        BulkRequest.Builder br = new BulkRequest.Builder();
 
         // 기본 운동 목록
         for (Exercise exercise : exerciseList) {
-            ExerciseDoc aDefault = new ExerciseDoc(DEFAULT+exercise.getId(),exercise.getId(), exercise.getExerciseName(), exercise.getGifUrl(), exercise.getExerciseTarget().name(),
-                    exercise.getExerciseType().getDescription(), exercise.getExerciseEquipment().getKoreanName(), null, "default", false);
-            exerciseDocList.add(aDefault);
-        }
-        // 커스텀 운동 목록
-        for (CustomExercise customExercise : customExercises) {
-            Long memberId = customExercise.getMember().getId();
-            ExerciseDoc custom = new ExerciseDoc(CUSTOM+customExercise.getId()+"-"+memberId,customExercise.getId(), customExercise.getCustomExName(), customExercise.getCustomGifUrl(), customExercise.getExerciseTarget().name(), null, customExercise.getExerciseEquipment().getKoreanName(), String.valueOf(customExercise.getMember().getId()), "custom",false);
-            exerciseDocList.add(custom);
-        }
-
-        // 관심 운동 목록 업데이트
-        for (ExerciseInterest exerciseInterest : exerciseInterests) {
-            Long memberId = exerciseInterest.getMember().getId();
-            String id;
-            Long exerciseId = (exerciseInterest.getExercise() != null) ? exerciseInterest.getExercise().getId() : exerciseInterest.getCustomExercise().getId();
-            id = (exerciseInterest.getExercise() != null ? DEFAULT : CUSTOM) + exerciseId +"-"+ memberId;
-            exerciseInterestDocList.add(ExerciseInterestDoc.of(id, memberId, exerciseId, exerciseInterest.isInterested(),false));
+            br.operations(op -> op.update(u -> u
+                    .index("exercise_index")
+                    .id(DEFAULT+exercise.getId())
+                    .action(a -> a.script(s ->
+                            s.inline(i -> i
+                                    .source("ctx._source.gifUrl = params.gifUrl")
+                                    .lang("painless")
+                                    .params("gifUrl", JsonData.of(exercise.getGifUrl())))))));
         }
 
-        exerciseElsRepository.saveAll(exerciseDocList);
-        exerciseElsInterestRepository.saveAll(exerciseInterestDocList);
+        try {
+            Time time = new Time.Builder().time("10m").build();
+            elasticsearchClient.bulk(br.timeout(time).build());
+        }catch (Exception e){
+            log.error("운동 gif 업데이트 중 오류 발생 ={}",e.getMessage());
+        }
+
     }
 }
