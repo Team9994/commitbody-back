@@ -18,6 +18,7 @@ import team9499.commitbody.domain.article.dto.response.AllArticleResponse;
 import team9499.commitbody.domain.article.dto.response.ProfileArticleResponse;
 import team9499.commitbody.domain.article.repository.ArticleRepository;
 import team9499.commitbody.domain.block.servcice.BlockMemberService;
+import team9499.commitbody.domain.file.domain.FileType;
 import team9499.commitbody.domain.file.service.FileService;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
@@ -43,7 +44,10 @@ public class ArticleServiceImpl implements ArticleService{
     private final BlockMemberService blockMemberService;
 
     @Value("${cloud.aws.cdn.url}")
-    private String cloudUrl;
+    private String imageUrl;
+
+    @Value("${cloud.aws.cdn.video}")
+    private String videoUrl;
 
     /**
      * 게시글 전체 조회
@@ -62,7 +66,7 @@ public class ArticleServiceImpl implements ArticleService{
         if (articleCategory.equals(ArticleCategory.POPULAR)) {
             List<Object[]> test = articleRepository.findByPopularArticle(memberId);
             List<ArticleDto> articleDtoList = test.stream().map(o -> ArticleDto.of((Long) o[0], (Long) o[8], ArticleCategory.fromKorean((String) o[3]), (String) o[5], (String) o[6], (Integer) o[10], (Integer) o[9],
-                            TimeConverter.converter(((Timestamp) o[1]).toLocalDateTime()), converterImgUrl((String) o[12]), (String) o[13], (String) o[14]))
+                            TimeConverter.converter(((Timestamp) o[1]).toLocalDateTime()), converterImgUrl((String) o[12], FileType.valueOf((String)o[15])), (String) o[13], (String) o[14]))
                     .collect(Collectors.toList());
 
             allArticleResponse= new AllArticleResponse(null,false,articleDtoList);
@@ -88,11 +92,12 @@ public class ArticleServiceImpl implements ArticleService{
     @Override
     public ArticleDto saveArticle(Long memberId, String title, String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
         Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
+        checkCategoryFileType(articleCategory, file);
         Article article = Article.of(title,content,articleType,articleCategory,visibility,member);
         Article save = articleRepository.save(article);
         String filename = fileService.saveArticleFile(article, file);
 
-        return ArticleDto.of(save, member,filename.equals("등록된 이미지가 없습니다.") ? "등록된 이미지가 없습니다." : cloudUrl+filename);
+        return ArticleDto.of(save, member,filename.equals("등록된 이미지가 없습니다.") ? "등록된 이미지가 없습니다." : filename);
     }
 
     /**
@@ -145,6 +150,7 @@ public class ArticleServiceImpl implements ArticleService{
      */
     @Override
     public ArticleDto updateArticle(Long memberId, Long articleId, String title , String content, ArticleType articleType, ArticleCategory articleCategory, Visibility visibility, MultipartFile file) {
+        checkCategoryFileType(articleCategory, file);
         Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
         Map<String, Object> articleAndFile = articleRepository.getArticleAndFile(articleId);
         Article article = (Article)articleAndFile.get("article");
@@ -156,7 +162,7 @@ public class ArticleServiceImpl implements ArticleService{
 
         String storedFileName = fileService.updateArticleFile(article, previousFileName, file);
 
-        return ArticleDto.of(article,member, storedFileName==null ? "등록된 이미지가 없습니다." : cloudUrl+storedFileName);
+        return ArticleDto.of(article,member, storedFileName==null ? "등록된 이미지가 없습니다." : storedFileName);
     }
 
     /**
@@ -182,7 +188,27 @@ public class ArticleServiceImpl implements ArticleService{
     /*
     파일을 S3 CDN의 URL 주소로 변경해줍니다.
      */
-    private String converterImgUrl(String storedFileName) {
-        return storedFileName == null ? "등록된 이미지가 없습니다." : cloudUrl + storedFileName;
+    private String converterImgUrl(String storedFileName, FileType type) {
+        final String DEFAULT_URL_MESSAGE = "등록된 이미지가 없습니다.";
+
+        if (storedFileName == null) {
+            return DEFAULT_URL_MESSAGE;
+        }
+
+        // 파일 타입에 따른 URL 생성
+        return switch (type) {
+            case IMAGE -> imageUrl + storedFileName;
+            case VIDEO -> videoUrl + storedFileName;
+            case DEFAULT -> null;
+        };
+    }
+
+    /*
+    카테고리가 몸평이 아닌 경우에는 이미지만 등록가능 하도록 400 예외 발생
+     */
+    private static void checkCategoryFileType(ArticleCategory articleCategory, MultipartFile file) {
+        if (!articleCategory.equals(ArticleCategory.BODY_REVIEW) && file !=null){
+            if (file.getContentType().contains("video")) throw new InvalidUsageException(ExceptionStatus.BAD_REQUEST,ExceptionType.ONLY_IMAGE);
+        }
     }
 }

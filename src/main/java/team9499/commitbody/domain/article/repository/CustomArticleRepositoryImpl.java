@@ -40,7 +40,10 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
     private final JPAQueryFactory jpaQueryFactory;
 
     @Value("${cloud.aws.cdn.url}")
-    private String cloudUrl;
+    private String imageUrl;
+
+    @Value("${cloud.aws.cdn.video}")
+    private String videoUrl;
 
     private final QBlockMember fromBlock = new QBlockMember("fromBlock");
 
@@ -270,6 +273,18 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
     등록된 이미지를 저장된 유혀한 값을 s3에 저장된 url로 변환 해주는 메서드
      */
     private String converterImgUrl(File file) {
-        return file == null ? "등록된 이미지가 없습니다." : cloudUrl + file.getStoredName();
+        final String DEFAULT_URL_MESSAGE = "등록된 이미지가 없습니다.";
+
+        // null 체크
+        if (file == null) {
+            return DEFAULT_URL_MESSAGE;
+        }
+
+        // 파일 타입에 따른 URL 생성
+        return switch (file.getFileType()) {
+            case IMAGE -> imageUrl + file.getStoredName();
+            case VIDEO -> videoUrl + file.getStoredName();
+            case DEFAULT -> null;
+        };
     }
 }

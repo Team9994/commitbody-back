@@ -33,7 +33,7 @@ public class FileServiceImpl implements FileService{
             storedFilename = s3Service.uploadImage(multipartFile);
             String originalFilename = multipartFile.getOriginalFilename();
             FileType fileType = checkFileType(multipartFile);
-            File file = File.of(originalFilename, storedFilename, fileType, article);
+            File file = File.of(originalFilename, storedFilename.substring(45), fileType, article);
             fileRepository.save(file);
         }else storedFilename = "등록된 이미지가 없습니다.";
 
@@ -67,7 +67,7 @@ public class FileServiceImpl implements FileService{
         String storedFileName = s3Service.updateImage(multipartFile, previousFileName);
 
         if ( !file.getOriginName().equals(originalFilename)) {
-            file.update(originalFilename, storedFileName, fileType);
+            file.update(originalFilename, storedFileName.substring(45), fileType);
         }
         
         return storedFileName;

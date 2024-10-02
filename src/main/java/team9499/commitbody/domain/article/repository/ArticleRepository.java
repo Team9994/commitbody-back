@@ -11,7 +11,7 @@ import java.util.List;
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, Long>, CustomArticleRepository {
 
-    @Query(value = "select ra.*, f.stored_name, m.nickname ,m.profile " +
+    @Query(value = "select ra.*,f.stored_name, m.nickname ,m.profile, f.file_type " +
             "from (select a.* ,row_number() over (PARTITION by a.article_category order by a.like_count desc) as rn " +
             "from article a " +
             "left join block_member bm1 on bm1.blocked_id = a.member_id and bm1.blocker_id = :memberId " +
@@ -21,7 +21,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, CustomA
             "and a.created_at between date_format(now(), '%Y-%m-01') and last_day(now())) ra " +
             "join member m on m.member_id = ra.member_id " +
             "left join file f on f.article_id = ra.article_id " +
-            "where ra.rn <= 2",nativeQuery = true)
+            "where ra.rn <= 2 and m.is_withdrawn = false",nativeQuery = true)
     List<Object[]> findByPopularArticle(@Param("memberId") Long memberId);
 
 }
