@@ -63,7 +63,7 @@ public class ArticleDto {
 
     public static ArticleDto of(Article article,Member member, String imageUrl){
         MemberDto memberDTO = MemberDto.toMemberDTO(member);
-        return ArticleDto.builder().articleId(article.getId()).title(article.getTitle()).articleCategory(article.getArticleCategory()).time(TimeConverter.converter(article.getCreatedAt())).likeCount(article.getLikeCount())
+        return ArticleDto.builder().articleId(article.getId()).title(article.getTitle()).content(article.getContent()).articleCategory(article.getArticleCategory()).time(TimeConverter.converter(article.getCreatedAt())).likeCount(article.getLikeCount())
                 .commentCount(article.getCommentCount()).member(memberDTO).imageUrl(imageUrl).localDateTime(article.getCreatedAt()).visibility(article.getVisibility()).build();
     }
 

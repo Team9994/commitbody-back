@@ -91,7 +91,9 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
                 .leftJoin(follow).on(follow.follower.id.eq(memberId).and(follow.following.id.eq(article.member.id)))
                 .where(booleanBuilder, categoryBuilder, followBuilder, defaultBuilder,
                         article.articleType.eq(type).and(blockMember.id.isNull().or(blockMember.blockStatus.eq(false)))
-                                .and(fromBlock.id.isNull().or(fromBlock.blockStatus.eq(false))))
+                                .and(fromBlock.id.isNull().or(fromBlock.blockStatus.eq(false)))
+                                .and(article.member.isWithdrawn.eq(false))
+                                .and(article.member.id.eq(memberId).or(article.visibility.eq(Visibility.PUBLIC))))
                 .limit(pageable.getPageSize() + 1)
                 .orderBy(article.createdAt.desc())
                 .fetch();
