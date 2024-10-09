@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
@@ -171,7 +173,7 @@ public class ArticleController {
     @PutMapping(value = "/article/{articleId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateArticle(@PathVariable("articleId") Long articleId,
                                            @RequestPart("updateArticleRequest") ArticleRequest request,
-                                           @RequestPart(required = false) MultipartFile file,
+                                           @RequestPart(name = "file", required = false) MultipartFile file,
                                            @AuthenticationPrincipal PrincipalDetails principalDetails){
         ResponseEntity<ErrorResponse<Map<String, String>>> errorMap = getArticleValidTitleAndCategory(request);
         if (errorMap != null) return errorMap;
