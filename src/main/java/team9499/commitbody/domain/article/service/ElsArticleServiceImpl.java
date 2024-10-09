@@ -73,7 +73,7 @@ public class ElsArticleServiceImpl implements ElsArticleService{
 
         try {
             UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(ARTICLE_INDEX).id(String.valueOf(articleDto.getArticleId())).doc(doc));
-            UpdateResponse<Object> updateResponse = client.update(updateRequest, Map.class);
+            UpdateResponse<Object> updateResponse = client.update(updateRequest, Object.class);
             log.info("게시글 수정 성공 ID ={}",updateResponse.id());
         }catch (Exception e){
             log.error("업데이트중 오류 발생");
@@ -108,9 +108,9 @@ public class ElsArticleServiceImpl implements ElsArticleService{
 
     @Override
     public AllArticleResponse searchArticleByTitle(Long memberId, String title,ArticleCategory category, Integer size, Long lastId) {
-        List<Long> blockedIds = elsBlockMemberService.findBlockedIds(memberId);
+        List<Long> blockedIds = new ArrayList<>(elsBlockMemberService.findBlockedIds(memberId));
         List<Long> blockerIds = elsBlockMemberService.getBlockerIds(memberId);
-        List<Long> followings = followRepository.followings(memberId);
+        List<Long> followings = new ArrayList<>(followRepository.followings(memberId));
         // 차단된 사용자와 차단한 사용자 ID 합치기
         blockedIds.addAll(blockerIds);
         followings.add(memberId);   // 자신의 게시물을 확인하기 위해 추가
@@ -253,10 +253,10 @@ public class ElsArticleServiceImpl implements ElsArticleService{
             case "댓글" -> doc.put("comment_count",count);
             case "좋아요" -> doc.put("like_count",count);
         }
-        
+        UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(ARTICLE_INDEX).id(String.valueOf(articleId)).doc(doc));
+
         try {
-            UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(ARTICLE_INDEX).id(String.valueOf(articleId)).doc(doc));
-            client.update(updateRequest,Map.class);
+            client.update(updateRequest,Object.class);
         }catch (Exception e){
             log.error("게시글 댓글 수 업데이트중 오류 발생");
         }
