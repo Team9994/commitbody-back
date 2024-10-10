@@ -3,20 +3,17 @@ package team9499.commitbody.domain.article.repository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.article.domain.*;
 import team9499.commitbody.domain.article.dto.ArticleDto;
 import team9499.commitbody.domain.block.domain.QBlockMember;
 import team9499.commitbody.domain.file.domain.File;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
-import team9499.commitbody.domain.like.domain.QContentLike;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
@@ -32,6 +29,7 @@ import static team9499.commitbody.domain.block.domain.QBlockMember.*;
 import static team9499.commitbody.domain.comment.article.domain.QArticleComment.*;
 import static team9499.commitbody.domain.file.domain.QFile.*;
 import static team9499.commitbody.domain.follow.domain.QFollow.*;
+import static team9499.commitbody.domain.like.domain.QContentLike.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -154,14 +152,15 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
     @Override
     public ArticleDto getDetailArticle(Long loginMemberId, Long articleId) {
 
-        List<Tuple> list = jpaQueryFactory.select(article, file, follow)
+        List<Tuple> list = jpaQueryFactory.select(article, file, follow,contentLike)
                 .from(article)
                 .leftJoin(file).on(article.id.eq(file.article.id)).fetchJoin()  // 파일 정보는 선택적이므로 LEFT JOIN
+                .leftJoin(contentLike).on(article.id.eq(contentLike.article.id)).fetchJoin()
                 .leftJoin(follow).on(follow.follower.id.eq(loginMemberId).and(follow.following.id.eq(article.member.id)))
                 .where(article.id.eq(articleId).and(article.member.isWithdrawn.eq(false))).fetch();
 
         return list.stream()
-                .map(tuple -> ArticleDto.of(loginMemberId, tuple.get(article), converterImgUrl(tuple.get(file)), tuple.get(follow))).findFirst()
+                .map(tuple -> ArticleDto.of(loginMemberId, tuple.get(article), converterImgUrl(tuple.get(file)), tuple.get(follow),tuple.get(contentLike))).findFirst()
                 .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
     }
 
@@ -183,14 +182,12 @@ public class CustomArticleRepositoryImpl implements CustomArticleRepository {
         return Map.of("article", tuple.get(article), "storedName", tuple.get(file.storedName) == null ? "" : tuple.get(file.storedName));
     }
 
-    @Async
-    @Transactional
     @Override
     public void deleteArticle(Long articleId) {
         jpaQueryFactory.delete(article).where(article.id.eq(articleId)).execute();
         jpaQueryFactory.delete(articleComment).where(articleComment.article.id.eq(articleId)).execute();
         jpaQueryFactory.delete(QNotification.notification).where(QNotification.notification.articleId.eq(articleId)).execute();
-        jpaQueryFactory.delete(QContentLike.contentLike).where(QContentLike.contentLike.article.id.eq(articleId)).execute();
+        jpaQueryFactory.delete(contentLike).where(contentLike.article.id.eq(articleId)).execute();
         jpaQueryFactory.delete(file).where(file.article.id.eq(articleId)).execute();
     }
 
