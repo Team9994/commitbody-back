@@ -26,6 +26,13 @@ public class ElsBlockMemberServiceImpl implements ElsBlockMemberService{
     private final ElasticsearchClient elasticsearchClient;
 
     private String BLOCKED="blocked_";
+
+    /**
+     * 차단 성공/해제시 BlockMember 의 차단한 사용자 필드의 차단한 사용자 Id 를 삽입/삭제 하는 메서드
+     * @param blockerId 차단한 사용자
+     * @param blockedId 차단당한 사용자
+     * @param status   [차단 성공, 차단 해제]
+     */
     @Async
     public void blockMember(Long blockerId, Long blockedId, String status) {
         String id = getElsId(blockedId);
@@ -47,6 +54,11 @@ public class ElsBlockMemberServiceImpl implements ElsBlockMemberService{
         elsBlockMemberRepository.save(blockMemberDoc);
     }
 
+    /**
+     * 차단당한 사용자의 차단한 사용자의 ID를 조회
+     * @param blockedId 차단당한 사용자의 ID
+     * @return 차단한 사용자가 있을시 List 반환 없을시 빈 List 반환
+     */
     @Override
     public List<Long> getBlockerIds(Long blockedId) {
         String elsId = getElsId(blockedId);

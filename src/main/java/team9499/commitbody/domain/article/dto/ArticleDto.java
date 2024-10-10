@@ -3,7 +3,6 @@ package team9499.commitbody.domain.article.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.dto.MemberDto;
 import team9499.commitbody.domain.article.domain.Article;
@@ -12,11 +11,11 @@ import team9499.commitbody.domain.article.domain.ArticleType;
 import team9499.commitbody.domain.article.domain.Visibility;
 import team9499.commitbody.domain.follow.domain.Follow;
 import team9499.commitbody.domain.follow.domain.FollowStatus;
+import team9499.commitbody.domain.like.domain.ContentLike;
 import team9499.commitbody.global.utils.TimeConverter;
 
 import java.time.LocalDateTime;
 
-@Slf4j
 @Data
 @Builder(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -39,6 +38,8 @@ public class ArticleDto {
     private String time;        // 작성 시간
 
     private Integer likeCount;      // 좋아요 수
+
+    private Boolean likeStatus;     // 좋아요 상태
 
     private Integer commentCount;  // 게시글 수
 
@@ -67,7 +68,7 @@ public class ArticleDto {
                 .commentCount(article.getCommentCount()).member(memberDTO).imageUrl(imageUrl).localDateTime(article.getCreatedAt()).visibility(article.getVisibility()).build();
     }
 
-    public static ArticleDto of(Long loginMemberId,Article article, String imageUrl, Follow follow){
+    public static ArticleDto of(Long loginMemberId,Article article, String imageUrl, Follow follow, ContentLike contentLike){
         Member member = article.getMember();
         ArticleDtoBuilder builder = ArticleDto.builder()
                 .articleId(article.getId())
@@ -76,6 +77,7 @@ public class ArticleDto {
                 .postOwner(loginMemberId.equals(member.getId()))
                 .imageUrl(imageUrl).followStatus(follow == null ? FollowStatus.CANCEL : follow.getStatus())
                 .likeCount(article.getLikeCount())
+                .likeStatus(contentLike != null && contentLike.isLikeStatus())
                 .member(MemberDto.builder().memberId(member.getId()).nickname(member.getNickname()).profile(member.getProfile()).build());
         if (article.getArticleType().equals(ArticleType.INFO_QUESTION)){
             builder.title(article.getTitle()).articleCategory(article.getArticleCategory()).build();
