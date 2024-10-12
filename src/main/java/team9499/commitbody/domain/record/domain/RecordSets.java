@@ -35,8 +35,8 @@ public class RecordSets {
         return RecordSets.builder().reps(reps).recordDetails(recordDetails).build();
     }
 
-    public static RecordSets ofTimes(Integer times,Integer reps, RecordDetails recordDetails) { // 시간만 기록
-        return RecordSets.builder().times(times).reps(reps).recordDetails(recordDetails).build();
+    public static RecordSets ofTimes(Integer times, RecordDetails recordDetails) { // 시간만 기록
+        return RecordSets.builder().times(times).recordDetails(recordDetails).build();
     }
 
     public void updateWeightAndReps(Integer weight, Integer reps){
