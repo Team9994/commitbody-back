@@ -108,6 +108,8 @@ public class RecordServiceImpl implements RecordService{
                 Integer reps = set.getReps();       // 세트당 진횅 횟수
                 Integer weight = set.getWeight();       // 세트당 무게
                 Integer times = set.getTimes();         // 운동 시간
+
+                validZero(weight, reps,times);
                 totalSets += 1;
                 detailsSets += 1;
                 if (weight !=null && reps!=null){       // 무게+횟수일때
@@ -119,7 +121,7 @@ public class RecordServiceImpl implements RecordService{
                     maxRm += Math.round((float)weight * (float)(1 +0.03333*reps));      // 칼로리 계산
                     weightCount++;
                 } else if (times != null) {     // 시간일떄
-                    recordSets.add(RecordSets.ofTimes(times,reps,recordDetail));
+                    recordSets.add(RecordSets.ofTimes(times,recordDetail));
                     detailsTime += times;
                     timesValid = true;
                 }else{                  // 횟수만 사용할떄
@@ -219,6 +221,7 @@ public class RecordServiceImpl implements RecordService{
                 Integer weight = recordSetsDto.getWeight();
                 Integer times = recordSetsDto.getTimes();
                 totalSets++; //세트수 증가
+                validZero(weight, reps,times);
 
                 if (reps != null && weight != null) { // 무게 + 횟수일때
                     newSets.add(RecordSets.ofWeightAndSets(weight, reps, recordDetails));
@@ -228,7 +231,7 @@ public class RecordServiceImpl implements RecordService{
                     totalReps += reps; // 총 횟수 계산
                     count++;
                 } else if (times != null) { // 시간일때
-                    newSets.add(RecordSets.ofTimes(times, reps, recordDetails));
+                    newSets.add(RecordSets.ofTimes(times, recordDetails));
                     totalTimes += times; // 총 시간 누적
                 } else if (reps != null) { // 횟수만 있을때
                     newSets.add(RecordSets.ofSets(reps, recordDetails));
@@ -288,17 +291,17 @@ public class RecordServiceImpl implements RecordService{
 
     }
 
+
     /*
     최대 1RM 무게를 계산하는 메서드
      */
-
     private int calculate1RM(Integer weight, Integer reps) {
         return Math.round(weight * (1 + 0.03333f * reps));
     }
+
     private CustomExercise getCustomExercise(Long exerciseId) {
         return customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
     }
-
     private Exercise getExercise(Long exerciseId) {
         return exerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
     }
@@ -306,8 +309,25 @@ public class RecordServiceImpl implements RecordService{
     /*
     총 소모 칼로리 계산 메서드
      */
+
     private static int calculateTotalCalorie(LocalDateTime startTime, LocalDateTime endTime, Member member, int exerciseSize, float totalMets) {
         int totalCalorie = (int) ((int) (totalMets / exerciseSize) * member.getWeight() * (int)Duration.between(startTime, endTime).toHours());
         return totalCalorie;
+    }
+    /*
+     sets 의 0 값이 들어오면 예외 발생
+     */
+    private static void validZero(Integer weight, Integer reps, Integer times) {
+        if (weight != null && weight == 0) {
+            throw new InvalidUsageException(BAD_REQUEST, NOT_USE_ZERO);
+        }
+
+        if (reps != null && reps == 0) {
+            throw new InvalidUsageException(BAD_REQUEST, NOT_USE_ZERO);
+        }
+
+        if (times != null && times == 0) {
+            throw new InvalidUsageException(BAD_REQUEST, NOT_USE_ZERO);
+        }
     }
 }
