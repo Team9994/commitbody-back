@@ -16,7 +16,8 @@ public enum ExceptionType {
     ALREADY_REQUESTED("이미 처리된 요청입니다."),
     AUTHOR_ONLY("작성자만 이용할 수 있습니다."),
     BLOCK("사용자를 차단한 상태입니다."),
-    PRIVATE_ACCOUNT("비공개 계정입니다.");
+    PRIVATE_ACCOUNT("비공개 계정입니다."),
+    NOT_USE_ZERO("0 이상인 값을 입력해주세요.");
 
 
     private final String message;
