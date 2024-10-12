@@ -73,7 +73,7 @@ public class CustomExerciseCommentRepositoryImpl implements CustomExerciseCommen
                         converter(ec.getCreatedAt()),
                         checkAuthor(memberId, ec.getMember().getId()),
                         ec.getLikeCount(),
-                        ec.getExerciseCommentLikes().stream().anyMatch(like -> like.getMember().getId().equals(memberId) && like.isLikeStatus()) // 좋아요 여부 확인
+                        ec.getExerciseCommentLikes() != null && ec.getExerciseCommentLikes().stream().anyMatch(like -> like.getMember().getId().equals(memberId) && like.isLikeStatus())
                 ))
                 .collect(Collectors.toList());
         // 다음 페이직 존재하는지 검사

@@ -41,7 +41,7 @@ public class ContentLike {
     private Article article;            // 게시글
 
     public static ContentLike createLike(Member member, ExerciseComment exerciseComment){
-        return ContentLike.builder().member(member).exerciseComment(exerciseComment).likeStatus(false).build();
+        return ContentLike.builder().member(member).exerciseComment(exerciseComment).likeStatus(true).build();
     }
 
     public static ContentLike createArticleLike(Member member, Article article){
