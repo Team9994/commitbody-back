@@ -49,7 +49,8 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                 builder.or(articleComment.likeCount.lt(lastLikeCount));
             }else
                 builder.or(articleComment.likeCount.eq(0).and(articleComment.id.lt(lastId)));
-        }else if (lastId!=null){        // 최신순 정렬일 경우에는 lastId 값 기준으로 다음 데이터 조회
+        }
+        if (lastId!=null){        // 최신순 정렬일 경우에는 lastId 값 기준으로 다음 데이터 조회
             builder.and(articleComment.id.lt(lastId));
         }
 
@@ -59,9 +60,10 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                 .select(articleComment, articleComment.member)
                 .from(articleComment)
                 .leftJoin(articleComment.member, member).fetchJoin()
+                .leftJoin(articleComment.childComments, childComment).fetchJoin()
                 .leftJoin(blockMember).on(blockMember.blocked.id.eq(articleComment.member.id).and(blockMember.blocker.id.eq(memberId)))
                 .leftJoin(childBlock).on(childBlock.blocked.id.eq(memberId).and(childBlock.blocker.id.eq(articleComment.member.id)))    // 차단된 사용자 필터링 조건
-                .where(articleComment.article.id.eq(articleId)
+                .where(builder,articleComment.article.id.eq(articleId)
                         .and(articleComment.parent.id.isNull())
                         .and(blockMember.id.isNull().or(blockMember.blockStatus.eq(false)))
                         .and(childBlock.id.isNull().or(childBlock.blockStatus.eq(false)))
@@ -189,7 +191,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                 .from(articleComment)
                 .join(article).on(article.id.eq(articleComment.article.id)).fetchJoin()
                 .where(articleComment.member.id.eq(memberId)
-                        .and(articleComment.member.id.ne(article.member.id))
+                        .and(articleComment.member.id.eq(article.member.id))
                         .and(articleComment.parent.isNull())).fetch();
     }
 
