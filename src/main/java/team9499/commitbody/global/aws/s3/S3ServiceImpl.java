@@ -148,7 +148,7 @@ public class S3ServiceImpl implements S3Service{
 
         Set<String> allowedExtensions = Set.of("jpeg", "jpg", "png","gif","mp4");
         if (!allowedExtensions.contains(extension)){
-            throw new InvalidUsageException(ExceptionStatus.BAD_REQUEST, INVALID_IMAGE_FORMAT);
+            throw new InvalidUsageException(ExceptionStatus.BAD_REQUEST, INVALID_FILE_FORMAT);
         }
         String uuid = UUID.randomUUID().toString();
         return Map.of("fileName",uuid+"."+extension,"type",extension);

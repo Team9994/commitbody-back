@@ -11,7 +11,7 @@ public enum ExceptionType {
     LOGIN_REQUIRED("접근하려는 페이지에 접근하려면 로그인해야 합니다."),
     ACCESS_DENIED("이 리소스에 접근할 권한이 없습니다."),
     DUPLICATE_NICKNAME("중복된 닉네임 입니다."),
-    INVALID_IMAGE_FORMAT("올바른 이미지 형식이 아닙니다."),
+    INVALID_FILE_FORMAT("올바른 파일 형식이 아닙니다."),
     ONLY_IMAGE("이미지 파일만 등록 가능합니다."),
     ALREADY_REQUESTED("이미 처리된 요청입니다."),
     AUTHOR_ONLY("작성자만 이용할 수 있습니다."),
