@@ -28,15 +28,14 @@ public class FileServiceImpl implements FileService{
      */
     @Override
     public String saveArticleFile(Article article, MultipartFile multipartFile) {
-        String storedFilename = null;
+        String storedFilename = "등록된 이미지가 없습니다.";
         if (multipartFile != null) {
-            storedFilename = s3Service.uploadImage(multipartFile);
+            storedFilename = s3Service.uploadFile(multipartFile);
             String originalFilename = multipartFile.getOriginalFilename();
             FileType fileType = checkFileType(multipartFile);
             File file = File.of(originalFilename, storedFilename.substring(45), fileType, article);
             fileRepository.save(file);
-        }else storedFilename = "등록된 이미지가 없습니다.";
-
+        }
         return storedFilename;
     }
 
@@ -57,14 +56,13 @@ public class FileServiceImpl implements FileService{
 
         // 파일명이 "" 일경우 새롭게 파일을 저장
         if (previousFileName.isEmpty()) {
-            saveArticleFile(article, multipartFile);
-            return null;
+            return saveArticleFile(article, multipartFile);
         }
 
         File file = fileRepository.findByArticleId(article.getId());
         String originalFilename = multipartFile.getOriginalFilename();
         FileType fileType = checkFileType(multipartFile);
-        String storedFileName = s3Service.updateImage(multipartFile, previousFileName);
+        String storedFileName = s3Service.updateFile(multipartFile, previousFileName);
 
         if ( !file.getOriginName().equals(originalFilename)) {
             file.update(originalFilename, storedFileName.substring(45), fileType);

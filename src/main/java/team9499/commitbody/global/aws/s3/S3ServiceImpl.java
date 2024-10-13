@@ -86,8 +86,7 @@ public class S3ServiceImpl implements S3Service{
     @Override
     public String updateFile(MultipartFile file, String previousFileName) {
         if (file!=null && previousFileName!=null) {
-            String fileName = file.getOriginalFilename();
-            String extension = getFileTypeToString(fileName);
+            String extension = getFileTypeToString(previousFileName);
             FileType type = FileType.IMAGE;
 
             if (extension.equals("mp4") || extension.equals("gif")) type = FileType.VIDEO;
@@ -106,6 +105,7 @@ public class S3ServiceImpl implements S3Service{
     @Override
     public String updateProfile(MultipartFile file, String previousFileName,boolean deleteProfile) {
         String previous = previousFileName;
+
         if (deleteProfile){     // 기본 프로필 적용시
             previous = defaultProfile;
             deleteFile(previousFileName.replace(imageUrl, ""),FileType.IMAGE);
@@ -114,7 +114,7 @@ public class S3ServiceImpl implements S3Service{
             if (!previous.equals(defaultProfile)){      // 기본 프로필 사진이 아닐 경우 기존 프로필 사진을 삭제
                 deleteFile(previousFileName.replace(imageUrl, ""),FileType.IMAGE);
             }
-            previous = imageUrl + uploadFile(file);
+            previous = uploadFile(file);
         }
 
         return previous;
@@ -132,7 +132,7 @@ public class S3ServiceImpl implements S3Service{
                 amazonS3.deleteObject(bucketVideo,fileName);
             }
         }catch (Exception e){
-            log.error("이미지 삭제중 오류 발생");
+            log.error("이미지 삭제중 오류 발생 : {}",e.getMessage());
             throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR,SERVER_ERROR);
         }
     }
