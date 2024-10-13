@@ -49,7 +49,7 @@ public class S3ServiceImpl implements S3Service{
      * 저장된 파일명을 반환한다.
      */
     @Override
-    public String uploadImage(MultipartFile file) {
+    public String uploadFile(MultipartFile file) {
         String storedFileName =null;
         if (file!=null) {
             String originalFilename = file.getOriginalFilename();
@@ -84,16 +84,15 @@ public class S3ServiceImpl implements S3Service{
      * 파일을 업데이트한다. 이전파일을 삭제후 새로운 파일을 저장
      */
     @Override
-    public String updateImage(MultipartFile file, String previousFileName) {
+    public String updateFile(MultipartFile file, String previousFileName) {
         if (file!=null && previousFileName!=null) {
-            String fileName = file.getOriginalFilename();
-            String extension = getFileTypeToString(fileName);
+            String extension = getFileTypeToString(previousFileName);
             FileType type = FileType.IMAGE;
 
             if (extension.equals("mp4") || extension.equals("gif")) type = FileType.VIDEO;
-            deleteImage(previousFileName,type);
+            deleteFile(previousFileName,type);
         }
-        return uploadImage(file);
+        return uploadFile(file);
     }
 
     /**
@@ -106,15 +105,16 @@ public class S3ServiceImpl implements S3Service{
     @Override
     public String updateProfile(MultipartFile file, String previousFileName,boolean deleteProfile) {
         String previous = previousFileName;
+
         if (deleteProfile){     // 기본 프로필 적용시
             previous = defaultProfile;
-            deleteImage(previousFileName.replace(imageUrl, ""),FileType.IMAGE);
+            deleteFile(previousFileName.replace(imageUrl, ""),FileType.IMAGE);
         }
         if (file!=null) {
             if (!previous.equals(defaultProfile)){      // 기본 프로필 사진이 아닐 경우 기존 프로필 사진을 삭제
-                deleteImage(previousFileName.replace(imageUrl, ""),FileType.IMAGE);
+                deleteFile(previousFileName.replace(imageUrl, ""),FileType.IMAGE);
             }
-            previous = imageUrl +uploadImage(file);
+            previous = uploadFile(file);
         }
 
         return previous;
@@ -124,7 +124,7 @@ public class S3ServiceImpl implements S3Service{
      * 파일 삭제
      */
     @Override
-    public void deleteImage(String fileName,FileType type) {
+    public void deleteFile(String fileName, FileType type) {
         try {
             if (type.equals(FileType.IMAGE))
                 amazonS3.deleteObject(bucketImage,fileName);
@@ -132,7 +132,7 @@ public class S3ServiceImpl implements S3Service{
                 amazonS3.deleteObject(bucketVideo,fileName);
             }
         }catch (Exception e){
-            log.error("이미지 삭제중 오류 발생");
+            log.error("이미지 삭제중 오류 발생 : {}",e.getMessage());
             throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR,SERVER_ERROR);
         }
     }
@@ -148,7 +148,7 @@ public class S3ServiceImpl implements S3Service{
 
         Set<String> allowedExtensions = Set.of("jpeg", "jpg", "png","gif","mp4");
         if (!allowedExtensions.contains(extension)){
-            throw new InvalidUsageException(ExceptionStatus.BAD_REQUEST, INVALID_IMAGE_FORMAT);
+            throw new InvalidUsageException(ExceptionStatus.BAD_REQUEST, INVALID_FILE_FORMAT);
         }
         String uuid = UUID.randomUUID().toString();
         return Map.of("fileName",uuid+"."+extension,"type",extension);
