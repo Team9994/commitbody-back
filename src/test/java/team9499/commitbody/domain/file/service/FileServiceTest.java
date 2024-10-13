@@ -1,15 +1,12 @@
 package team9499.commitbody.domain.file.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mock.web.MockMultipartFile;
 import team9499.commitbody.domain.article.domain.Article;
 import team9499.commitbody.domain.file.domain.File;
@@ -18,11 +15,8 @@ import team9499.commitbody.domain.file.repository.FileRepository;
 import team9499.commitbody.global.aws.s3.S3Service;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Random;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
@@ -42,7 +36,7 @@ class FileServiceTest {
         String uuid = url+"35017bde-8037-43c4-a53a-f4d5f7dbe1a3.png";
         File file = new File();
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", "file", "image/jpeg", "test".getBytes(StandardCharsets.UTF_8));
-        when(s3Service.uploadImage(eq(mockMultipartFile))).thenReturn(uuid);
+        when(s3Service.uploadFile(eq(mockMultipartFile))).thenReturn(uuid);
         when(fileRepository.save(any())).thenReturn(file);
         String fileName = fileService.saveArticleFile(new Article(), mockMultipartFile);
 
@@ -64,7 +58,7 @@ class FileServiceTest {
         String uuid = url+"35017bde-8037-43c4-a53a-f4d5f7dbe1a3.png";
         File file = new File();
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", "file", "image/jpeg", "test".getBytes(StandardCharsets.UTF_8));
-        when(s3Service.uploadImage(eq(mockMultipartFile))).thenReturn(uuid);
+        when(s3Service.uploadFile(eq(mockMultipartFile))).thenReturn(uuid);
         when(fileRepository.save(any())).thenReturn(file);
 
         String updateFileName = fileService.updateArticleFile(new Article(), "", mockMultipartFile);
@@ -81,7 +75,7 @@ class FileServiceTest {
         File file = File.of("notSame", after, FileType.IMAGE, article);
 
         when(fileRepository.findByArticleId(anyLong())).thenReturn(file);
-        when(s3Service.updateImage(eq(mockMultipartFile),eq(before))).thenReturn(after);
+        when(s3Service.updateFile(eq(mockMultipartFile),eq(before))).thenReturn(after);
 
         String updateFilename = fileService.updateArticleFile(article, before, mockMultipartFile);
         assertThat(updateFilename).isEqualTo(after);

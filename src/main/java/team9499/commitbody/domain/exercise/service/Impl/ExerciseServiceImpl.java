@@ -283,7 +283,7 @@ public class ExerciseServiceImpl implements ExerciseService {
      */
     @Override
     public CustomExerciseDto saveCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment,Long memberId, MultipartFile file) {
-        String storedFileName = s3Service.uploadImage(file);
+        String storedFileName = s3Service.uploadFile(file);
         Optional<Member> redisMember = getRedisMember(memberId);
 
         CustomExercise customExercise = new CustomExercise().save(exerciseName, storedFileName, exerciseTarget, exerciseEquipment,redisMember.get());
@@ -297,7 +297,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Override
     public CustomExerciseDto updateCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, Long customExerciseId, MultipartFile file) {
         CustomExercise customExercise = getCustomExercise(customExerciseId,memberId);
-        String updateImage = s3Service.updateImage(file, customExercise.getCustomGifUrl());
+        String updateImage = s3Service.updateFile(file, customExercise.getCustomGifUrl());
         customExercise.update(exerciseName,exerciseTarget,exerciseEquipment,updateImage);
         return CustomExerciseDto.fromDto(customExercise,getImgUrl(updateImage));
     }
