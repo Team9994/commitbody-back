@@ -2,6 +2,7 @@ package team9499.commitbody.domain.comment.article.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ArticleCommentBatchServiceImpl implements ArticleCommentBatchService {
 
+    @Qualifier("dataJdbcTemplate")
     private final JdbcTemplate jdbcTemplate;
 
     /**
