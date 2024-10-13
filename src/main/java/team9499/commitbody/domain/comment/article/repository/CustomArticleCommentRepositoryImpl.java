@@ -82,7 +82,9 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                         checkWriter(tuple.get(articleComment.member), memberId),
                         true
                         )
-                ).collect(Collectors.toList());
+                )
+                .distinct()
+                .collect(Collectors.toList());
 
         boolean hasNext = articleComments.size() > pageable.getPageSize();   // 페이지 체크
 
