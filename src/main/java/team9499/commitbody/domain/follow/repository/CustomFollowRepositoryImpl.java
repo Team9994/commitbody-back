@@ -58,9 +58,11 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
                 .fetch();
 
         List<FollowDto> followingDtoList = new ArrayList<>();
-        if (followerId != followingId) {// 상대방 계정 조회시
-            validPrivateAccount(followerId,followingId,followList.get(0).getFollower().getAccountStatus()); // 해당 사용자가 팔로우 상태인지 확인
-            followingDtoList = getFriendFollows(followerId, followList,FOLLOWING);
+        if (!followerId.equals(followingId)) {// 상대방 계정 조회시
+            if (!followList.isEmpty()) {
+                validPrivateAccount(followerId, followingId, followList.get(0).getFollower().getAccountStatus()); // 해당 사용자가 팔로우 상태인지 확인
+                followingDtoList = getFriendFollows(followerId, followList, FOLLOWING);
+            }
         }else {
             followingDtoList = getMyFollows(followList,FOLLOWING);
         }
@@ -92,9 +94,11 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
                 .orderBy(follow.id.asc())
                 .fetch();
         List<FollowDto> followerDtoList = new ArrayList<>();
-        if (followerId != followId) {       // 상대방 계정 조회시
-            validPrivateAccount(followerId, followId,followList.get(0).getFollowing().getAccountStatus());  // 해당 사용자가 팔로우 상태인지 확인
-            followerDtoList = getFriendFollows(followerId, followList,"follower");
+        if (!followerId.equals(followId)) {       // 상대방 계정 조회시
+            if (!followList.isEmpty()) {
+                validPrivateAccount(followerId, followId, followList.get(0).getFollowing().getAccountStatus());  // 해당 사용자가 팔로우 상태인지 확인
+                followerDtoList = getFriendFollows(followerId, followList, "follower");
+            }
         }else {
             followerDtoList = getMyFollows(followList,"follower");
         }
@@ -228,7 +232,7 @@ public class CustomFollowRepositoryImpl implements CustomFollowRepository{
     }
 
     private static boolean checkFollow(FollowStatus followStatus){
-        return followStatus.equals(FollowStatus.FOLLOWING) || followStatus.equals(FollowStatus.MUTUAL_FOLLOW)? true : false;
+        return followStatus.equals(FollowStatus.FOLLOWING) || followStatus.equals(FollowStatus.MUTUAL_FOLLOW);
     }
 
     /**
