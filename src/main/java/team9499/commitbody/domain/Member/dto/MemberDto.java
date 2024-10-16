@@ -60,7 +60,7 @@ public class MemberDto {
                 .memberId(member.getId()).nickname(member.getNickname()).build();
     }
 
-    public static MemberDto createNickname(Long memberId,String profile ,String nickname){
+    public static MemberDto createNickname(Long memberId,String nickname, String profile){
         return MemberDto.builder().profile(profile).memberId(memberId).nickname(nickname).build();
     }
 }

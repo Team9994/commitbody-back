@@ -1,7 +1,6 @@
 package team9499.commitbody.domain.Member.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,7 +22,6 @@ import team9499.commitbody.global.redis.RedisService;
 
 import java.time.LocalDate;
 
-@Slf4j
 @Service
 @Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
@@ -55,7 +53,7 @@ public class MemberServiceImpl implements MemberService {
                 MemberMyPageResponse.builder().nickname(member.getNickname()).profile(member.getProfile()).followerCount(countFollower).followingCount((countFollowing)).blockStatus(blockStatus);
         
         //현재 마이페이지로 접근 시
-        if (member.getId() == memberId) {
+        if (member.getId().equals(memberId)) {
             memberMyPageResponseBuilder.memberId(memberId).pageType("myPage");
         }else{  // 상대방 페이지 접근시
             FollowType followStatus = followRepository.followStatus(memberId, member.getId());  // 상대방과 팔로우 관계를 검사
@@ -81,7 +79,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public void updateProfile(Long memberId, String nickname, Gender gender, LocalDate birthDay, Float height, Float weight, Float boneMineralDensity,
                               Float bodyFatPercentage, boolean deleteProfile,MultipartFile file) {
-        Member member = getMember(memberId);
+        Member member = redisService.getMemberDto(memberId.toString()).get();
         String beforeNickname = member.getNickname();   // 변경하기전 닉네임
         String profile = s3Service.updateProfile(file, member.getProfile(),deleteProfile);
         member.updateProfile(nickname,gender,birthDay,height,weight,boneMineralDensity,bodyFatPercentage,profile);
@@ -110,7 +108,7 @@ public class MemberServiceImpl implements MemberService {
      */
     @Override
     public String updateNotification(Long memberId) {
-        Member member = memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+        Member member = redisService.getMemberDto(memberId.toString()).get();
 
         boolean notificationEnabled = member.isNotificationEnabled();
         member.updateNotification(!notificationEnabled);        // 알림 수신 유무 반대로 저장
@@ -119,7 +117,4 @@ public class MemberServiceImpl implements MemberService {
         return notificationEnabled ? "알림 미수신" : "알림 수신";
     }
 
-    private Member getMember(Long memberId) {
-        return memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
-    }
 }
