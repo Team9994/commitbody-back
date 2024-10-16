@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
-import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.article.domain.Article;
 import team9499.commitbody.domain.article.dto.response.ArticleCountResponse;
 import team9499.commitbody.domain.article.repository.ArticleRepository;
@@ -34,13 +33,12 @@ public class LikeServiceImpl implements LikeService {
     private final ArticleRepository articleRepository;
     private final ArticleCommentRepository articleCommentRepository;
     private final RedisService redisService;
-    private final MemberRepository memberRepository;
     private final NotificationService notificationService;
+    private final LikeRepository likeRepository;
 
 
     private final String ADD = "등록";
     private final String CANCEL ="해제";
-    private final LikeRepository likeRepository;
 
     /**
      * 운동 상세 페이지 - 댓글 좋아요 메서드
@@ -48,21 +46,24 @@ public class LikeServiceImpl implements LikeService {
      * @param memberId  로그인한 상자 ID
      * @return
      */
-    public String updateCommentLike(Long exCommentId, Long memberId) {
+    public String exerciseCommentLike(Long exCommentId, Long memberId) {
 
-        Member member = memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(BAD_REQUEST, No_SUCH_MEMBER));
+        Member member = redisService.getMemberDto(memberId.toString()).get();
 
         ExerciseComment exerciseComment = exerciseCommentRepository.findById(exCommentId).get();
 
         Optional<ContentLike> optionalExerciseCommentLike = commentLikeRepository.findByMemberIdAndExerciseCommentId(memberId, exCommentId);
-        
+
+        Integer likeCount = exerciseComment.getLikeCount();
+
         // 새로운 좋아요를 누른다면 새로운 객체 생성
         if (optionalExerciseCommentLike.isEmpty()){
-            optionalExerciseCommentLike = Optional.of(commentLikeRepository.save(ContentLike.createLike(member,exerciseComment)));
+          commentLikeRepository.save(ContentLike.createLike(member,exerciseComment));
+          exerciseComment.updateLikeCount(likeCount + 1);
+          return ADD;
         }
 
         ContentLike exerciseCommentLike = optionalExerciseCommentLike.get();
-        Integer likeCount = exerciseComment.getLikeCount();
 
         // 좋아요 되어 잇다면 해제 좋아요 상태를 false로 바꾸며 좋아요 수 -1
         if (exerciseCommentLike.isLikeStatus()) {

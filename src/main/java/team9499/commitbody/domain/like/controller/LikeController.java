@@ -43,7 +43,7 @@ public class LikeController {
     public ResponseEntity<?> exerciseLike(@Parameter(schema = @Schema(example = "{\"exCommentId\":1}")) @RequestBody Map<String, Long> exCommentLikeRequest,
                                           @AuthenticationPrincipal PrincipalDetails principalDetails){
         Long memberId = principalDetails.getMember().getId();
-        String commentLikeStatus = exerciseCommentLikeService.updateCommentLike(exCommentLikeRequest.get("exCommentId"), memberId);
+        String commentLikeStatus = exerciseCommentLikeService.exerciseCommentLike(exCommentLikeRequest.get("exCommentId"), memberId);
         return ResponseEntity.ok(new SuccessResponse<>(true,commentLikeStatus));
     }
 
