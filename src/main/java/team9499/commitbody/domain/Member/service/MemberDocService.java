@@ -58,7 +58,7 @@ public class MemberDocService {
         
         try{
             UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(u -> u.index(MEMBER_INDEX).id(memberId).doc(doc));
-            elasticsearchClient.update(updateRequest,Map.class);
+            elasticsearchClient.update(updateRequest,Object.class);
         }catch (Exception e){
             log.error("엘라스틱 사용자 닉네임 변경중 업데이트 발생");
         }

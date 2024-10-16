@@ -118,8 +118,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
         if (nicknameLock) {     // 잠금 성공시
             try {
-                Member member = memberRepository.existsByNickname(nickname);
-                if (member != null) {       // 닉네임 사용자 존재시
+                Optional<Member> member = memberRepository.findByNickname(nickname);
+                if (member.isPresent()) {       // 닉네임 사용자 존재시
                     redisService.deleteValue(redisKey,AuthType.CERTIFICATION);
                     throw new InvalidUsageException(BAD_REQUEST, DUPLICATE_NICKNAME);
                 }else       // 존재 하지 않을시 저장
