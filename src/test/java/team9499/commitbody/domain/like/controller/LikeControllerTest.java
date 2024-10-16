@@ -52,7 +52,7 @@ class LikeControllerTest {
     @Test
     void ExerciseCommentLike() throws Exception {
         Map<String, Long> request = Map.of("exCommentId", 1L);
-        given(likeService.updateCommentLike(anyLong(), anyLong())).willReturn("등록");
+        given(likeService.exerciseCommentLike(anyLong(), anyLong())).willReturn("등록");
 
         mockMvc.perform(post("/api/v1/comment-exercise/like")
                         .with(csrf())

@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface LikeService {
 
-    String updateCommentLike(Long exCommentId, Long memberId);
+    String exerciseCommentLike(Long exCommentId, Long memberId);
 
     ArticleCountResponse articleLike(Long articleId, Long memberId);
 

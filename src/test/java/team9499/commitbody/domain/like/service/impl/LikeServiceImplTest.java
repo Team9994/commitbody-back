@@ -60,7 +60,7 @@ class LikeServiceImplTest {
         when(likeRepository.findByMemberIdAndExerciseCommentId(anyLong(),anyLong())).thenReturn(Optional.empty());
         when(likeRepository.save(any())).thenReturn(ContentLike.createLike(member,exerciseComment));
 
-        String status = likeService.updateCommentLike(exerciseComment.getId(), memberId);
+        String status = likeService.exerciseCommentLike(exerciseComment.getId(), memberId);
         assertThat(status).isEqualTo("등록");     //최초 좋아요
         assertThat(exerciseComment.getLikeCount()).isEqualTo(1);    // 좋아요 증가
     }
@@ -76,7 +76,7 @@ class LikeServiceImplTest {
         when(exerciseCommentRepository.findById(any())).thenReturn(Optional.of(exerciseComment));
         when(likeRepository.findByMemberIdAndExerciseCommentId(eq(memberId),eq(exerciseComment.getId()))).thenReturn(Optional.of(contentLike));
 
-        String status = likeService.updateCommentLike(exerciseComment.getId(), memberId);
+        String status = likeService.exerciseCommentLike(exerciseComment.getId(), memberId);
         assertThat(status).isEqualTo("해제");
         assertThat(exerciseComment.getLikeCount()).isEqualTo(9);    //좋아요 감소
     }
@@ -92,7 +92,7 @@ class LikeServiceImplTest {
         when(exerciseCommentRepository.findById(any())).thenReturn(Optional.of(exerciseComment));
         when(likeRepository.findByMemberIdAndExerciseCommentId(eq(memberId),eq(exerciseComment.getId()))).thenReturn(Optional.of(contentLike));
 
-        String status = likeService.updateCommentLike(exerciseComment.getId(), memberId);
+        String status = likeService.exerciseCommentLike(exerciseComment.getId(), memberId);
         assertThat(status).isEqualTo("등록");
         assertThat(exerciseComment.getLikeCount()).isEqualTo(11);       // 좋아요 수 증가
     }
