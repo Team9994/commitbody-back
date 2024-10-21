@@ -18,6 +18,7 @@ import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.Exception.WithDrawException;
 import team9499.commitbody.global.authorization.domain.RefreshToken;
 import team9499.commitbody.global.authorization.dto.TokenInfoDto;
+import team9499.commitbody.global.authorization.dto.response.JoinResponse;
 import team9499.commitbody.global.authorization.dto.response.TokenUserInfoResponse;
 import team9499.commitbody.global.authorization.repository.RefreshTokenRepository;
 import team9499.commitbody.global.authorization.service.AuthorizationElsService;
@@ -29,7 +30,6 @@ import team9499.commitbody.global.utils.JwtUtils;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -54,42 +54,48 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Value("${default.profile}")
     private String profileUrl;
 
+    private final String ACCESS_TOKEN = "accessToken";
     private final String REFRESH_TOKEN = "refreshToken";
     private final String JOIN = "회원가입";
+    private final String INCOMPLETE_JOIN = "회원가입 미완료";
     private final String LOGIN = "로그인";
     private final String RE_JOIN = "재가입";
     private final String NICKNAME ="nickname_";
 
     @Override
-    public Map<String,Object> authenticateOrRegisterUser(LoginType loginType,String socialId,String fcmToken) {
-        String joinOrLogin = "";
-        Optional<Member> optionalMember = memberRepository.findBySocialIdAndLoginType(socialId,loginType);
+    public JoinResponse authenticateOrRegisterUser(LoginType loginType,String socialId,String fcmToken) {
+        Optional<Member> optionalMember = memberRepository.findBySocialIdAndLoginType(socialId, loginType);
+        String joinOrLogin = LOGIN;
 
-        if (!optionalMember.isPresent()){
-            Member member = memberRepository.save(Member.createSocialId(socialId,loginType,profileUrl));
+        // 회원 가입
+        if (optionalMember.isEmpty()) {
+            Member member = memberRepository.save(Member.createSocialId(socialId, loginType, profileUrl));
             optionalMember = Optional.of(member);
             joinOrLogin = JOIN;
         }
-        else{       //로그인인 경우
+        else if (optionalMember.get().getNickname()==null){ // 회원 가입이 완료되지 않은 상태
+            joinOrLogin = INCOMPLETE_JOIN;
+        }
+        else { // 로그인 처리
             Member member = optionalMember.get();
-            if (member.isWithdrawn()&&member.getWithdrawalRevokePeriod().isBefore(LocalDate.now())){    // 재가입은 일정 기간 이후에 가능
-                throw new WithDrawException("재가입 기간은 "+member.getWithdrawnAt().plusDays(1)+" 이후부터 가능합니다.");
-            }else if (member.isWithdrawn()){        // 일정 기간내에 가입할 경우 가입 취소
+            if (member.isWithdrawn()) {
+                if (member.getWithdrawalRevokePeriod().isBefore(LocalDate.now())) {
+                    throw new WithDrawException("재가입 기간은 " + member.getWithdrawnAt().plusDays(1) + " 이후부터 가능합니다.");
+                }
                 member.cancelWithDrawn();
-                joinOrLogin = RE_JOIN;
-            }else{
-                joinOrLogin = LOGIN;
+                joinOrLogin = RE_JOIN; // 재가입 처리
             }
         }
 
-        Map<String, Object> tokenMap = new LinkedHashMap<>(jwtUtils.generateAuthTokens(MemberDto.builder().memberId(optionalMember.get().getId()).build()));
-        tokenMap.put("authMode",joinOrLogin);       // 로그인 / 회원가입을 구분하기위함
+        Member member = optionalMember.get();
+        Map<String, String> tokens = jwtUtils.generateAuthTokens(MemberDto.builder().memberId(member.getId()).build());
+        JoinResponse joinResponse = JoinResponse.of(joinOrLogin, TokenInfoDto.of(member), tokens.get(ACCESS_TOKEN),
+                tokens.get(REFRESH_TOKEN));
 
-        redisService.setFCM(String.valueOf(optionalMember.get().getId()),fcmToken);     // fcm 토큰 레디스에 저장
+        redisService.setFCM(String.valueOf(member.getId()), fcmToken); // fcm 토큰 레디스에 저장
+        SaveRefreshToken(member.getId(), member, joinResponse.getRefreshToken());
 
-        if (joinOrLogin.equals(LOGIN) || joinOrLogin.equals(RE_JOIN)) tokenMap.put("tokenInfo",TokenInfoDto.of(optionalMember.get().getId(),optionalMember.get().getNickname()));     //로그인일 경우에만 JWT토큰의대한 정보를 담는다
-        SaveRefreshToken(optionalMember.get().getId(), optionalMember, (String) tokenMap.get(REFRESH_TOKEN));
-        return tokenMap;
+        return joinResponse;
     }
 
     @Override
@@ -104,7 +110,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         }else
             member.createAdditionalInfoNull(nickName,gender,birthday,height,weight);
 
-        return new TokenUserInfoResponse(TokenInfoDto.of(member.getId()));
+        return new TokenUserInfoResponse(TokenInfoDto.of(member.getId(),member.getNickname()));
     }
 
     /**
@@ -140,7 +146,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         memberRepository.findById(Long.valueOf(verifyMemberId)).orElseThrow(() -> new NoSuchException(BAD_REQUEST, No_SUCH_MEMBER));
 
         String newAccessToken = jwtUtils.generateAccessToken(MemberDto.builder().memberId(Long.valueOf(verifyMemberId)).build());
-        return Map.of("accessToken",newAccessToken);
+        return Map.of(ACCESS_TOKEN,newAccessToken);
     }
 
     /**
@@ -173,11 +179,11 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     /*
     레디스의 정보가 서버의 문제로 인해 삭제될수있기때문에 MySQL에 리프레쉬 토큰을 저장
      */
-    private void SaveRefreshToken(Long memberId, Optional<Member> optionalMember, String refreshToken) {
+    private void SaveRefreshToken(Long memberId, Member member, String refreshToken) {
         boolean existsByMemberId = refreshTokenRepository.existsByMemberId(memberId);
         if(!existsByMemberId) {
             refreshTokenRepository.save(
-                    RefreshToken.of(optionalMember.get(), refreshToken, LocalDateTime.now().plusMonths(expired))
+                    RefreshToken.of(member, refreshToken, LocalDateTime.now().plusMonths(expired))
             );
         }
     }
