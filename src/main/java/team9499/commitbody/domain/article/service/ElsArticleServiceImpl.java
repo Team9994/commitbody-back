@@ -8,6 +8,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -128,10 +129,19 @@ public class ElsArticleServiceImpl implements ElsArticleService{
 
         // 카테고리 필터링 (동적 조건)
         if (category != null) {
-            TermQuery categoryTerm = new TermQuery.Builder()
-                    .field("category")
-                    .value(category.toString()).build();
-            builder.must(Query.of(q -> q.term(categoryTerm)));
+            if (category.name().equals("ALL")){
+                List<String> categories = Arrays.asList("INFORMATION","FEEDBACK","BODY_REVIEW");
+                TermsQueryField exerciseIdTerms = new TermsQueryField.Builder()
+                        .value(categories.stream().map(FieldValue::of).toList())
+                        .build();
+                builder.must(m -> m.terms(t -> t.field("category").terms(exerciseIdTerms)));
+            }else {
+                TermQuery categoryTerm = new TermQuery.Builder()
+                        .field("category")
+                        .value(category.toString()).build();
+
+                builder.must(Query.of(q -> q.term(categoryTerm)));
+            }
         }
 
         // 탈퇴하지 않은 사용자의 게시글만 조회
