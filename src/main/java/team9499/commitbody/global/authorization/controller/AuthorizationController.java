@@ -20,11 +20,11 @@ import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
-import team9499.commitbody.global.authorization.dto.TokenInfoDto;
 import team9499.commitbody.global.authorization.dto.request.AdditionalInfoReqeust;
 import team9499.commitbody.global.authorization.dto.request.JoinLoginRequest;
 import team9499.commitbody.global.authorization.dto.request.MemberWithdrawRequest;
 import team9499.commitbody.global.authorization.dto.request.RegisterNicknameRequest;
+import team9499.commitbody.global.authorization.dto.response.JoinResponse;
 import team9499.commitbody.global.authorization.dto.response.TokenUserInfoResponse;
 import team9499.commitbody.global.authorization.event.DeleteMemberEvent;
 import team9499.commitbody.global.authorization.service.AuthorizationService;
@@ -56,17 +56,14 @@ public class AuthorizationController {
     })
     @PostMapping("/auth")
     public ResponseEntity<SuccessResponse> socialLogin(@RequestBody JoinLoginRequest joinLoginRequest){
-        Map<String, Object> jwtTokenMap = authorizationService.authenticateOrRegisterUser(
-                joinLoginRequest.getLoginType(), joinLoginRequest.getSocialId(),joinLoginRequest.getFcmToken()
+        JoinResponse joinResponse = authorizationService.authenticateOrRegisterUser(
+                joinLoginRequest.getLoginType(), joinLoginRequest.getSocialId(), joinLoginRequest.getFcmToken()
         );
 
-        TokenInfoDto tokenInfo = (TokenInfoDto) jwtTokenMap.get("tokenInfo");
-        String authMode = (String) jwtTokenMap.get("authMode");
-        Long memberId = tokenInfo.getMemberId();  
-        if (authMode.equals("재가입"))
-            eventPublisher.publishEvent(new DeleteMemberEvent(memberId,"재가입",LocalDateTime.now()));
+        if (joinResponse.getAuthMode().equals("재가입"))
+            eventPublisher.publishEvent(new DeleteMemberEvent(joinResponse.getTokenInfoDto().getMemberId(),"재가입",LocalDateTime.now()));
 
-        return ResponseEntity.ok().body(new SuccessResponse<>(true,"성공",jwtTokenMap));
+        return ResponseEntity.ok().body(new SuccessResponse<>(true,"성공",joinResponse));
     }
 
     @Operation(summary = "회원가입-추가정보", description = "회원가입의 필요한 추가 개인정보를 작성합니다. 추가정보 입력 완료시 tokenInfo에 사용자 정보가 포함됩니다.")

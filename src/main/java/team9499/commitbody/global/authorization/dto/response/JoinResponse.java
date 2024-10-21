@@ -18,4 +18,8 @@ public class JoinResponse {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private TokenInfoDto tokenInfoDto;
+
+    public static JoinResponse of(String loginType, TokenInfoDto tokenInfoDto, String accessToken, String refreshToken){
+        return JoinResponse.builder().authMode(loginType).tokenInfoDto(tokenInfoDto).accessToken(accessToken).refreshToken(refreshToken).build();
+    }
 }
