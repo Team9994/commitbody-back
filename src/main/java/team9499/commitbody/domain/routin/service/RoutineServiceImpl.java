@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
-import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
 import team9499.commitbody.domain.exercise.dto.CustomExerciseDto;
@@ -25,7 +24,7 @@ import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.Exception.ServerException;
 
 import java.util.*;
-
+import team9499.commitbody.global.redis.RedisService;
 
 @Slf4j
 @Service
@@ -35,29 +34,30 @@ public class RoutineServiceImpl implements RoutineService{
 
     private final RoutineRepository routineRepository;
     private final RoutineDetailsRepository routineDetailsRepository;
-    private final MemberRepository memberRepository;
     private final ExerciseRepository exerciseRepository;
     private final CustomExerciseRepository customExerciseRepository;
     private final RoutineBatchService routineBatchService;
+    private final RedisService redisService;
 
     private final String DEFAULT ="default";
 
+    /**
+     * 루틴을 저장
+     * @param memberId 사용자 ID
+     * @param routineExercises  루틴 정보
+     * @param routineName   루틴 명
+     */
     @Override
     public void saveRoutine(Long memberId, List<RoutineExercise> routineExercises, String routineName) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+
+        Member member = redisService.getMemberDto(memberId.toString()).get();
 
         Routine routine = routineRepository.save(Routine.create(member, routineName));  // 새로운 루틴 생성 및 저장
         List<RoutineDetails> routineDetails = new ArrayList<>();
 
         for (RoutineExercise routineExercise : routineExercises) {
-            String source = routineExercise.getSource();
-            // 일반 운동일 경우
-            if (source.equals(DEFAULT)) {
-                addRoutineDetails(routineExercise.getExerciseId(),routineExercise.getOrder(), routine, routineDetails, false);
-            }else { // 커스컴 운동일 경우
-                addRoutineDetails(routineExercise.getExerciseId(),routineExercise.getOrder(), routine, routineDetails, true);
-            }
+            addRoutineDetails(routineExercise.getExerciseId(),routineExercise.getOrder(), routine, routineDetails,
+                    !routineExercise.getSource().equals(DEFAULT));
         }
         // 루틴의 상세 목록 설정 및 저장
         routine.setList(routineDetails);
@@ -65,18 +65,10 @@ public class RoutineServiceImpl implements RoutineService{
     }
 
     /**
-     * 주어진 exerciseIds 목록을 순회하면서 루틴 상세 정보를 추가하는 메서드
+     * 사용자가 등록한 루틴의 대해서 루틴을 모두 조회합니다.
+     * @param memberId 로그인한 사용자 ID
+     * @return  루틴 객체
      */
-    private void addRoutineDetails(Long exerciseId,Integer order, Routine routine, List<RoutineDetails> routineDetails,boolean isCustom) {
-        if (isCustom) {         // 커스텀 운동인 경우 처리
-            CustomExercise customExercise = customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
-            routineDetails.add(RoutineDetails.of(customExercise, routine,order));
-        } else {                // 일반 운동인 경우 처리
-            Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
-            routineDetails.add(RoutineDetails.of(exercise, routine,order));
-        }
-    }
-
     @Override
     public MyRoutineResponse getMyRoutine(Long memberId) {
         List<Routine> allByMemberId = routineRepository.findAllByMemberId(memberId);
@@ -86,42 +78,30 @@ public class RoutineServiceImpl implements RoutineService{
             RoutineDto routineDto = convertToRoutineDto(routine);
             routineDtos.add(routineDto);
         }
-
         // 오름차순 정렬
-        for (RoutineDto routineDto : routineDtos) {
-            List<Object> exercises = routineDto.getExercises();
-            if (exercises != null) {
-                exercises.sort((o1, o2) -> {
-                    Integer orders1 = getOrder(o1);
-                    Integer orders2 = getOrder(o2);
-                    return orders1.compareTo(orders2);
-                });
-            }
-        }
+        sortAsc(routineDtos);
         return new MyRoutineResponse(routineDtos);    // 변환된 루틴 DTO 리스트를 MyRoutineResponse로 반환
     }
 
+    /**
+     * 특정 루틴의 루틴 상세 조회
+     * @param memberId  사용자 ID
+     * @param routineId 조회할 루틴 ID
+     * @return  상세 조회한 루틴 객체
+     */
     @Override
     public MyRoutineResponse getDetailMyRoutine(Long memberId, Long routineId) {
         Optional<Routine> byIdAndMemberId = routineRepository.findByIdAndMemberId(routineId, memberId);
         List<RoutineDto> routineDtos = new ArrayList<>();
-        if (!byIdAndMemberId.isEmpty()){
+        if (byIdAndMemberId.isPresent()){
             Routine routine = byIdAndMemberId.get();
             RoutineDto routineDto = convertToRoutineDto(routine);
             routineDtos.add(routineDto);
         }
 
         // 오름차순 정렬
-        for (RoutineDto routineDto : routineDtos) {
-            List<Object> exercises = routineDto.getExercises();
-            if (exercises != null) {
-                exercises.sort((o1, o2) -> {
-                    Integer orders1 = getOrder(o1);
-                    Integer orders2 = getOrder(o2);
-                    return orders1.compareTo(orders2);
-                });
-            }
-        }
+        sortAsc(routineDtos);
+
         return new MyRoutineResponse(routineDtos);    // 변환된 루틴 DTO 리스트를 MyRoutineResponse로 반환
     }
 
@@ -137,7 +117,7 @@ public class RoutineServiceImpl implements RoutineService{
     public void updateRoutine(Long routineId, Long memberId, String routineName, List<ExerciseDto> exercises) {
         Routine routine = routineRepository.findByIdAndMemberId(routineId,memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
         // 루틴명 변경
-        routine.updateRoutineName(routineName); 
+        routine.updateRoutineName(routineName);
 
         // 루틴의 저장된 상세루틴 ID 리스트
         List<Long> deleteDetailIds = new ArrayList<>();
@@ -150,7 +130,7 @@ public class RoutineServiceImpl implements RoutineService{
         for (ExerciseDto exercise : exercises) {
             String source = exercise.getSource();
             Object obExercise = source.equals(DEFAULT) ? getExercise(exercise.getExerciseId()) : getCustomExercise(exercise.getExerciseId());       // 운동과 커스텀 운동 구분
-            
+
             newRoutineDetails.add(RoutineDetails.of(exercise.getRoutineDetailId(), obExercise, routine, exercise.getOrders()));
         }
 
@@ -181,6 +161,7 @@ public class RoutineServiceImpl implements RoutineService{
     }
 
     // orders 기준으로 정렬
+
     private Integer getOrder(Object obj) {
         if (obj instanceof ExerciseDto) {
             return ((ExerciseDto) obj).getOrders();
@@ -189,6 +170,18 @@ public class RoutineServiceImpl implements RoutineService{
         } else {
             log.error("정렬증 오류 발생");
             throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR,ExceptionType.SERVER_ERROR);
+        }
+    }
+    /**
+     * 주어진 exerciseIds 목록을 순회하면서 루틴 상세 정보를 추가하는 메서드
+     */
+    private void addRoutineDetails(Long exerciseId,Integer order, Routine routine, List<RoutineDetails> routineDetails,boolean isCustom) {
+        if (isCustom) {         // 커스텀 운동인 경우 처리
+            CustomExercise customExercise = customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+            routineDetails.add(RoutineDetails.of(customExercise, routine,order));
+        } else {                // 일반 운동인 경우 처리
+            Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+            routineDetails.add(RoutineDetails.of(exercise, routine,order));
         }
     }
 
@@ -230,4 +223,21 @@ public class RoutineServiceImpl implements RoutineService{
             exercises.add(CustomExerciseDto.of(routineDetailsId, customExercise.getId(),customExercise.getCustomExName(), customExercise.getCustomGifUrl(), routineDetails.getTotalSets(),"무게와 횟수", routineDetails.getOrders()));
         }
     }
+
+    /*
+    오름 차순으 정렬
+     */
+    private void sortAsc(List<RoutineDto> routineDtos) {
+        for (RoutineDto routineDto : routineDtos) {
+            List<Object> exercises = routineDto.getExercises();
+            if (exercises != null) {
+                exercises.sort((o1, o2) -> {
+                    Integer orders1 = getOrder(o1);
+                    Integer orders2 = getOrder(o2);
+                    return orders1.compareTo(orders2);
+                });
+            }
+        }
+    }
+
 }
