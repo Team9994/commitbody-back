@@ -34,7 +34,7 @@ public class ElasticExerciseInterestServiceImpl implements ElasticExerciseIntere
     @Override
     public SearchExerciseResponse searchFavoriteExercise(String memberId, BoolQuery.Builder builder,int size, int from,List<SortOptions> sortOptions) {
         BoolQuery favoriteQuery = new BoolQuery.Builder()
-                .must(m -> m.term(t -> t.field(MEMBER_FILED).value(memberId)))
+                .must(m -> m.term(t -> t.field(MEMBER_ID).value(memberId)))
                 .must(m -> m.term(t -> t.field(STATUS).value(true))).build();
 
         SearchRequest favoriteRequest = new SearchRequest.Builder()
@@ -107,7 +107,7 @@ public class ElasticExerciseInterestServiceImpl implements ElasticExerciseIntere
                 .build();
 
         BoolQuery interestBool = new BoolQuery.Builder()
-                .must(m -> m.term(t -> t.field(MEMBER_FILED).value(memberId)))
+                .must(m -> m.term(t -> t.field(MEMBER_ID).value(memberId)))
                 .must(m -> m.terms(t -> t.field(EXERCISE_ID).terms(countryTerms))).build();
 
         SearchRequest interestRequest = new SearchRequest.Builder()
