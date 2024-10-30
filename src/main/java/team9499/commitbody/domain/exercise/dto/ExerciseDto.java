@@ -40,6 +40,8 @@ public class ExerciseDto {
 
     private List<RecordSetsDto> routineSets;
 
+    private Boolean interest;
+
 
 
     public static ExerciseDto of(Long routineDetailId, Long exerciseId,String exerciseName, String gifUrl,Integer sets,String exerciseType,Integer orders,List<RecordSetsDto> routineSets) {
@@ -47,5 +49,10 @@ public class ExerciseDto {
     }
     public static ExerciseDto of(Long routineDetailId, Long exerciseId,String exerciseName, String gifUrl,Integer sets,String exerciseType,Integer orders) {
         return ExerciseDto.builder().routineDetailId(routineDetailId).source("default").exerciseId(exerciseId).exerciseName(exerciseName).gifUrl(gifUrl).sets(sets).exerciseType(exerciseType).orders(orders).build();
+    }
+
+    public static ExerciseDto of(Long exerciseId, String name, String gifUrl, String target, String type, String equipment, String source, boolean interest){
+        return ExerciseDto.builder().exerciseId(exerciseId).exerciseName(name).gifUrl(gifUrl).exerciseTarget(ExerciseTarget.valueOf(target)).exerciseType(type).exerciseEquipment(ExerciseEquipment.fromEventStatus(equipment))
+                .source(source).interest(interest).build();
     }
 }

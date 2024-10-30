@@ -1,12 +1,7 @@
 package team9499.commitbody.domain.exercise.service.Impl;
 
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.UpdateByQueryRequest;
-import co.elastic.clients.elasticsearch.core.UpdateByQueryResponse;
-import co.elastic.clients.json.JsonData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
