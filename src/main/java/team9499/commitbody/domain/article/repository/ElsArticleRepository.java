@@ -4,5 +4,6 @@ import org.springframework.data.elasticsearch.repository.ElasticsearchRepository
 import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.article.domain.ArticleDoc;
 
+@Repository
 public interface ElsArticleRepository extends ElasticsearchRepository<ArticleDoc,String> {
 }
