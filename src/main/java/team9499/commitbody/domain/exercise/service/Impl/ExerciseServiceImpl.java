@@ -52,12 +52,11 @@ public class ExerciseServiceImpl implements ExerciseService {
      * 이미지는 s3에 업로드
      */
     @Override
-    public CustomExerciseDto saveCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment,Long memberId, MultipartFile file) {
+    public CustomExerciseDto saveCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, MultipartFile file) {
         String storedFileName = s3Service.uploadFile(file);
         Optional<Member> redisMember = getRedisMember(memberId);
 
-        CustomExercise customExercise = new CustomExercise().save(exerciseName, storedFileName, exerciseTarget, exerciseEquipment,redisMember.get());
-        CustomExercise exercise = customExerciseRepository.save(customExercise);
+        CustomExercise exercise = customExerciseRepository.save(CustomExercise.save(exerciseName, storedFileName, exerciseTarget, exerciseEquipment, redisMember.get()));
         return CustomExerciseDto.fromDto(exercise, getImgUrl(storedFileName));
     }
 
@@ -66,10 +65,10 @@ public class ExerciseServiceImpl implements ExerciseService {
      */
     @Override
     public CustomExerciseDto updateCustomExercise(String exerciseName, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment, Long memberId, Long customExerciseId, MultipartFile file) {
-        CustomExercise customExercise = getCustomExercise(customExerciseId,memberId);
+        CustomExercise customExercise = getCustomExercise(customExerciseId, memberId);
         String updateImage = s3Service.updateFile(file, customExercise.getCustomGifUrl());
-        customExercise.update(exerciseName,exerciseTarget,exerciseEquipment,updateImage);
-        return CustomExerciseDto.fromDto(customExercise,getImgUrl(updateImage));
+        customExercise.update(exerciseName, exerciseTarget, exerciseEquipment, updateImage);
+        return CustomExerciseDto.fromDto(customExercise, getImgUrl(updateImage));
     }
 
     /**
@@ -77,7 +76,7 @@ public class ExerciseServiceImpl implements ExerciseService {
      */
     @Override
     public void deleteCustomExercise(Long customExerciseId, Long memberId) {
-        CustomExercise customExercise = getCustomExercise(customExerciseId,memberId);
+        CustomExercise customExercise = getCustomExercise(customExerciseId, memberId);
         recordRepository.deleteCustomExercise(customExercise.getId());                      // 운동 기록 삭제
         exerciseInterestRepository.deleteAllByCustomExerciseId(customExercise.getId());     // 관심 운동 삭제
         commentLikeRepository.deleteByCustomExerciseId(customExercise.getId());     // 댓글 좋아요 삭제
@@ -86,9 +85,10 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     /**
      * 상세 운동 조회하는 메서드
+     *
      * @param exerciseId 운동 ID
-     * @param memberId 로그인한 사용자 ID
-     * @param source 운동 정보 타입 [custom,default]
+     * @param memberId   로그인한 사용자 ID
+     * @param source     운동 정보 타입 [custom,default]
      */
     @Transactional(readOnly = true)
     @Override
@@ -104,7 +104,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     private Optional<Member> getRedisMember(Long memberId) {
         Optional<Member> optionalMember = redisService.getMemberDto(String.valueOf(memberId));
 
-        if (optionalMember.isEmpty()){
+        if (optionalMember.isEmpty()) {
             Member member = memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
             optionalMember = Optional.of(member);
         }
@@ -112,7 +112,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     private CustomExercise getCustomExercise(Long customExerciseId, Long memberId) {
-        return customExerciseRepository.findByIdAndAndMemberId(customExerciseId,memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        return customExerciseRepository.findByIdAndAndMemberId(customExerciseId, memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
     }
 
 
