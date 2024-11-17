@@ -14,6 +14,8 @@ public class ElasticFiled {
 
     public static final String ADD = "등록";
     public static final String CANCEL = "해제";
+    public static final String UPDATE = "수정";
+    public static final String DELETE = "삭제";
 
     
     public static final String INTEREST_INDEX = "exercise_interest_index";
