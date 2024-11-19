@@ -17,6 +17,7 @@ import team9499.commitbody.domain.record.dto.response.RecordSetsResponse;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
+import team9499.commitbody.global.constants.ElasticFiled;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -31,6 +32,7 @@ import static team9499.commitbody.domain.exercise.domain.QExercise.*;
 import static team9499.commitbody.domain.record.domain.QRecord.*;
 import static team9499.commitbody.domain.record.domain.QRecordDetails.*;
 import static team9499.commitbody.domain.record.domain.QRecordSets.*;
+import static team9499.commitbody.global.constants.ElasticFiled.*;
 
 @Slf4j
 @Repository
@@ -56,7 +58,7 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
         LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
         LocalDateTime startOfWeek = weekStart.atStartOfDay();
         LocalDate weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
-        LocalDateTime endOfWeek = weekEnd.atTime(23, 59, 59);;
+        LocalDateTime endOfWeek = weekEnd.atTime(23, 59, 59);
 
         // 쿼리 생성
         List<Tuple> tupleList = jpaQueryFactory
@@ -103,7 +105,7 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
 
         // 만약 details가 null이라면, source에 따라 적절한 Exercise 또는 CustomExercise를 가져와서 RecordDetails 생성
         if (details == null) {
-            if (source.equals("default")) {
+            if (source.equals(DEFAULT)) {
                 Exercise exercise1 = jpaQueryFactory.select(exercise).from(exercise).where(exercise.id.eq(exerciseId)).fetchOne();
                 details = new RecordDetails().onlyExercise(exercise1);
             } else {
@@ -161,10 +163,6 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
                 dayRecordMap.put(dayOfWeek,records);
             }
         }
-
-
-
-
 
         // ExerciseDetailsResponse 집계
         List<ExerciseDetailsResponse> allDetailsResponses = tupleList.stream()
@@ -231,12 +229,10 @@ public class CustomExerciseRepositoryImpl implements CustomExerciseRepository{
      */
     private static BooleanBuilder getBooleanBuilder(Long exerciseId, String source) {
         BooleanBuilder builder = new BooleanBuilder();
-        if (source.equals("default")) {
-            builder.and(recordDetails.exercise.id.eq(exerciseId));
-        } else {
-            builder.and(recordDetails.customExercise.id.eq(exerciseId));
+        if (source.equals(DEFAULT)) {
+            return builder.and(recordDetails.exercise.id.eq(exerciseId));
         }
-        return builder;
+        return  builder.and(recordDetails.customExercise.id.eq(exerciseId));
     }
 
     /*

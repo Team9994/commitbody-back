@@ -42,7 +42,7 @@ public class CustomExercise {
     @ManyToOne(fetch = FetchType.LAZY)
     private Member member;
 
-    public CustomExercise save(String exerciseName,String gifUrl, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment,Member member){
+    public static CustomExercise save(String exerciseName,String gifUrl, ExerciseTarget exerciseTarget, ExerciseEquipment exerciseEquipment,Member member){
         return CustomExercise.builder()
                 .customExName(exerciseName).customGifUrl(gifUrl).exerciseTarget(exerciseTarget).exerciseEquipment(exerciseEquipment).member(member).build();
     }

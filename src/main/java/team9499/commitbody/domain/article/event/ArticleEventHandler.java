@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import team9499.commitbody.domain.article.dto.ArticleDto;
 import team9499.commitbody.domain.article.service.ElsArticleService;
 
+import static team9499.commitbody.global.constants.ElasticFiled.*;
+
 @Component
 @RequiredArgsConstructor
 public class ArticleEventHandler {
@@ -22,9 +24,9 @@ public class ArticleEventHandler {
         String type = elsArticleEvent.getType();
         ArticleDto articleDto = elsArticleEvent.getArticleDto();
         switch (type) {
-            case "등록" -> elsArticleService.saveArticleAsync(articleDto);
-            case "수정" -> elsArticleService.updateArticleAsync(articleDto);
-            case "삭제" -> elsArticleService.deleteArticleAsync(articleDto.getArticleId());
+            case ADD -> elsArticleService.saveArticleAsync(articleDto);
+            case UPDATE -> elsArticleService.updateArticleAsync(articleDto);
+            case DELETE -> elsArticleService.deleteArticleAsync(articleDto.getArticleId());
         }
     }
 

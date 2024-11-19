@@ -165,7 +165,7 @@ class ElsArticleServiceImplTest {
 
         when(likeService.getWriteDrawArticleIds(eq(memberId))).thenReturn(writeDrawArticleIds);
         when(articleCommentService.getWriteDrawArticleIdsByComment(eq(memberId))).thenReturn(writeDrawArticleIdsByComment);
-        when(updateByQueryResponse.updated()).thenReturn(4L);
+
 
 
         when(client.updateByQuery(any(UpdateByQueryRequest.class))).thenReturn(updateByQueryResponse);

@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
-import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
 import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
@@ -46,7 +45,6 @@ public class RecordServiceImpl implements RecordService{
     private final RecordSetsRepository recordSetsRepository;
     private final ExerciseRepository exerciseRepository;
     private final CustomExerciseRepository customExerciseRepository;
-    private final MemberRepository memberRepository;
     private final RecordBatchService recordBatchService;
     private final RedisService redisService;
 
@@ -64,7 +62,7 @@ public class RecordServiceImpl implements RecordService{
      */
     @Override
     public Long saveRecord(Long memberId, String recordName, LocalDateTime startTime, LocalDateTime endTime, List<RecordDto> recordDtos) {
-        Member member = memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(BAD_REQUEST, No_SUCH_MEMBER));
+        Member member = redisService.getMemberDto(memberId.toString()).get();
         int totalVolume = 0;        // 투틴 총 수행 볼륨
         int totalSets = 0;          // 루틴 총 진행 세트
         int exerciseSize = 0;       // 루틴의 총 운동수
