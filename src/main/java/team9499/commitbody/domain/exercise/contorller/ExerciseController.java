@@ -22,12 +22,12 @@ import team9499.commitbody.domain.exercise.event.ElasticDeleteExerciseEvent;
 import team9499.commitbody.domain.exercise.event.ElasticExerciseInterest;
 import team9499.commitbody.domain.exercise.event.ElasticSaveExerciseEvent;
 import team9499.commitbody.domain.exercise.event.ElasticUpdateExerciseEvent;
+import team9499.commitbody.domain.exercise.service.ElasticExerciseService;
 import team9499.commitbody.domain.exercise.service.ExerciseInterestService;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
-
 
 @RestController
 @RequiredArgsConstructor
@@ -35,6 +35,7 @@ import team9499.commitbody.global.payload.SuccessResponse;
 public class ExerciseController {
 
     private final ExerciseService exerciseService;
+    private final ElasticExerciseService elasticExerciseService;
     private final ExerciseInterestService exerciseInterestService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -54,7 +55,7 @@ public class ExerciseController {
                                             @RequestParam(value = "size",required = false)Integer size,
                                             @AuthenticationPrincipal PrincipalDetails principalDetails){
         String memberId = String.valueOf(principalDetails.getMember().getId());
-        SearchExerciseResponse searchExerciseResponse = exerciseService.searchExercise(name, target, equipment,from, size, interest, memberId,source);
+        SearchExerciseResponse searchExerciseResponse = elasticExerciseService.searchExercise(name, target, equipment,from, size, interest, memberId,source);
 
         return ResponseEntity.ok(new SuccessResponse<>(true,"성공",searchExerciseResponse));
     }
