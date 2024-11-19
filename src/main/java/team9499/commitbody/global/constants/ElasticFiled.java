@@ -11,6 +11,7 @@ public class ElasticFiled {
     public static final String DEFAULT_ = "default_";
     public static final String DEFAULT = "default";
     public static final String ID = "id";
+    public static final String _ID = "_id";
 
     public static final String ADD = "등록";
     public static final String CANCEL = "해제";
@@ -35,9 +36,27 @@ public class ElasticFiled {
     public static final String NO_IMAGE = "등록된 이미지 파일이 없습니다.";
     public static final String WEIGHT_AND_LEP = "무게와 횟수";
 
+    // ARTICLE DOC
+    public static final String ARTICLE_INDEX  = "article_index";
+
     // Script
     public static final String CTX_WITH_DRAW = "ctx._source.withDraw = params.writDraw";
+    public static final String INCREMENT_LIKE_COUNT = "ctx._source.like_count += 1";
+    public static final String DECREMENT_LIKE_COUNT = "ctx._source.like_count -= 1";
+    public static final String INCREMENT_COMMENT_COUNT = "ctx._source.comment_count += params.count";
+    public static final String DECREMENT_COMMENT_COUNT = "ctx._source.comment_count -= params.count";
     public static final String PAINLESS = "painless";
     public static final String WRIT_DRAW = "writDraw";
 
+
+    // MAPPING DOC
+    public static final String CATEGORY = "category";
+    public static final String TITLE = "title";
+    public static final String IMG_URL = "img_url";
+    public static final String VISIBILITY = "visibility";
+    public static final String CONTENT = "content";
+    public static final String LIKE_COUNT = "like_count";
+    public static final String COMMENT_COUNT = "comment_count";
+    public static final String TIME = "time";
+    public static final String WRITER = "writer";
 }
