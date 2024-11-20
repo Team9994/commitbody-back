@@ -19,6 +19,7 @@ import team9499.commitbody.domain.file.domain.FileType;
 import team9499.commitbody.global.Exception.InvalidUsageException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,8 +35,12 @@ class S3ServiceTest {
 
     @InjectMocks private S3ServiceImpl s3Service;
 
-    String imageUrl = "https://ClodFronTest.uirl/image/";
-    String defaultProfile = "https://ClodFronTest.uirl/image/default.jpeg";
+    String root = "https://ClodFronTest.url/";
+    String imageUrl = "https://ClodFronTest.url/image/";
+    String defaultProfile1 = "https://ClodFronTest.url/default-1.jpeg";
+    String defaultProfile2 = "https://ClodFronTest.url/default-2.jpeg";
+    String defaultProfile3 = "https://ClodFronTest.url/default-3.jpeg";
+    String defaultProfile4 = "https://ClodFronTest.url/default-4.jpeg";
     String bucketImage = "https://buket/image";
     String bucketVideo = "https://buket/video";
 
@@ -44,7 +49,11 @@ class S3ServiceTest {
         ReflectionTestUtils.setField(s3Service,"bucketImage",bucketImage);
         ReflectionTestUtils.setField(s3Service,"bucketVideo",bucketVideo);
         ReflectionTestUtils.setField(s3Service,"imageUrl",imageUrl);
-        ReflectionTestUtils.setField(s3Service,"defaultProfile",defaultProfile);
+        ReflectionTestUtils.setField(s3Service,"defaultProfile1",defaultProfile1);
+        ReflectionTestUtils.setField(s3Service,"defaultProfile2",defaultProfile2);
+        ReflectionTestUtils.setField(s3Service,"defaultProfile3",defaultProfile3);
+        ReflectionTestUtils.setField(s3Service,"defaultProfile4",defaultProfile4);
+        ReflectionTestUtils.setField(s3Service,"cdnRoot",root);
     }
 
 
@@ -136,10 +145,11 @@ class S3ServiceTest {
     @Test
     void updateS3DefaultProfile(){
         String preFile = "커스텀 사용자 프로필.jpeg";
+        Set<String> defaultProfileSET = Set.of(defaultProfile1,defaultProfile2,defaultProfile3,defaultProfile4);
         doNothing().when(amazonS3).deleteObject(any(),anyString());
 
         String defaultProFile = s3Service.updateProfile(null, preFile, true);
-        assertThat(defaultProFile).isEqualTo(defaultProfile);
+        assertThat(defaultProfileSET).contains(defaultProFile);
 
         verify(amazonS3,times(1)).deleteObject(any(),anyString());
         verify(amazonS3,times(0)).putObject(any(),anyString(),anyString());
