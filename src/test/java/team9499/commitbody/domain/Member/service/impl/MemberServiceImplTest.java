@@ -94,7 +94,7 @@ class MemberServiceImplTest {
     @Test
     void updateMemberProfile(){
         String defaultProfile = "default.jpeg";
-        when(redisService.getMemberDto(memberId.toString())).thenReturn(Optional.of(member));
+        when(memberRepository.findById(anyLong())).thenReturn(Optional.of(member));
         when(s3Service.updateProfile(isNull(),eq(member.getProfile()),eq(true))).thenReturn(defaultProfile);
         doNothing().when(redisService).updateMember(eq(memberId.toString()),eq(member));
         doNothing().when(memberDocService).updateMemberDocAsync(anyString(),anyString(),anyString());
@@ -122,7 +122,7 @@ class MemberServiceImplTest {
     @DisplayName("알림 수신 여부 업데이트")
     @Test
     void updateNotification(){
-        when(redisService.getMemberDto(memberId.toString())).thenReturn(Optional.of(member));
+        when(memberRepository.findById(anyLong())).thenReturn(Optional.of(member));
         doNothing().when(redisService).updateMember(anyString(),any());
 
         String notification = memberService.updateNotification(memberId);

@@ -16,16 +16,19 @@ import team9499.commitbody.global.Exception.ServerException;
 
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
 import static team9499.commitbody.global.Exception.ExceptionType.*;
+import static team9499.commitbody.global.constants.Delimiter.*;
+import static team9499.commitbody.global.constants.ImageConstants.*;
 
 @Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class S3ServiceImpl implements S3Service{
+public class S3ServiceImpl implements S3Service {
 
     private final AmazonS3 amazonS3;
 
@@ -35,8 +38,20 @@ public class S3ServiceImpl implements S3Service{
     @Value("${cloud.aws.s3.bucket.video}")
     private String bucketVideo;
 
-    @Value("${default.profile}")
-    private String defaultProfile;
+    @Value("${default.profile-1}")
+    private String defaultProfile1;
+
+    @Value("${default.profile-2}")
+    private String defaultProfile2;
+
+    @Value("${default.profile-3}")
+    private String defaultProfile3;
+
+    @Value("${default.profile-4}")
+    private String defaultProfile4;
+
+    @Value("${cloud.aws.cdn.root}")
+    private String cdnRoot;
 
     @Value("${cloud.aws.cdn.url}")
     private String imageUrl;
@@ -50,34 +65,11 @@ public class S3ServiceImpl implements S3Service{
      */
     @Override
     public String uploadFile(MultipartFile file) {
-        String storedFileName =null;
-        if (file!=null) {
-            String originalFilename = file.getOriginalFilename();
-
-            Map<String, String> uuid = createUUID(originalFilename);
-            storedFileName = uuid.get("fileName");
-            ObjectMetadata objectMetadata = new ObjectMetadata();
-            objectMetadata.setContentLength(file.getSize());
-            objectMetadata.setContentType(file.getContentType());
-
-            try {
-                InputStream inputStream = file.getInputStream();
-                String type = uuid.get("type");
-                if (type.equals("mp4") || type.equals("gif")){
-                    amazonS3.putObject(new PutObjectRequest(bucketVideo, storedFileName, inputStream, objectMetadata));
-                    storedFileName = videoUrl + storedFileName;
-                }else{
-                    amazonS3.putObject(new PutObjectRequest(bucketImage, storedFileName, inputStream, objectMetadata));
-                    storedFileName = imageUrl + storedFileName;
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR, SERVER_ERROR);
-            }
+        if (file != null) {
+            Map<String, String> uuid = createUUID(file.getOriginalFilename());
+            return uploadAndGenerateFileURL(file, uuid, uuid.get(FILENAME), createObjectMetadata(file));
         }
-
-        return storedFileName;
+        return null;
     }
 
     /**
@@ -85,39 +77,32 @@ public class S3ServiceImpl implements S3Service{
      */
     @Override
     public String updateFile(MultipartFile file, String previousFileName) {
-        if (file!=null && previousFileName!=null) {
-            String extension = getFileTypeToString(previousFileName);
-            FileType type = FileType.IMAGE;
-
-            if (extension.equals("mp4") || extension.equals("gif")) type = FileType.VIDEO;
-            deleteFile(previousFileName,type);
-        }
+        deletePreviousFileIfExists(file, previousFileName);
         return uploadFile(file);
     }
 
     /**
      * 프로필 사진 업데이트
      * 기본 이미지파일을 경우 이미지파일을 업데이트하고 변경된 프로필 사진을 경우 기존 이미지 파일을 삭제후 새로운 프로플 사진을 업데이트
-     * @param file
-     * @param previousFileName  이전 프로필 파일 이름
-     * @return
      */
     @Override
-    public String updateProfile(MultipartFile file, String previousFileName,boolean deleteProfile) {
-        String previous = previousFileName;
-
-        if (deleteProfile){     // 기본 프로필 적용시
-            previous = defaultProfile;
-            deleteFile(previousFileName.replace(imageUrl, ""),FileType.IMAGE);
+    public String updateProfile(MultipartFile file, String previousFileName, boolean deleteProfile) {
+        if (deleteProfile) {     // 기본 프로필 적용시
+            applyDefaultProfile(previousFileName);
+            return generateRandomProfile();
         }
-        if (file!=null) {
-            if (!previous.equals(defaultProfile)){      // 기본 프로필 사진이 아닐 경우 기존 프로필 사진을 삭제
-                deleteFile(previousFileName.replace(imageUrl, ""),FileType.IMAGE);
-            }
-            previous = uploadFile(file);
+        if (file != null) {
+            handlePreviousProfileDeletion(previousFileName);
+            return uploadFile(file);
         }
+        return previousFileName;
+    }
 
-        return previous;
+    @Override
+    public String generateRandomProfile() {
+        String[] defaultProfiles = {defaultProfile1, defaultProfile2, defaultProfile3, defaultProfile4};
+        int randomIndex = new Random().nextInt(defaultProfiles.length);
+        return defaultProfiles[randomIndex];
     }
 
     /**
@@ -127,30 +112,79 @@ public class S3ServiceImpl implements S3Service{
     public void deleteFile(String fileName, FileType type) {
         try {
             if (type.equals(FileType.IMAGE))
-                amazonS3.deleteObject(bucketImage,fileName);
-            else if (type.equals(FileType.VIDEO)){
-                amazonS3.deleteObject(bucketVideo,fileName);
+                amazonS3.deleteObject(bucketImage, fileName);
+            else if (type.equals(FileType.VIDEO)) {
+                amazonS3.deleteObject(bucketVideo, fileName);
             }
-        }catch (Exception e){
-            log.error("이미지 삭제중 오류 발생 : {}",e.getMessage());
-            throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR,SERVER_ERROR);
+        } catch (Exception e) {
+            throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR, SERVER_ERROR);
         }
     }
 
-    private static String getFileTypeToString(String fileName) {
-        int indexOf = fileName.lastIndexOf(".");
-        return fileName.substring(indexOf + 1).toLowerCase();
+    private ObjectMetadata createObjectMetadata(MultipartFile file) {
+        ObjectMetadata objectMetadata = new ObjectMetadata();
+        objectMetadata.setContentLength(file.getSize());
+        objectMetadata.setContentType(file.getContentType());
+        return objectMetadata;
     }
 
+    private String uploadAndGenerateFileURL(MultipartFile file, Map<String, String> uuid, String storedFileName, ObjectMetadata objectMetadata) {
+        try {
+            InputStream inputStream = file.getInputStream();
+            String type = uuid.get(TYPE);
+            return uploadFileToS3AndGenerateURL(storedFileName, objectMetadata, type, inputStream);
+        } catch (Exception e) {
+            throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR, SERVER_ERROR);
+        }
+    }
 
-    private Map<String,String> createUUID(String fileName){
+    private String uploadFileToS3AndGenerateURL(String storedFileName, ObjectMetadata objectMetadata, String type, InputStream inputStream) {
+        if (type.equals(MP4) || type.equals(GIF)) {
+            amazonS3.putObject(new PutObjectRequest(bucketVideo, storedFileName, inputStream, objectMetadata));
+            return videoUrl + storedFileName;
+        }
+        amazonS3.putObject(new PutObjectRequest(bucketImage, storedFileName, inputStream, objectMetadata));
+        return imageUrl + storedFileName;
+    }
+
+    private Map<String, String> createUUID(String fileName) {
         String extension = getFileTypeToString(fileName);
+        validFileType(extension);
+        String uuid = UUID.randomUUID().toString();
+        return Map.of(FILENAME, uuid + COMMA + extension, TYPE, extension);
+    }
 
-        Set<String> allowedExtensions = Set.of("jpeg", "jpg", "png","gif","mp4");
-        if (!allowedExtensions.contains(extension)){
+    private void validFileType(String extension) {
+        Set<String> allowedExtensions = Set.of(JPEG, JPG, PNG, GIF, MP4);
+        if (!allowedExtensions.contains(extension)) {
             throw new InvalidUsageException(ExceptionStatus.BAD_REQUEST, INVALID_FILE_FORMAT);
         }
-        String uuid = UUID.randomUUID().toString();
-        return Map.of("fileName",uuid+"."+extension,"type",extension);
     }
+
+    private void deletePreviousFileIfExists(MultipartFile file, String previousFileName) {
+        if (file != null && previousFileName != null) {
+            String extension = getFileTypeToString(previousFileName);
+            FileType type = FileType.IMAGE;
+
+            if (extension.equals(MP4) || extension.equals(GIF))
+                type = FileType.VIDEO;
+            deleteFile(previousFileName, type);
+        }
+    }
+
+    private String getFileTypeToString(String fileName) {
+        return fileName.substring(fileName.lastIndexOf(COMMA) + 1).toLowerCase();
+    }
+
+    private void handlePreviousProfileDeletion(String previousFileName) {
+        Set<String> profiles = Set.of(defaultProfile1, defaultProfile2, defaultProfile3, defaultProfile4);
+        if (!profiles.contains(previousFileName)) {      // 기본 프로필 사진이 아닐 경우 기존 프로필 사진을 삭제
+            deleteFile(previousFileName.replace(imageUrl, STRING_EMPTY), FileType.IMAGE);
+        }
+    }
+
+    private void applyDefaultProfile(String previousFileName) {
+        deleteFile(previousFileName.replace(cdnRoot, STRING_EMPTY), FileType.IMAGE);
+    }
+
 }

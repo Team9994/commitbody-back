@@ -63,4 +63,8 @@ public class MemberDto {
     public static MemberDto createNickname(Long memberId,String nickname, String profile){
         return MemberDto.builder().profile(profile).memberId(memberId).nickname(nickname).build();
     }
+
+    public static MemberDto of(String verifyMemberId){
+        return MemberDto.builder().memberId(Long.valueOf(verifyMemberId)).build();
+    }
 }

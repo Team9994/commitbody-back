@@ -2,7 +2,6 @@ package team9499.commitbody.domain.exercise.service.Impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,7 +27,6 @@ import team9499.commitbody.global.redis.RedisService;
 
 import java.util.*;
 
-@Slf4j
 @Service
 @Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
@@ -44,9 +42,6 @@ public class ExerciseServiceImpl implements ExerciseService {
     private final MemberRepository memberRepository;
     private final S3Service s3Service;
 
-    @Value("${cloud.aws.cdn.url}")
-    private String CDN_RUL;
-
     /**
      * 커스텀 운동등록 메서드
      * 이미지는 s3에 업로드
@@ -57,7 +52,7 @@ public class ExerciseServiceImpl implements ExerciseService {
         Optional<Member> redisMember = getRedisMember(memberId);
 
         CustomExercise exercise = customExerciseRepository.save(CustomExercise.save(exerciseName, storedFileName, exerciseTarget, exerciseEquipment, redisMember.get()));
-        return CustomExerciseDto.fromDto(exercise, getImgUrl(storedFileName));
+        return CustomExerciseDto.fromDto(exercise, storedFileName);
     }
 
     /**
@@ -68,7 +63,7 @@ public class ExerciseServiceImpl implements ExerciseService {
         CustomExercise customExercise = getCustomExercise(customExerciseId, memberId);
         String updateImage = s3Service.updateFile(file, customExercise.getCustomGifUrl());
         customExercise.update(exerciseName, exerciseTarget, exerciseEquipment, updateImage);
-        return CustomExerciseDto.fromDto(customExercise, getImgUrl(updateImage));
+        return CustomExerciseDto.fromDto(customExercise, updateImage);
     }
 
     /**
@@ -100,7 +95,6 @@ public class ExerciseServiceImpl implements ExerciseService {
         return exerciseDetailReport;
     }
 
-
     private Optional<Member> getRedisMember(Long memberId) {
         Optional<Member> optionalMember = redisService.getMemberDto(String.valueOf(memberId));
 
@@ -115,8 +109,4 @@ public class ExerciseServiceImpl implements ExerciseService {
         return customExerciseRepository.findByIdAndAndMemberId(customExerciseId, memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
     }
 
-
-    private String getImgUrl(String storedFileName) {
-        return storedFileName != null ? CDN_RUL + storedFileName : null;
-    }
 }

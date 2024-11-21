@@ -11,5 +11,7 @@ public interface S3Service {
 
     String updateProfile(MultipartFile file, String previousFileName, boolean deleteProfile);
 
+    String generateRandomProfile();
+
     void deleteFile(String fileName, FileType type);
 }
