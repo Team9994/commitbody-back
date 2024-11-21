@@ -5,7 +5,6 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +16,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-@Slf4j
+import static team9499.commitbody.global.constants.Delimiter.*;
+import static team9499.commitbody.global.constants.ElasticFiled.*;
+
 @Service
 @Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
@@ -26,7 +27,8 @@ public class ElsBlockMemberServiceImpl implements ElsBlockMemberService {
     private final ElsBlockMemberRepository elsBlockMemberRepository;
     private final ElasticsearchClient elasticsearchClient;
 
-    private String BLOCKED="blocked_";
+    private final String BLOCKED="blocked_";
+    private final static String BLOCK_KR = "차단 성공";
 
     /**
      * 차단 성공/해제시 BlockMember 의 차단한 사용자 필드의 차단한 사용자 Id 를 삽입/삭제 하는 메서드
@@ -36,23 +38,8 @@ public class ElsBlockMemberServiceImpl implements ElsBlockMemberService {
      */
     @Async
     public void blockMember(Long blockerId, Long blockedId, String status) {
-        String id = getElsId(blockedId);
-
-        BlockMemberDoc blockMemberDoc = elsBlockMemberRepository.findById(id)
-                .orElse(new BlockMemberDoc(id, new ArrayList<>()));
-
-        List<Long> blockedIds = blockMemberDoc.getBlockerId();
-
-        if ("차단 성공".equals(status)) {
-            if (!blockedIds.contains(blockerId)) {
-                blockedIds.add(blockerId);
-            }
-        } else {
-            blockedIds.remove(blockerId);
-        }
-
-        blockMemberDoc.setBlockerId(blockedIds);
-        elsBlockMemberRepository.save(blockMemberDoc);
+        BlockMemberDoc blockMemberDoc = getBlockMemberDoc(blockedId);
+        handleBlockMember(blockMemberDoc, getBlockedIds(blockerId, status, blockMemberDoc));
     }
 
     /**
@@ -62,12 +49,8 @@ public class ElsBlockMemberServiceImpl implements ElsBlockMemberService {
      */
     @Override
     public List<Long> getBlockerIds(Long blockedId) {
-        String elsId = getElsId(blockedId);
-        BlockMemberDoc blockMemberDoc = elsBlockMemberRepository.findById(elsId).orElse(null);
-        if (blockMemberDoc!=null){
-            return blockMemberDoc.getBlockerId();
-        }
-        return List.of();
+        BlockMemberDoc blockMemberDoc = getBlockerMemberDoc(blockedId);
+        return handlerBlockerIds(blockMemberDoc);
     }
 
     /**
@@ -77,20 +60,63 @@ public class ElsBlockMemberServiceImpl implements ElsBlockMemberService {
      */
     @Override
     public List<Long> findBlockedIds(Long blockerId) {
-        SearchRequest searchRequest = new SearchRequest.Builder()
-                .index("block_member_index")
-                .query(q -> q.term(t -> t.field("blockerId").value(blockerId))).build();
+        SearchRequest searchRequest = createSearchRequest(blockerId);
+        return handlerFindBlockedIds(searchRequest);
+    }
 
+    private BlockMemberDoc getBlockMemberDoc(Long blockedId) {
+        String id = getElsId(blockedId);
+        return elsBlockMemberRepository.findById(id)
+                .orElse(new BlockMemberDoc(id, new ArrayList<>()));
+    }
+
+    private void handleBlockMember(BlockMemberDoc blockMemberDoc, List<Long> blockedIds) {
+        blockMemberDoc.setBlockerId(blockedIds);
+        elsBlockMemberRepository.save(blockMemberDoc);
+    }
+
+    private List<Long> getBlockedIds(Long blockerId, String status, BlockMemberDoc blockMemberDoc) {
+        List<Long> blockedIds = blockMemberDoc.getBlockerId();
+        if (BLOCK_KR.equals(status)) {
+            blockedIds.add(blockerId); // 중복 추가를 방지하도록 수정
+            return blockedIds.stream().distinct().toList();
+        }
+        blockedIds.remove(blockerId);
+        return blockedIds;
+    }
+
+    private BlockMemberDoc getBlockerMemberDoc(Long blockedId) {
+        return elsBlockMemberRepository.findById(getElsId(blockedId)).orElse(null);
+    }
+
+    private static List<Long> handlerBlockerIds(BlockMemberDoc blockMemberDoc) {
+        if (blockMemberDoc !=null){
+            return blockMemberDoc.getBlockerId();
+        }
+        return List.of();
+    }
+
+    private static SearchRequest createSearchRequest(Long blockerId) {
+        return new SearchRequest.Builder()
+                .index(BLOCK_MEMBER_INDEX)
+                .query(q -> q.term(t -> t.field(BLOCKER_ID).value(blockerId))).build();
+    }
+
+    private List<Long> handlerFindBlockedIds(SearchRequest searchRequest) {
         List<Long> ids = new ArrayList<>();
         try {
             SearchResponse<Object> search = elasticsearchClient.search(searchRequest, Object.class);
-            for (Hit<Object> hit : search.hits().hits()) {
-                 ids.add(Long.parseLong(hit.id().replace(BLOCKED,"")));
-            }
+            extractIdsFromHits(search, ids);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return ids;
+    }
+
+    private void extractIdsFromHits(SearchResponse<Object> search, List<Long> ids) {
+        for (Hit<Object> hit : search.hits().hits()) {
+            ids.add(Long.parseLong(hit.id().replace(BLOCKED, STRING_EMPTY)));
+        }
     }
 
     private String getElsId(Long blockedId) {
