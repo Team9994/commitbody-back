@@ -39,6 +39,10 @@ public class ElasticFiled {
     // ARTICLE DOC
     public static final String ARTICLE_INDEX  = "article_index";
 
+    public static final String BLOCK_MEMBER_INDEX = "block_member_index";
+    public static final String BLOCKER_ID = "blockerId";
+
+
     // Script
     public static final String CTX_WITH_DRAW = "ctx._source.withDraw = params.writDraw";
     public static final String INCREMENT_LIKE_COUNT = "ctx._source.like_count += 1";
