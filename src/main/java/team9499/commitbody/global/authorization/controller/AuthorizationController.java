@@ -20,10 +20,7 @@ import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.authorization.domain.PrincipalDetails;
-import team9499.commitbody.global.authorization.dto.request.AdditionalInfoReqeust;
-import team9499.commitbody.global.authorization.dto.request.JoinLoginRequest;
-import team9499.commitbody.global.authorization.dto.request.MemberWithdrawRequest;
-import team9499.commitbody.global.authorization.dto.request.RegisterNicknameRequest;
+import team9499.commitbody.global.authorization.dto.request.*;
 import team9499.commitbody.global.authorization.dto.response.JoinResponse;
 import team9499.commitbody.global.authorization.dto.response.TokenUserInfoResponse;
 import team9499.commitbody.global.authorization.event.DeleteMemberEvent;
@@ -33,7 +30,6 @@ import team9499.commitbody.global.payload.SuccessResponse;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-
 
 @Tag(name = "인증 인가",description = "인증 인가관련된 API")
 @Slf4j
@@ -55,7 +51,7 @@ public class AuthorizationController {
             examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
     @PostMapping("/auth")
-    public ResponseEntity<SuccessResponse> socialLogin(@RequestBody JoinLoginRequest joinLoginRequest){
+    public ResponseEntity<?> socialLogin(@RequestBody JoinLoginRequest joinLoginRequest){
         JoinResponse joinResponse = authorizationService.authenticateOrRegisterUser(
                 joinLoginRequest.getLoginType(), joinLoginRequest.getSocialId(), joinLoginRequest.getFcmToken()
         );
@@ -86,7 +82,7 @@ public class AuthorizationController {
                 additionalInfoReqeust.getNickName(), additionalInfoReqeust.getGender(), additionalInfoReqeust.getBirthday(), additionalInfoReqeust.getHeight(), additionalInfoReqeust.getWeight(),
                 additionalInfoReqeust.getBodyFatPercentage(), additionalInfoReqeust.getBoneMineralDensity(), jwtToken
         );
-        return ResponseEntity.ok(new SuccessResponse(true,"회원가입 성공",tokenUserInfoResponse));
+        return ResponseEntity.ok(new SuccessResponse<>(true,"회원가입 성공",tokenUserInfoResponse));
     }
 
     @Operation(summary = "회원가입-닉네임 검증", description = "회원가입 시 닉네임을 검증합니다. 조건: 1. 영문+한글+숫자(3~8글자), 2. 영문+숫자(3~8글자), 3. 한글+숫자(3~8글자) 조건을 만족해야 한다.")
@@ -125,8 +121,8 @@ public class AuthorizationController {
     @PostMapping("/auth-refresh")
     public ResponseEntity<?> refreshAccessToken(HttpServletRequest request){
         String refreshToken = getJwtToken(request);
-        Map<String, String> map = authorizationService.refreshAccessToken(refreshToken);
-        return ResponseEntity.ok(new SuccessResponse<>(true,"재발급 성공",map));
+        Map<String, String> refreshAccessToken = authorizationService.refreshAccessToken(refreshToken);
+        return ResponseEntity.ok(new SuccessResponse<>(true,"재발급 성공",refreshAccessToken));
     }
 
     @Operation(summary = "로그아웃", description = "로그아웃을 진행합니다. 현재 사용한 AccessToken 및 RefreshToken 은 다시 사용 할수 없습니다.")
@@ -141,10 +137,8 @@ public class AuthorizationController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request,
-                                    @AuthenticationPrincipal PrincipalDetails principalDetails){
-        Long memberId = principalDetails.getMember().getId();
-        authorizationService.logout(memberId,getJwtToken(request));
+    public ResponseEntity<?> logout(@RequestBody LogoutRequest logoutRequest){
+        authorizationService.logout(logoutRequest);
         return ResponseEntity.ok(new SuccessResponse<>(true,"로그아웃 성공"));
     }
 

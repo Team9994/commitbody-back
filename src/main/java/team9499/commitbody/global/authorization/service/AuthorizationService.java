@@ -2,6 +2,7 @@ package team9499.commitbody.global.authorization.service;
 
 import team9499.commitbody.domain.Member.domain.Gender;
 import team9499.commitbody.domain.Member.domain.LoginType;
+import team9499.commitbody.global.authorization.dto.request.LogoutRequest;
 import team9499.commitbody.global.authorization.dto.response.JoinResponse;
 import team9499.commitbody.global.authorization.dto.response.TokenUserInfoResponse;
 
@@ -18,7 +19,7 @@ public interface AuthorizationService {
 
     Map<String,String> refreshAccessToken(String refreshToken);
 
-    void logout(Long memberId, String jwtToken);
+    void logout(LogoutRequest logoutRequest);
 
     void withdrawMember(Long memberId,String jwtToken);
 }
