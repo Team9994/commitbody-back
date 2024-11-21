@@ -1,4 +1,4 @@
-package team9499.commitbody.domain.block.servcice;
+package team9499.commitbody.domain.block.servcice.impl;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.block.domain.BlockMemberDoc;
 import team9499.commitbody.domain.block.repository.ElsBlockMemberRepository;
+import team9499.commitbody.domain.block.servcice.ElsBlockMemberService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ import java.util.List;
 @Service
 @Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
-public class ElsBlockMemberServiceImpl implements ElsBlockMemberService{
+public class ElsBlockMemberServiceImpl implements ElsBlockMemberService {
 
     private final ElsBlockMemberRepository elsBlockMemberRepository;
     private final ElasticsearchClient elasticsearchClient;

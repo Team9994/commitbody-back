@@ -1,4 +1,4 @@
-package team9499.commitbody.domain.block.servcice;
+package team9499.commitbody.domain.block.servcice.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.block.domain.BlockMember;
 import team9499.commitbody.domain.block.repository.BlockMemberRepository;
+import team9499.commitbody.domain.block.servcice.BlockMemberService;
 import team9499.commitbody.global.Exception.BlockException;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
@@ -14,7 +15,7 @@ import team9499.commitbody.global.redis.RedisService;
 @Service
 @Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
-public class BlockMemberServiceImpl implements BlockMemberService{
+public class BlockMemberServiceImpl implements BlockMemberService {
 
     private final BlockMemberRepository blockMemberRepository;
     private final RedisService redisService;
