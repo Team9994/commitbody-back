@@ -15,6 +15,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ArticleCommentBatchServiceImpl implements ArticleCommentBatchService {
 
+    private static final String SQL_LIKE_DELETE = "DELETE FROM content_like WHERE article_comment_id = ?";
+    private static final String SQL_PARENT_DELETE = "DELETE FROM article_comment WHERE article_comment_id = ?";
+    private static final String SQL_CHILD_DELETE = "DELETE FROM article_comment WHERE parent_id = ?";
+    private static final String SQL_NOTIFICATION_DELETE = "DELETE FROM notification WHERE comment_id = ?";
+
     @Qualifier("dataJdbcTemplate")
     private final JdbcTemplate jdbcTemplate;
 
@@ -26,37 +31,7 @@ public class ArticleCommentBatchServiceImpl implements ArticleCommentBatchServic
      */
     @Override
     public void deleteCommentBatch(Long commentId, List<Long> ids) {
-
-        try {
-            // content_like에서 삭제할 ID 목록 준비
-            String likeDelete = "DELETE FROM content_like WHERE article_comment_id = ?";
-            List<Object[]> likeBatchArgs = ids.stream()
-                    .map(id -> new Object[]{id})
-                    .toList();
-
-            // article_comment에서 댓글 삭제할 ID 목록 준비
-            String parentDelete = "DELETE FROM article_comment WHERE article_comment_id = ?";
-            Object[] parentArgs = {commentId};
-
-            // article_comment에서 자식 댓글 삭제할 ID 목록 준비
-            String childDelete = "DELETE FROM article_comment WHERE parent_id = ?";
-            Object[] childArgs = {commentId};
-
-            // 부모 댓글 삭제시 해당 댓글로 날라간 알림 내역 삭제
-            String notification = "DELETE FROM notification where comment_id = ?";
-            List<Object[]> notificationArgs = ids.stream()
-                    .map(id -> new Object[]{id})
-                    .toList();
-
-            // 각 테이블에서 배치 삭제 수행
-            jdbcTemplate.batchUpdate(likeDelete, likeBatchArgs);
-            jdbcTemplate.batchUpdate(notification, notificationArgs);
-            jdbcTemplate.update(parentDelete, parentArgs);
-            jdbcTemplate.update(childDelete, childArgs);
-        }catch (Exception e){
-            log.error("부모 댓글 배치 삭제시 오류 발생");
-            e.printStackTrace();
-        }
+        handleBatchDelete(ids,commentId,true);
     }
 
     /**
@@ -66,18 +41,29 @@ public class ArticleCommentBatchServiceImpl implements ArticleCommentBatchServic
      */
     @Override
     public void deleteChildCommentBatch(Long commentId) {
-        try {
-            String delChildCommentLike = "DELETE FROM content_like WHERE article_comment_id = ?";
-            String delNotification = "DELETE FROM notification WHERE comment_id = ?";
-            String delCommentId = "DELETE FROM article_comment WHERE article_comment_id = ?";
+        handleBatchDelete(List.of(commentId),commentId,false);
+    }
 
-            jdbcTemplate.update(delChildCommentLike, commentId);
-            jdbcTemplate.update(delNotification, commentId);
-            jdbcTemplate.update(delCommentId, commentId); 
+    private void handleBatchDelete(List<Long> ids, Long parentId, boolean isParent) {
+        try {
+            jdbcTemplate.batchUpdate(SQL_LIKE_DELETE, mapToBatchArgs(ids));
+            jdbcTemplate.batchUpdate(SQL_NOTIFICATION_DELETE, mapToBatchArgs(ids));
+
+            if (isParent){
+                jdbcTemplate.update(SQL_PARENT_DELETE, parentId);
+                jdbcTemplate.update(SQL_CHILD_DELETE, parentId);
+                return;
+            }
+            jdbcTemplate.update(SQL_CHILD_DELETE, parentId);
+
         }catch (Exception e){
-            log.error("자식 댓글 삭제중 오류 발생");
-            e.printStackTrace();
+            log.error("댓글 삭제 중 오류 발생: {}", e.getMessage(), e);
         }
-        
+    }
+
+    private static List<Object[]> mapToBatchArgs(List<Long> ids) {
+        return ids.stream()
+                .map(id -> new Object[]{id})
+                .toList();
     }
 }
