@@ -8,7 +8,6 @@ import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.Member.domain.Member;
@@ -29,7 +28,6 @@ import static team9499.commitbody.domain.article.domain.QArticle.*;
 import static team9499.commitbody.domain.block.domain.QBlockMember.blockMember;
 import static team9499.commitbody.domain.comment.article.domain.QArticleComment.*;
 
-@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentRepository {
@@ -41,59 +39,11 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
 
     @Override
     public Slice<ArticleCommentDto> getAllCommentByArticle(Long articleId, Long memberId, Long lastId, Integer lastLikeCount,OrderType orderType, Pageable pageable) {
-        BooleanBuilder builder = new BooleanBuilder();
-
-        // lastId를 기준으로 이전 댓글만 가져옴
-        if (orderType.equals(OrderType.LIKE) && lastLikeCount!=null){
-            if (lastLikeCount!=0){
-                builder.or(articleComment.likeCount.lt(lastLikeCount));
-            }else
-                builder.or(articleComment.likeCount.eq(0).and(articleComment.id.lt(lastId)));
-        }
-        if (lastId!=null){        // 최신순 정렬일 경우에는 lastId 값 기준으로 다음 데이터 조회
-            builder.and(articleComment.id.lt(lastId));
-        }
-
-        OrderSpecifier[] order = getSortOrder(orderType,articleComment);
-        // 부모 댓글만 가져오기 위한 조건 추가
-        List<Tuple> comments = jpaQueryFactory
-                .select(articleComment, articleComment.member)
-                .from(articleComment)
-                .leftJoin(articleComment.member, member).fetchJoin()
-                .leftJoin(articleComment.childComments, childComment).fetchJoin()
-                .leftJoin(blockMember).on(blockMember.blocked.id.eq(articleComment.member.id).and(blockMember.blocker.id.eq(memberId)))
-                .leftJoin(childBlock).on(childBlock.blocked.id.eq(memberId).and(childBlock.blocker.id.eq(articleComment.member.id)))    // 차단된 사용자 필터링 조건
-                .where(builder,articleComment.article.id.eq(articleId)
-                        .and(articleComment.parent.id.isNull())
-                        .and(blockMember.id.isNull().or(blockMember.blockStatus.eq(false)))
-                        .and(childBlock.id.isNull().or(childBlock.blockStatus.eq(false)))
-                        .and((articleComment.member.isWithdrawn.eq(false)))
-                ) // 차단되지 않았거나 차단이 해제된 경우
-                .orderBy(order) // 최신 댓글 우선 정렬
-                .limit(pageable.getPageSize() + 1)
-                .fetch();
-
-        // 조회된 댓글을 순회하며 articleComments 매핑하여 객체를 담습니다.
-        List<ArticleCommentDto> articleComments = comments.stream()
-                .map(tuple -> ArticleCommentDto.of(
-                        tuple.get(articleComment),
-                        MemberDto.toMemberDTO(tuple.get(articleComment.member)),
-                        TimeConverter.converter(tuple.get(articleComment).getCreatedAt()),
-                        checkWriter(tuple.get(articleComment.member), memberId),
-                        true
-                        )
-                )
-                .distinct()
-                .collect(Collectors.toList());
-
-        boolean hasNext = articleComments.size() > pageable.getPageSize();   // 페이지 체크
-
-        // 다음 페이지 여부를 결정하기 위해 마지막 요소를 제거
-        if (hasNext) {
-            articleComments.remove(pageable.getPageSize());
-        }
-
-        return new SliceImpl<>(articleComments, pageable, hasNext);
+        BooleanBuilder builder = getBuilder(lastId, lastLikeCount, orderType);
+        OrderSpecifier[] order = getSortOrder(orderType);
+        List<Tuple> getParentComments = getAllAArticleCommentQuery(articleId, memberId, pageable, builder, order);
+        List<ArticleCommentDto> articleComments = mappingArticleComments(memberId, getParentComments);
+        return new SliceImpl<>(articleComments, pageable, isHasNext(pageable, articleComments));
     }
 
     /**
@@ -104,7 +54,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
      */
     @Override
     public Integer getCommentCount(Long articleId, Long memberId) {
-        List<ArticleComment> fetch = jpaQueryFactory
+       return jpaQueryFactory
                 .select(articleComment)
                 .from(articleComment)
                 .leftJoin(blockMember).on(blockMember.blocked.id.eq(articleComment.member.id).and(blockMember.blocker.id.eq(memberId)))
@@ -114,8 +64,7 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                         .and(blockMember.id.isNull().or(blockMember.blockStatus.eq(false)))
                         .and(childBlock.id.isNull().or(childBlock.blockStatus.eq(false)))
                         .and((articleComment.member.isWithdrawn.eq(false)))
-                ).fetch();
-        return fetch.size();
+                ).fetch().size();
     }
 
     /**
@@ -130,41 +79,10 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
     @Override
     public Slice<ArticleCommentDto> getAllReplyComments(Long commentId, Long memberId,Long lastId, Pageable pageable) {
         BooleanBuilder builder = new BooleanBuilder();
-        if (lastId!=null){
-            builder.and(articleComment.id.lt(lastId));
-        }
-
-        List<Tuple> articleComments = jpaQueryFactory
-                .select(articleComment, articleComment.member)
-                .from(articleComment)
-                .leftJoin(articleComment.childComments, childComment).fetchJoin() // 자식 댓글을 페치 조인
-                .leftJoin(childComment.member, member).fetchJoin() // 자식 댓글 작성자 조인
-                .leftJoin(blockMember).on(blockMember.blocked.id.eq(articleComment.member.id).and(blockMember.blocker.id.eq(memberId))) // 차단한 사용자 필터링 조건
-                .leftJoin(childBlock).on(childBlock.blocked.id.eq(memberId).and(childBlock.blocker.id.eq(articleComment.member.id)))    // 차단된 사용자 필터링 조건
-                .where(builder,articleComment.parent.id.eq(commentId) // 부모 댓글 필터링
-                        .and(blockMember.id.isNull().or(blockMember.blockStatus.eq(false)))
-                        .and(childBlock.id.isNull().or(childBlock.blockStatus.eq(false)))
-                        .and((articleComment.member.isWithdrawn.eq(false)))
-                ) // 차단된 사용자가 아니거나 차단이 해제된 경우만
-                .limit(pageable.getPageSize() + 1)
-                .orderBy(articleComment.createdAt.desc())
-                .fetch();
-
-        List<ArticleCommentDto> content = articleComments.stream()
-                .map(tuple -> ArticleCommentDto.of(
-                        tuple.get(articleComment),
-                        TimeConverter.converter(tuple.get(articleComment).getCreatedAt()),
-                        checkWriter(tuple.get(articleComment.member), memberId),
-                        false
-                )).collect(Collectors.toList());
-
-        boolean hasNext =false;
-        if (content.size() > pageable.getPageSize()){
-            hasNext = true;
-            content.remove(pageable.getPageSize());
-        }
-
-       return new SliceImpl<>(content,pageable,hasNext);
+        builderLastId(lastId, builder);
+        List<Tuple> articleComments = getAllReplyCommentQuery(commentId, memberId, pageable, builder);
+        List<ArticleCommentDto> articleCommentDtos = getArticleCommentDtos(memberId, articleComments);
+       return new SliceImpl<>(articleCommentDtos,pageable,isHasNext(pageable,articleCommentDtos));
     }
 
     /**
@@ -197,31 +115,141 @@ public class CustomArticleCommentRepositoryImpl implements CustomArticleCommentR
                         .and(articleComment.parent.isNull())).fetch();
     }
 
+    private static BooleanBuilder getBuilder(Long lastId, Integer lastLikeCount, OrderType orderType) {
+        BooleanBuilder builder = new BooleanBuilder();
+        builderLike(lastId, lastLikeCount, orderType, builder);
+        builderLastId(lastId, builder);
+        return builder;
+    }
+
+    private static void builderLike(Long lastId, Integer lastLikeCount, OrderType orderType, BooleanBuilder builder) {
+        if (orderType.equals(OrderType.LIKE) && lastLikeCount !=null){
+            if (lastLikeCount !=0){
+                builder.or(articleComment.likeCount.lt(lastLikeCount));
+                return;
+            }
+            builder.or(articleComment.likeCount.eq(0).and(articleComment.id.lt(lastId)));
+        }
+    }
+
+    private static void builderLastId(Long lastId, BooleanBuilder builder) {
+        if (lastId !=null){        // 최신순 정렬일 경우에는 lastId 값 기준으로 다음 데이터 조회
+            builder.and(articleComment.id.lt(lastId));
+        }
+    }
+
+    private static List<ArticleCommentDto> mappingArticleComments(Long memberId, List<Tuple> getParentComments) {
+        return getParentComments.stream()
+                .map(tuple -> ArticleCommentDto.of(
+                                tuple.get(articleComment),
+                                MemberDto.toMemberDTO(tuple.get(articleComment.member)),
+                                TimeConverter.converter(tuple.get(articleComment).getCreatedAt()),
+                                checkWriter(tuple.get(articleComment.member), memberId),
+                                true
+                        )
+                )
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private static boolean isHasNext(Pageable pageable, List<ArticleCommentDto> articleComments) {
+        boolean hasNext = articleComments.size() > pageable.getPageSize();   // 페이지 체크
+        if (hasNext) {
+            articleComments.remove(pageable.getPageSize());
+        }
+        return hasNext;
+    }
+
+    private List<Tuple> getAllAArticleCommentQuery(Long articleId, Long memberId, Pageable pageable, BooleanBuilder builder, OrderSpecifier[] order) {
+        return jpaQueryFactory
+                .select(articleComment, articleComment.member)
+                .from(articleComment)
+                .leftJoin(articleComment.member, member).fetchJoin()
+                .leftJoin(articleComment.childComments, childComment).fetchJoin()
+                .leftJoin(blockMember).on(blockMember.blocked.id.eq(articleComment.member.id).and(blockMember.blocker.id.eq(memberId)))
+                .leftJoin(childBlock).on(childBlock.blocked.id.eq(memberId).and(childBlock.blocker.id.eq(articleComment.member.id)))    // 차단된 사용자 필터링 조건
+                .where(builder,articleComment.article.id.eq(articleId)
+                        .and(articleComment.parent.id.isNull())
+                        .and(blockMember.id.isNull().or(blockMember.blockStatus.eq(false)))
+                        .and(childBlock.id.isNull().or(childBlock.blockStatus.eq(false)))
+                        .and((articleComment.member.isWithdrawn.eq(false)))
+                ) // 차단되지 않았거나 차단이 해제된 경우
+                .orderBy(order) // 최신 댓글 우선 정렬
+                .limit(pageable.getPageSize() + 1)
+                .fetch();
+    }
+
     /**
      * 동적 정렬
      * - RECENT 최신순으로 정렬합니다.
      * - LIKE 좋아요 순으로 정렬합니다. 먼저 좋여가 많은순으로 정렬후 그이후 좋아요가 모두 0이라면 ID를 기준으로 내림차순 정렬 합니다.
      */
-    private OrderSpecifier[] getSortOrder(OrderType orderType, QArticleComment articleComment) {
+    private OrderSpecifier[] getSortOrder(OrderType orderType) {
+        return createSortOrders(orderType).toArray(new OrderSpecifier[0]);
+
+    }
+
+    private List<OrderSpecifier> createSortOrders(OrderType orderType) {
         List<OrderSpecifier> orderSpecifiers = new ArrayList<>();
-
-
         if (orderType.equals(OrderType.RECENT)){      // 최신순졍렬
-            orderSpecifiers.add(new OrderSpecifier<>(Order.DESC,articleComment.id));
-        }else if (orderType.equals(OrderType.LIKE)){    // 좋아요순 정렬
-            // 좋아요 크기 순으로 먼저 내림차순으로 정렬합니다.
-            OrderSpecifier<Integer> orderByLike = new CaseBuilder()
-                    .when(articleComment.likeCount.gt(0)).then(articleComment.likeCount)
-                    .otherwise(Expressions.constant(0)).desc();
-
-            // 좋아요 크기가 0이라면 ID기준으로 내림차순으로 정렬합니다.
-            OrderSpecifier<Long> orderById = new CaseBuilder()
-                    .when(articleComment.likeCount.eq(0)).then(articleComment.id)
-                    .otherwise(Expressions.constant(Long.MAX_VALUE)).desc();
-            orderSpecifiers.add(orderByLike);
-            orderSpecifiers.add(orderById);
+            return getRecentSortOrder(orderSpecifiers);
         }
-        return orderSpecifiers.toArray(new OrderSpecifier[0]);
+        // 좋아요 크기 순으로 먼저 내림차순으로 정렬합니다.
+        return getLikeBasedSortOrder(orderSpecifiers);
+
+    }
+
+    private static List<OrderSpecifier> getRecentSortOrder(List<OrderSpecifier> orderSpecifiers) {
+        orderSpecifiers.add(new OrderSpecifier<>(Order.DESC, articleComment.id));
+        return orderSpecifiers;
+    }
+
+    private static List<OrderSpecifier> getLikeBasedSortOrder(List<OrderSpecifier> orderSpecifiers) {
+        orderSpecifiers.add(getLikeCountSortOrder());
+        orderSpecifiers.add(getIdSortOrderForZeroLikes());
+        return orderSpecifiers;
+    }
+
+    private static OrderSpecifier<Integer> getLikeCountSortOrder() {
+        return new CaseBuilder()
+                .when(articleComment.likeCount.gt(0)).then(articleComment.likeCount)
+                .otherwise(Expressions.constant(0)).desc();
+    }
+
+    private static OrderSpecifier<Long> getIdSortOrderForZeroLikes() {
+        return new CaseBuilder()
+                .when(articleComment.likeCount.eq(0)).then(articleComment.id)
+                .otherwise(Expressions.constant(Long.MAX_VALUE)).desc();
+    }
+
+
+    private List<Tuple> getAllReplyCommentQuery(Long commentId, Long memberId, Pageable pageable, BooleanBuilder builder) {
+        return jpaQueryFactory
+                .select(articleComment, articleComment.member)
+                .from(articleComment)
+                .leftJoin(articleComment.childComments, childComment).fetchJoin() // 자식 댓글을 페치 조인
+                .leftJoin(childComment.member, member).fetchJoin() // 자식 댓글 작성자 조인
+                .leftJoin(blockMember).on(blockMember.blocked.id.eq(articleComment.member.id).and(blockMember.blocker.id.eq(memberId))) // 차단한 사용자 필터링 조건
+                .leftJoin(childBlock).on(childBlock.blocked.id.eq(memberId).and(childBlock.blocker.id.eq(articleComment.member.id)))    // 차단된 사용자 필터링 조건
+                .where(builder,articleComment.parent.id.eq(commentId) // 부모 댓글 필터링
+                        .and(blockMember.id.isNull().or(blockMember.blockStatus.eq(false)))
+                        .and(childBlock.id.isNull().or(childBlock.blockStatus.eq(false)))
+                        .and((articleComment.member.isWithdrawn.eq(false)))
+                ) // 차단된 사용자가 아니거나 차단이 해제된 경우만
+                .limit(pageable.getPageSize() + 1)
+                .orderBy(articleComment.createdAt.desc())
+                .fetch();
+    }
+
+    private static List<ArticleCommentDto> getArticleCommentDtos(Long memberId, List<Tuple> articleComments) {
+        List<ArticleCommentDto> content = articleComments.stream()
+                .map(tuple -> ArticleCommentDto.of(
+                        tuple.get(articleComment),
+                        TimeConverter.converter(tuple.get(articleComment).getCreatedAt()),
+                        checkWriter(tuple.get(articleComment.member), memberId),
+                        false
+                )).collect(Collectors.toList());
+        return content;
     }
 
     /*
