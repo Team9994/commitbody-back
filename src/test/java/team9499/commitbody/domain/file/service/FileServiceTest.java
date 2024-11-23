@@ -48,7 +48,7 @@ class FileServiceTest {
     @Test
     void saveFileIsNull(){
         String fileName = fileService.saveArticleFile(new Article(), null);
-        assertThat(fileName).isEqualTo("등록된 이미지가 없습니다.");
+        assertThat(fileName).isEqualTo("등록된 이미지 파일이 없습니다.");
     }
     
     @DisplayName("파일 업데이트 = 이전 파일이 없을 경우")
