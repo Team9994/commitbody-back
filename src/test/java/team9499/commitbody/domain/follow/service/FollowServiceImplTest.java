@@ -137,10 +137,10 @@ class FollowServiceImplTest {
     @Test
     void getFollowers(){
         List<FollowDto> followDtos = new ArrayList<>();
-        followDtos.add(new FollowDto(followerId,2L,"사용자2","test",false));
-        followDtos.add(new FollowDto(followerId,3L,"사용자3","test",false));
-        followDtos.add(new FollowDto(followerId,4L,"사용자4","test",false));
-        followDtos.add(new FollowDto(followerId,5L,"사용자5","test",false));
+        followDtos.add(FollowDto.of(followerId,2L,"사용자2","test",false));
+        followDtos.add(FollowDto.of(followerId,3L,"사용자3","test",false));
+        followDtos.add(FollowDto.of(followerId,4L,"사용자4","test",false));
+        followDtos.add(FollowDto.of(followerId,5L,"사용자5","test",false));
 
         SliceImpl<FollowDto> dtoSlice = new SliceImpl<>(followDtos, Pageable.ofSize(10), false);
 
