@@ -24,6 +24,8 @@ import team9499.commitbody.global.notification.event.FollowingEvent;
 import team9499.commitbody.global.payload.ErrorResponse;
 import team9499.commitbody.global.payload.SuccessResponse;
 
+import static team9499.commitbody.global.constants.FollowConstants.*;
+
 @Tag(name = "팔로워",description = "팔로워 관련 API")
 @RestController
 @RequiredArgsConstructor
@@ -32,11 +34,6 @@ public class FollowController {
 
     private final FollowService followService;
     private final ApplicationEventPublisher eventPublisher;
-
-    private final String MUTUAL_FOLLOW = "맞팔로우";
-    private final String REQUEST_FOLLOW = "팔로우 요청";
-    private final String UNFOLLOW = "언팔로우";
-    private final String CANCEL_FOLLOW = "팔로우 취소";
 
     @Operation(summary = "팔로워", description = "하나의 API를 통해 팔로워/팔로잉등 요청을 수행합니다.type의 팔로우요청 , 맞팔로우시 FOLLOW, 언팔시및 팔로우 취소시 UNFOLLOW를 작성합니다.")
     @ApiResponses(value = {
@@ -56,15 +53,10 @@ public class FollowController {
         Long followerId = getMember(principalDetails);
         Long followId = followRequest.getFollowId();
         String followStatus = followService.follow(followerId, followId, followRequest.getType());
-
-        if (followStatus.equals(MUTUAL_FOLLOW)||followStatus.equals(REQUEST_FOLLOW))
-          eventPublisher.publishEvent(new FollowingEvent(followerId,followId));
-        else if (followStatus.equals(UNFOLLOW)||followStatus.equals(CANCEL_FOLLOW)) {
-            eventPublisher.publishEvent(new DeleteFollowEvent(followerId,followId));
-        }
-
+        sendFollowNotification(followStatus, followerId, followId);
         return ResponseEntity.ok(new SuccessResponse<>(true,followStatus));
     }
+
 
     @Operation(summary = "팔로워 목록(무한 스크롤)", description = "팔로워 목록을 조회하며, 사용자 닉네임을통해 나를 팔로워한 사용자를 찾을수 있습니다.[2글자이상]")
     @ApiResponses(value = {
@@ -110,7 +102,14 @@ public class FollowController {
     }
 
     private static Long getMember(PrincipalDetails principalDetails) {
-        Long followId = principalDetails.getMember().getId();
-        return followId;
+        return principalDetails.getMember().getId();
+    }
+
+    private void sendFollowNotification(String followStatus, Long followerId, Long followId) {
+        if (followStatus.equals(MUTUAL_FOLLOW)|| followStatus.equals(REQUEST_FOLLOW))
+            eventPublisher.publishEvent(new FollowingEvent(followerId, followId));
+        else if (followStatus.equals(UNFOLLOW)|| followStatus.equals(CANCEL_FOLLOW)) {
+            eventPublisher.publishEvent(new DeleteFollowEvent(followerId, followId));
+        }
     }
 }
