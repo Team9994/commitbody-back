@@ -10,6 +10,6 @@ public class ImageConstants {
     public static final String JPG ="jpg";
     public static final String JPEG ="jpeg";
     public static final String PNG ="png";
-    public static final int INDEX = 45;
+    public static final int INDEX = 44;
 
 }
