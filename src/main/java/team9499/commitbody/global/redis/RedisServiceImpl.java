@@ -10,11 +10,14 @@ import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
+import team9499.commitbody.global.constants.Delimiter;
 import team9499.commitbody.global.utils.CustomMapper;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+
+import static team9499.commitbody.global.constants.Delimiter.*;
 
 @Slf4j
 @Service
@@ -23,8 +26,12 @@ public class RedisServiceImpl implements RedisService{
 
     private final RedisTemplate<String,Object> redisTemplate;
     private final MemberRepository memberRepository;
-    private final String MEMBER_ID = "member_";
-    private final String FCM = "fcm_";
+    private static final String MEMBER_ID = "member_";
+    private static final String FCM = "fcm_";
+    private static final String SEARCH = "search_";
+    private static final String ALL = "all";
+    private static final String BLACK_LIST = "blackList";
+
 
     @Override
     public void setValue(String key, String value) {
@@ -41,17 +48,17 @@ public class RedisServiceImpl implements RedisService{
     @Override
     public String getValue(String key) {
         ValueOperations<String, Object> values = redisTemplate.opsForValue();
-        if(values.get(key) == null) return "";
+        if(values.get(key) == null) return STRING_EMPTY;
         return String.valueOf(values.get(key));
     }
 
     @Override
     public void deleteValue(String key, AuthType type) {
-        String redisKey = "";
+        String redisKey = STRING_EMPTY;
         switch (type){
             case CERTIFICATION -> redisKey = getKey(key);
             case SEARCH -> redisKey = getSearchKey(key);
-            case FCM -> redisKey = "fcm_"+key;
+            case FCM -> redisKey = FCM+key;
         }
         redisTemplate.delete(redisKey);
     }
@@ -63,15 +70,14 @@ public class RedisServiceImpl implements RedisService{
 
     @Override
     public Optional<Member> getMemberDto(String key) {
-        Object o = redisTemplate.opsForValue().get(getKey(key));
-        if (o!=null){
+        Object memberOb = redisTemplate.opsForValue().get(getKey(key));
+        if (memberOb!=null){
             CustomMapper<Member> customMapper = new CustomMapper<>();
-            return Optional.of(customMapper.to(o, Member.class));
-        }else {
-            Member member = memberRepository.findById(Long.valueOf(key)).filter(member1 -> !member1.isWithdrawn()).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
-            setMember(member,Duration.ofDays(7));
-            return Optional.of(member);
+            return Optional.of(customMapper.to(memberOb, Member.class));
         }
+        Member member = memberRepository.findById(Long.valueOf(key)).filter(member1 -> !member1.isWithdrawn()).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+        setMember(member,Duration.ofDays(7));
+        return Optional.of(member);
     }
 
     @Override
@@ -99,7 +105,7 @@ public class RedisServiceImpl implements RedisService{
     public String getFCMToken(String key) {
         Object fcm = redisTemplate.opsForValue().get(FCM + key);
         if (fcm == null){
-            return "";
+            return STRING_EMPTY;
         }
         return (String) fcm;
     }
@@ -154,7 +160,7 @@ public class RedisServiceImpl implements RedisService{
     public void deleteRecentSearchLog(String memberId, String title,String type) {
         String searchKey = getSearchKey(memberId);
         if (type!=null){
-            if (type.equals("all")) deleteValue(memberId,AuthType.SEARCH);
+            if (type.equals(ALL)) deleteValue(memberId,AuthType.SEARCH);
         }else
             redisTemplate.opsForList().remove(searchKey,0,title);
     }
@@ -165,7 +171,7 @@ public class RedisServiceImpl implements RedisService{
      */
     @Override
     public void setBlackListJwt(String jwtToken) {
-        redisTemplate.opsForValue().set(jwtToken,"blackList",Duration.ofHours(1));
+        redisTemplate.opsForValue().set(jwtToken,BLACK_LIST,Duration.ofHours(1));
     }
 
     /**
@@ -183,6 +189,6 @@ public class RedisServiceImpl implements RedisService{
     }
 
     private String getSearchKey(String memberId) {
-        return "search_" + memberId;
+        return SEARCH + memberId;
     }
 }

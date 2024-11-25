@@ -15,10 +15,12 @@ import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
 import team9499.commitbody.global.Exception.InvalidUsageException;
 import team9499.commitbody.global.Exception.NoSuchException;
+import team9499.commitbody.global.constants.ElasticFiled;
 import team9499.commitbody.global.redis.RedisService;
 
 import static team9499.commitbody.global.Exception.ExceptionStatus.*;
 import static team9499.commitbody.global.Exception.ExceptionType.*;
+import static team9499.commitbody.global.constants.ElasticFiled.*;
 
 @Service
 @Transactional(transactionManager = "dataTransactionManager")
@@ -32,13 +34,8 @@ public class ExerciseCommentServiceImpl implements ExerciseCommentService {
 
     @Override
     public void saveExerciseComment(Long memberId, Long exerciseId, String source, String comment) {
-        Member member = redisService.getMemberDto(memberId.toString()).get();
-        Object exercise;
-        if (source.equals("default")){
-            exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
-        }else
-            exercise = customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(BAD_REQUEST,NO_SUCH_DATA));
-
+        Member member = getMember(memberId);
+        Object exercise = getExercise(exerciseId, source);
         exerciseCommentRepository.save(ExerciseComment.of(member,exercise,comment));
     }
 
@@ -47,8 +44,10 @@ public class ExerciseCommentServiceImpl implements ExerciseCommentService {
      */
     @Transactional(readOnly = true)
     @Override
-    public ExerciseCommentResponse getExerciseComments(Long memberId, Long exerciseId, String source, Pageable pageable, Long lastId) {
-        Slice<ExerciseCommentDto> exerciseComments = exerciseCommentRepository.getExerciseComments(memberId, exerciseId, source, pageable, lastId);
+    public ExerciseCommentResponse getExerciseComments(Long memberId, Long exerciseId, String source,
+                                                       Pageable pageable, Long lastId) {
+        Slice<ExerciseCommentDto> exerciseComments = exerciseCommentRepository
+                .getExerciseComments(memberId, exerciseId, source, pageable, lastId);
         return new ExerciseCommentResponse(exerciseComments.hasNext(),exerciseComments.getContent());
     }
 
@@ -75,6 +74,20 @@ public class ExerciseCommentServiceImpl implements ExerciseCommentService {
         ExerciseComment exerciseComment = checkWriter(memberId, exerciseCommentId);
         exerciseComment.updateContent(content);
     }
+
+    private Member getMember(Long memberId) {
+        return redisService.getMemberDto(memberId.toString()).get();
+    }
+
+    private Object getExercise(Long exerciseId, String source) {
+        if (source.equals(DEFAULT)){
+            return exerciseRepository.findById(exerciseId)
+                    .orElseThrow(() -> new NoSuchException(BAD_REQUEST, NO_SUCH_DATA));
+        }
+        return customExerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new NoSuchException(BAD_REQUEST,NO_SUCH_DATA));
+    }
+
 
     /*
     현재 이용하려면 데이터가 작성자가 맞는지 확인하는 메서드

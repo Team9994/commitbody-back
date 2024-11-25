@@ -62,7 +62,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public NotificationResponse getAllNotification(Long memberId, Long lastId, Pageable pageable) {
         Slice<NotificationDto> allNotification = notificationRepository.getAllNotification(memberId, lastId, pageable);
-
         return new NotificationResponse(allNotification.hasNext(),allNotification.getContent());
     }
 
@@ -125,9 +124,9 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void sendReplyComment(Member member, String replyNickname,String articleTitle,String commentContent,String commentId,Long articleId) {
         Member replyMember = getReplyMember(replyNickname);     // 댓글 알림 수신자
-        String content = member.getNickname()+"님이 회원님의 댓글에 답급을 남겼어요:"+commentContent;
+        String content = member.getNickname()+"님이 회원님의 댓글에 답급을 남겼어요: "+commentContent;
         // 알림 기능을 사용하며, 만약 자신에게 담긴 답글의 경우 알림 이전송되지 않도록
-        if (replyMember.isNotificationEnabled() && member.getId() != replyMember.getId()) {
+        if (replyMember.isNotificationEnabled() && !member.getId().equals(replyMember.getId())) {
             fcmService.sendReplyComment(String.valueOf(replyMember.getId()), articleTitle, content,commentId);
             saveNotification(content, NotificationType.REPLY_COMMENT, replyMember, member, Long.valueOf(commentId),articleId);
         }
@@ -172,9 +171,10 @@ public class NotificationServiceImpl implements NotificationService {
         if (status && receiverMember.isNotificationEnabled() && !member.getId().equals(receiverMember.getId())){
             fcmService.sendArticleLike(String.valueOf(receiverId),String.valueOf(articleId),content);
             saveNotification(content, NotificationType.ARTICLE_LIKE, receiverMember, member,null,articleId);
-        }else {     // 좋아요 해제 요청시에는 알림 데이터 삭제
-            asyncDelete(receiverId, member.getId(), NotificationType.ARTICLE_LIKE);
+            return;
         }
+        asyncDelete(receiverId, member.getId(), NotificationType.ARTICLE_LIKE); // 좋아요 해제 요청시에는 알림 데이터 삭제
+
 
     }
     
@@ -182,13 +182,13 @@ public class NotificationServiceImpl implements NotificationService {
     public void sendCommentLike(Member member, Long receiverId, Long commentId,Long articleId, boolean status) {
         Member receiverMember = getReceiverMember(receiverId);
         String content = member.getNickname()+"님이 회원님 댓글에 좋아요를 눌렀어요";
-
+        // 좋아요 해제 요청시에는 알림 데이터 삭제
         if (status && receiverMember.isNotificationEnabled() && !member.getId().equals(receiverMember.getId())){
             fcmService.sendArticleCommentLike(String.valueOf(receiverId),String.valueOf(commentId),content);
             saveNotification(content, NotificationType.COMMENT_LIKE, receiverMember, member,commentId,articleId);
-        }else {     // 좋아요 해제 요청시에는 알림 데이터 삭제
-            asyncDelete(receiverId, member.getId(), NotificationType.COMMENT_LIKE);
+            return;
         }
+        asyncDelete(receiverId, member.getId(), NotificationType.COMMENT_LIKE);
     }
 
 

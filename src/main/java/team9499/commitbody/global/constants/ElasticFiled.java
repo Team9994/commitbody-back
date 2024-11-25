@@ -18,7 +18,8 @@ public class ElasticFiled {
     public static final String UPDATE = "수정";
     public static final String DELETE = "삭제";
 
-    
+
+    public static final String MEMBER_INDEX = "member_index";
     public static final String INTEREST_INDEX = "exercise_interest_index";
 
 
@@ -39,14 +40,22 @@ public class ElasticFiled {
     // ARTICLE DOC
     public static final String ARTICLE_INDEX  = "article_index";
 
+    public static final String BLOCK_MEMBER_INDEX = "block_member_index";
+    public static final String BLOCKER_ID = "blockerId";
+    public static final String BLOCKED_ = "blocked_";
+
+
     // Script
     public static final String CTX_WITH_DRAW = "ctx._source.withDraw = params.writDraw";
     public static final String INCREMENT_LIKE_COUNT = "ctx._source.like_count += 1";
     public static final String DECREMENT_LIKE_COUNT = "ctx._source.like_count -= 1";
     public static final String INCREMENT_COMMENT_COUNT = "ctx._source.comment_count += params.count";
     public static final String DECREMENT_COMMENT_COUNT = "ctx._source.comment_count -= params.count";
+    public static final String BLOCKER_REMOVE_IF = "ctx._source.blockerId.removeIf(id -> id == params.id)";
+
     public static final String PAINLESS = "painless";
     public static final String WRIT_DRAW = "writDraw";
+    public static final String WRIT_DRAW_KR = "탈퇴";
 
 
     // MAPPING DOC

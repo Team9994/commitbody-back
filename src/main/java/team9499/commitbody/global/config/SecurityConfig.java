@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -22,11 +23,25 @@ import team9499.commitbody.global.security.filter.JwtAuthenticationFilter;
 import team9499.commitbody.global.utils.JwtUtils;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private static final List<String> WHITELISTED_URLS = List.of(
+            "/api/v1/auth",
+            "/actuator/**",
+            "/api/v1/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/api/v1/swagger-ui.html",
+            "/api-docs/**",
+            "/api/v1/additional-info",
+            "/api/v1/scheduled/**",
+            "/api/v1/auth-refresh",
+            "/api/v1/logout"
+    );
 
     private final RedisService redisService;
     private final MemberRepository memberRepository;
@@ -37,8 +52,8 @@ public class SecurityConfig {
 
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .formLogin(form -> form.disable())
-                .httpBasic(basic -> basic.disable())
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).disable());
         http
                 .exceptionHandling((exception) -> exception.authenticationEntryPoint(new CustomAuthenticationEntryPoint())
@@ -50,9 +65,7 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(authorizeRequests ->
                 authorizeRequests
-                        .requestMatchers("/api/v1/auth","/actuator/**","/api/v1/swagger-ui/**", "/v3/api-docs/**", "/api/v1/swagger-ui.html","/api-docs/**",
-                                "/api/v1/additional-info","/api/v1/scheduled/**","/api/v1/auth-refresh","/api/v1/logout"
-                                ).permitAll()
+                        .requestMatchers(WHITELISTED_URLS.toArray(String[]::new)).permitAll()
                         .requestMatchers("/api/v1/**").hasAnyRole("USER"));
         return http.build();
     }

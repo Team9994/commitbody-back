@@ -21,7 +21,7 @@ import team9499.commitbody.domain.article.domain.ArticleDoc;
 import team9499.commitbody.domain.article.dto.ArticleDto;
 import team9499.commitbody.domain.article.dto.response.AllArticleResponse;
 import team9499.commitbody.domain.article.repository.ElsArticleRepository;
-import team9499.commitbody.domain.block.servcice.ElsBlockMemberServiceImpl;
+import team9499.commitbody.domain.block.servcice.impl.ElsBlockMemberServiceImpl;
 import team9499.commitbody.domain.comment.article.service.ArticleCommentService;
 import team9499.commitbody.domain.follow.repository.FollowRepository;
 import team9499.commitbody.domain.like.service.impl.LikeServiceImpl;

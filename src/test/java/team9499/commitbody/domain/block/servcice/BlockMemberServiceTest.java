@@ -11,6 +11,7 @@ import team9499.commitbody.domain.Member.domain.LoginType;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.block.domain.BlockMember;
 import team9499.commitbody.domain.block.repository.BlockMemberRepository;
+import team9499.commitbody.domain.block.servcice.impl.BlockMemberServiceImpl;
 import team9499.commitbody.global.Exception.BlockException;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;

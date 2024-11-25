@@ -1,7 +1,6 @@
 package team9499.commitbody.domain.file.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,11 +10,14 @@ import team9499.commitbody.domain.file.domain.FileType;
 import team9499.commitbody.domain.file.repository.FileRepository;
 import team9499.commitbody.global.aws.s3.S3Service;
 
-@Slf4j
+import static team9499.commitbody.global.constants.ElasticFiled.NO_IMAGE;
+import static team9499.commitbody.global.constants.ImageConstants.*;
+
 @Service
 @Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class FileServiceImpl implements FileService{
+
 
     private final S3Service s3Service;
     private final FileRepository fileRepository;
@@ -28,15 +30,10 @@ public class FileServiceImpl implements FileService{
      */
     @Override
     public String saveArticleFile(Article article, MultipartFile multipartFile) {
-        String storedFilename = "등록된 이미지가 없습니다.";
         if (multipartFile != null) {
-            storedFilename = s3Service.uploadFile(multipartFile);
-            String originalFilename = multipartFile.getOriginalFilename();
-            FileType fileType = checkFileType(multipartFile);
-            File file = File.of(originalFilename, storedFilename.substring(45), fileType, article);
-            fileRepository.save(file);
+            return handleUploadFile(article, multipartFile);
         }
-        return storedFilename;
+        return NO_IMAGE;
     }
 
     /**
@@ -49,28 +46,14 @@ public class FileServiceImpl implements FileService{
      */
     @Override
     public String updateArticleFile(Article article, String previousFileName, MultipartFile multipartFile) {
-        // 파일이 없을시 저장 안함
         if (multipartFile == null) {
             return null;
         }
-
-        // 파일명이 "" 일경우 새롭게 파일을 저장
         if (previousFileName.isEmpty()) {
             return saveArticleFile(article, multipartFile);
         }
-
-        File file = fileRepository.findByArticleId(article.getId());
-        String originalFilename = multipartFile.getOriginalFilename();
-        FileType fileType = checkFileType(multipartFile);
-        String storedFileName = s3Service.updateFile(multipartFile, previousFileName);
-
-        if ( !file.getOriginName().equals(originalFilename)) {
-            file.update(originalFilename, storedFileName.substring(45), fileType);
-        }
-        
-        return storedFileName;
+        return handleUpdateFile(article, previousFileName, multipartFile);
     }
-
 
     /**
      * 파일의 유형을 검사합니다.
@@ -80,12 +63,31 @@ public class FileServiceImpl implements FileService{
     @Override
     public FileType checkFileType(MultipartFile multipartFile) {
         String contentType = multipartFile.getContentType();
-        FileType fileType = FileType.DEFAULT;
-        if (contentType!=null && contentType.startsWith("image/"))
-            fileType = FileType.IMAGE;
-        else if (fileType!=null && contentType.startsWith("video/"))
-            fileType = FileType.VIDEO;
-
-        return fileType;
+        if (contentType != null && contentType.startsWith(IMAGE)) {
+            return FileType.IMAGE;
+        }
+        return FileType.VIDEO;
     }
+
+    private String handleUploadFile(Article article, MultipartFile multipartFile) {
+        String uploadFile = s3Service.uploadFile(multipartFile);
+        fileRepository.save(createFile(article, multipartFile, uploadFile, checkFileType(multipartFile)));
+        return uploadFile;
+    }
+
+    private static File createFile(Article article, MultipartFile file, String storedFilename, FileType fileType) {
+        return File.of(file.getOriginalFilename(), storedFilename.substring(INDEX), fileType, article);
+    }
+
+    private String handleUpdateFile(Article article, String previousFileName, MultipartFile multipartFile) {
+        File file = fileRepository.findByArticleId(article.getId());
+        String originalFilename = multipartFile.getOriginalFilename();
+        FileType fileType = checkFileType(multipartFile);
+        String storedFileName = s3Service.updateFile(multipartFile, previousFileName);
+        if ( !file.getOriginName().equals(originalFilename)) {
+            file.update(originalFilename, storedFileName.substring(INDEX), fileType);
+        }
+        return storedFileName;
+    }
+
 }
