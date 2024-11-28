@@ -8,6 +8,7 @@ public class ElasticFiled {
     public static final String _SCORE = "_score";
     public static final String _SOURCE = "_source";
     public static final String CUSTOM_ = "custom_";
+    public static final String CUSTOM = "custom";
     public static final String DEFAULT_ = "default_";
     public static final String DEFAULT = "default";
     public static final String ID = "id";
