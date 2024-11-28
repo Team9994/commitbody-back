@@ -1,7 +1,6 @@
 package team9499.commitbody.domain.routin.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import team9499.commitbody.domain.Member.domain.Member;
@@ -24,13 +23,15 @@ import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.Exception.ServerException;
 
 import java.util.*;
+
 import team9499.commitbody.global.redis.RedisService;
 
-@Slf4j
+import static team9499.commitbody.global.constants.ElasticFiled.*;
+
 @Service
 @Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
-public class RoutineServiceImpl implements RoutineService{
+public class RoutineServiceImpl implements RoutineService {
 
     private final RoutineRepository routineRepository;
     private final RoutineDetailsRepository routineDetailsRepository;
@@ -39,194 +40,185 @@ public class RoutineServiceImpl implements RoutineService{
     private final RoutineBatchService routineBatchService;
     private final RedisService redisService;
 
-    private final String DEFAULT ="default";
-
     /**
      * 루틴을 저장
-     * @param memberId 사용자 ID
-     * @param routineExercises  루틴 정보
-     * @param routineName   루틴 명
      */
     @Override
     public void saveRoutine(Long memberId, List<RoutineExercise> routineExercises, String routineName) {
-
-        Member member = redisService.getMemberDto(memberId.toString()).get();
-
-        Routine routine = routineRepository.save(Routine.create(member, routineName));  // 새로운 루틴 생성 및 저장
-        List<RoutineDetails> routineDetails = new ArrayList<>();
-
-        for (RoutineExercise routineExercise : routineExercises) {
-            addRoutineDetails(routineExercise.getExerciseId(),routineExercise.getOrder(), routine, routineDetails,
-                    !routineExercise.getSource().equals(DEFAULT));
-        }
-        // 루틴의 상세 목록 설정 및 저장
-        routine.setList(routineDetails);
-        routineDetailsRepository.saveAll(routineDetails);
+        Routine routine = createAndSaveRoutine(memberId, routineName);
+        saveRoutineDetails(routineExercises, routine);
     }
 
     /**
      * 사용자가 등록한 루틴의 대해서 루틴을 모두 조회합니다.
-     * @param memberId 로그인한 사용자 ID
-     * @return  루틴 객체
      */
     @Override
     public MyRoutineResponse getMyRoutine(Long memberId) {
-        List<Routine> allByMemberId = routineRepository.findAllByMemberId(memberId);
-        List<RoutineDto> routineDtos = new ArrayList<>();
-
-        for (Routine routine : allByMemberId) {            // 각 루틴을 DTO로 변환하여 리스트에 추가
-            RoutineDto routineDto = convertToRoutineDto(routine);
-            routineDtos.add(routineDto);
-        }
-        // 오름차순 정렬
+        List<Routine> routines = findRoutinesByMemberId(memberId);
+        List<RoutineDto> routineDtos = mapRoutinesToDtos(routines);
         sortAsc(routineDtos);
-        return new MyRoutineResponse(routineDtos);    // 변환된 루틴 DTO 리스트를 MyRoutineResponse로 반환
+        return new MyRoutineResponse(routineDtos);
     }
 
     /**
      * 특정 루틴의 루틴 상세 조회
-     * @param memberId  사용자 ID
-     * @param routineId 조회할 루틴 ID
-     * @return  상세 조회한 루틴 객체
      */
     @Override
     public MyRoutineResponse getDetailMyRoutine(Long memberId, Long routineId) {
         Optional<Routine> byIdAndMemberId = routineRepository.findByIdAndMemberId(routineId, memberId);
-        List<RoutineDto> routineDtos = new ArrayList<>();
-        if (byIdAndMemberId.isPresent()){
-            Routine routine = byIdAndMemberId.get();
-            RoutineDto routineDto = convertToRoutineDto(routine);
-            routineDtos.add(routineDto);
-        }
-
-        // 오름차순 정렬
+        List<RoutineDto> routineDtos = getRoutineDtos(byIdAndMemberId);
         sortAsc(routineDtos);
-
-        return new MyRoutineResponse(routineDtos);    // 변환된 루틴 DTO 리스트를 MyRoutineResponse로 반환
+        return new MyRoutineResponse(routineDtos);
     }
 
     /**
      * 루틴 편집에 사용되는 메서드
      * 값이 NULL 아닐시에만  사용되도록 작성
-     * @param routineId 최상위 루틴 Id
-     * @param memberId 로그인한 사용자 Id
-     * @param routineName 변경할 루틴 명
-     * @param exercises 변경할 루틴의 상세 루틴 운동종류
      */
     @Override
     public void updateRoutine(Long routineId, Long memberId, String routineName, List<ExerciseDto> exercises) {
-        Routine routine = routineRepository.findByIdAndMemberId(routineId,memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
-        // 루틴명 변경
+        Routine routine = getRoutine(routineId, memberId);
         routine.updateRoutineName(routineName);
-
-        // 루틴의 저장된 상세루틴 ID 리스트
-        List<Long> deleteDetailIds = new ArrayList<>();
-        //순회하며 id 적재
-        routine.getList().forEach(routineDetails -> deleteDetailIds.add(routineDetails.getId()));
-
-        //새롭게 저장할 새로운 루틴 운동
-        List<RoutineDetails> newRoutineDetails = new ArrayList<>();
-
-        for (ExerciseDto exercise : exercises) {
-            String source = exercise.getSource();
-            Object obExercise = source.equals(DEFAULT) ? getExercise(exercise.getExerciseId()) : getCustomExercise(exercise.getExerciseId());       // 운동과 커스텀 운동 구분
-
-            newRoutineDetails.add(RoutineDetails.of(exercise.getRoutineDetailId(), obExercise, routine, exercise.getOrders()));
-        }
-
-        // 배치를 통해 삭제
-        routineDetailsRepository.deleteAllByInQuery(deleteDetailIds);
-        // 배치를 통해 저장
-        routineBatchService.saveRoutineDetailInBatch(newRoutineDetails);
+        routineDetailsRepository.deleteAllByInQuery(getDeleteDetailIds(routine));
+        routineBatchService.saveRoutineDetailInBatch(getNewRoutineDetails(exercises, routine));
     }
 
     /**
      * 루틴 삭제
      * 루틴은 작성자만 삭제 가능합니다.
+     *
      * @param routineId 루틴 아이디
      * @param memberId  현재 로그인한 사용자 ID
      */
     @Override
-    public void deleteRoutine(Long routineId,Long memberId) {
-        routineRepository.findByIdAndMemberId(routineId,memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST,ExceptionType.NO_SUCH_DATA));
+    public void deleteRoutine(Long routineId, Long memberId) {
+        getRoutine(routineId, memberId);
         routineRepository.deleteRoutine(routineId);
     }
 
-    private CustomExercise getCustomExercise(Long exerciseId) {
-        return customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+
+    // === saveRoutine() === //
+    private Routine createAndSaveRoutine(Long memberId, String routineName) {
+        return routineRepository.save(Routine.create(getMember(memberId), routineName));
     }
 
-    private Exercise getExercise(Long exerciseId) {
-        return exerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+    private void saveRoutineDetails(List<RoutineExercise> routineExercises, Routine routine) {
+        List<RoutineDetails> routineDetails = new ArrayList<>();
+        populateRoutineDetails(routineExercises, routine, routineDetails);
+        routine.setList(routineDetails);
+        routineDetailsRepository.saveAll(routineDetails);
     }
 
-    // orders 기준으로 정렬
+    private Member getMember(Long memberId) {
+        return redisService.getMemberDto(memberId.toString()).get();
+    }
 
-    private Integer getOrder(Object obj) {
-        if (obj instanceof ExerciseDto) {
-            return ((ExerciseDto) obj).getOrders();
-        } else if (obj instanceof CustomExerciseDto) {
-            return ((CustomExerciseDto) obj).getOrders();
-        } else {
-            log.error("정렬증 오류 발생");
-            throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR,ExceptionType.SERVER_ERROR);
+    private void populateRoutineDetails(List<RoutineExercise> routineExercises, Routine routine, List<RoutineDetails> routineDetails) {
+        for (RoutineExercise routineExercise : routineExercises) {
+            addRoutineDetails(routineExercise.getExerciseId(), routineExercise.getOrder(), routine, routineDetails,
+                    !routineExercise.getSource().equals(DEFAULT));
         }
     }
-    /**
-     * 주어진 exerciseIds 목록을 순회하면서 루틴 상세 정보를 추가하는 메서드
-     */
-    private void addRoutineDetails(Long exerciseId,Integer order, Routine routine, List<RoutineDetails> routineDetails,boolean isCustom) {
+
+    private void addRoutineDetails(Long exerciseId, Integer order, Routine routine, List<RoutineDetails> routineDetails, boolean isCustom) {
         if (isCustom) {         // 커스텀 운동인 경우 처리
-            CustomExercise customExercise = customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
-            routineDetails.add(RoutineDetails.of(customExercise, routine,order));
-        } else {                // 일반 운동인 경우 처리
-            Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
-            routineDetails.add(RoutineDetails.of(exercise, routine,order));
-        }
+            routineDetails.add(RoutineDetails.of(getCustomExercise(exerciseId), routine, order));
+            return;
+        }                // 일반 운동인 경우 처리
+        routineDetails.add(RoutineDetails.of(getExercise(exerciseId), routine, order));
     }
 
-    /**
-     * 주어진 루틴을 RoutineDto로 변환하는 메서드
-     */
+
+    // === getMyRoutine() === //
+    private List<Routine> findRoutinesByMemberId(Long memberId) {
+        return routineRepository.findAllByMemberId(memberId);
+    }
+
+    private List<RoutineDto> mapRoutinesToDtos(List<Routine> routines) {
+        List<RoutineDto> routineDtos = new ArrayList<>();
+        for (Routine routine : routines) {
+            RoutineDto routineDto = convertToRoutineDto(routine);
+            routineDtos.add(routineDto);
+        }
+        return routineDtos;
+    }
+
     private RoutineDto convertToRoutineDto(Routine routine) {
-        RoutineDto routineDto = new RoutineDto();
-        routineDto.setRoutineName(routine.getRoutineName());
-        routineDto.setRoutineId(routine.getId());
+        RoutineDto routineDto = RoutineDto.of(routine);
+        setTargetAndExercises(routine.getList(), routineDto);
+        return routineDto;
+    }
 
-        List<RoutineDetails> list = routine.getList();
-
-        // 운동 대상과 운동 리스트를 저장할 Set 및 List 초기화
+    private void setTargetAndExercises(List<RoutineDetails> list, RoutineDto routineDto) {
         Set<String> targets = new HashSet<>();
         List<Object> exercises = new ArrayList<>();
-
-        // 루틴 상세 목록을 순회하며 운동 정보를 추가
         for (RoutineDetails routineDetails : list) {
             addExerciseInfo(routineDetails, targets, exercises);
         }
-
-        routineDto.setTargets(targets);
-        routineDto.setExercises(exercises);
-
-        return routineDto;
+        routineDto.setData(targets, exercises);
     }
 
     private void addExerciseInfo(RoutineDetails routineDetails, Set<String> targets, List<Object> exercises) {
         Exercise exercise = routineDetails.getExercise(); // 루틴 상세 내 운동 정보를 가져옴
-        Long routineDetailsId = routineDetails.getId();
-
         if (exercise != null) {             // 기본 운동 정보가 있으면 대상에 추가하고, 운동을 리스트에 추가
             targets.add(exercise.getExerciseTarget().name());
-            exercises.add(ExerciseDto.of(routineDetailsId,exercise.getId(),exercise.getExerciseName(), exercise.getGifUrl(), routineDetails.getTotalSets(),exercise.getExerciseType().getDescription(), routineDetails.getOrders()));
-        } else {                // 커스텀 운동 정보가 있으면 대상에 추가하고, 커스텀 운동을 리스트에 추가
-            CustomExercise customExercise = routineDetails.getCustomExercise();
-            targets.add(customExercise.getExerciseTarget().name());
-            exercises.add(CustomExerciseDto.of(routineDetailsId, customExercise.getId(),customExercise.getCustomExName(), customExercise.getCustomGifUrl(), routineDetails.getTotalSets(),"무게와 횟수", routineDetails.getOrders()));
-        }
+            exercises.add(ExerciseDto.of(routineDetails, exercise));
+            return;
+        }                // 커스텀 운동 정보가 있으면 대상에 추가하고, 커스텀 운동을 리스트에 추가
+        CustomExercise customExercise = routineDetails.getCustomExercise();
+        targets.add(customExercise.getExerciseTarget().name());
+        exercises.add(CustomExerciseDto.of(routineDetails, customExercise));
     }
 
-    /*
-    오름 차순으 정렬
-     */
+    // === getDetailMyRoutine() === //
+
+    private List<RoutineDto> getRoutineDtos(Optional<Routine> byIdAndMemberId) {
+        List<RoutineDto> routineDtos = new ArrayList<>();
+        if (byIdAndMemberId.isPresent()) {
+            Routine routine = byIdAndMemberId.get();
+            RoutineDto routineDto = convertToRoutineDto(routine);
+            routineDtos.add(routineDto);
+        }
+        return routineDtos;
+    }
+
+    // === updateRoutine() === //
+    private static List<Long> getDeleteDetailIds(Routine routine) {
+        List<Long> deleteDetailIds = new ArrayList<>();
+        routine.getList().forEach(routineDetails -> deleteDetailIds.add(routineDetails.getId()));
+        return deleteDetailIds;
+    }
+
+    private List<RoutineDetails> getNewRoutineDetails(List<ExerciseDto> exercises, Routine routine) {
+        List<RoutineDetails> newRoutineDetails = new ArrayList<>();
+        for (ExerciseDto exerciseDto : exercises) {
+            addNewRoutineDetails(routine, exerciseDto, newRoutineDetails);
+        }
+        return newRoutineDetails;
+    }
+
+    private void addNewRoutineDetails(Routine routine, ExerciseDto exerciseDto, List<RoutineDetails> newRoutineDetails) {
+        Object obExercise = exerciseDto.getSource().equals(DEFAULT) ?
+                getExercise(exerciseDto.getExerciseId()) : getCustomExercise(exerciseDto.getExerciseId());       // 운동과 커스텀 운동 구분
+        newRoutineDetails.add(RoutineDetails.of(exerciseDto, obExercise, routine));
+    }
+
+    // === 공용 메서드 () === //
+    private CustomExercise getCustomExercise(Long exerciseId) {
+        return customExerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+    }
+
+    private Exercise getExercise(Long exerciseId) {
+        return exerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+    }
+
+    private Routine getRoutine(Long routineId, Long memberId) {
+        return routineRepository.findByIdAndMemberId(routineId, memberId)
+                .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+    }
+
     private void sortAsc(List<RoutineDto> routineDtos) {
         for (RoutineDto routineDto : routineDtos) {
             List<Object> exercises = routineDto.getExercises();
@@ -240,4 +232,12 @@ public class RoutineServiceImpl implements RoutineService{
         }
     }
 
+    private Integer getOrder(Object obj) {
+        if (obj instanceof ExerciseDto) {
+            return ((ExerciseDto) obj).getOrders();
+        } else if (obj instanceof CustomExerciseDto) {
+            return ((CustomExerciseDto) obj).getOrders();
+        }
+        throw new ServerException(ExceptionStatus.INTERNAL_SERVER_ERROR, ExceptionType.SERVER_ERROR);
+    }
 }

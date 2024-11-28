@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import team9499.commitbody.domain.Member.domain.Member;
+import team9499.commitbody.domain.record.dto.RecordStatistics;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -65,5 +66,11 @@ public class Record {
 
     public void updateRecordName(String recordName){
         this.recordName = recordName;
+    }
+
+    public void setRecord(RecordStatistics recordStatistics){
+        this.recordVolume = recordStatistics.getTotalVolume();
+        this.recordSets = recordStatistics.getTotalSets();
+        this.recordCalorie = recordStatistics.getCalories();
     }
 }

@@ -4,7 +4,6 @@ import com.querydsl.core.Tuple;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
@@ -17,247 +16,224 @@ import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
 
-import java.time.*;
-import java.time.format.TextStyle;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static team9499.commitbody.domain.record.domain.QRecord.*;
 import static team9499.commitbody.domain.record.domain.QRecordDetails.*;
 import static team9499.commitbody.domain.record.domain.QRecordSets.*;
 import static team9499.commitbody.domain.record.dto.response.RecordMonthResponse.*;
+import static team9499.commitbody.global.utils.TimeConverter.*;
 
-@Slf4j
 @Repository
 @RequiredArgsConstructor
-public class CustomRecordRepositoryImpl implements CustomRecordRepository{
+public class CustomRecordRepositoryImpl implements CustomRecordRepository {
 
     private final JPAQueryFactory jpaQueryFactory;
 
     /**
      * 루틴을 완료시 저장된 루틴 정보를 조회하기 위핸 쿼리
      * 사용자의 루틴만 볼 수 있다.
-     * @param recordId  기록 ID
-     * @param memberId  사용자 ID
      */
     @Override
     public RecordResponse findByRecordId(Long recordId, Long memberId) {
+        List<Tuple> list = fetchRecordDataWithDetailsAndSets(recordId, memberId);
+        Map<Record, List<RecordDetailsResponse>> groupedDetails = groupRecordsWithDetails(list);
+        return handleRecordResponse(groupedDetails, list);
+    }
 
-        List<Tuple> list = jpaQueryFactory.select(record,recordDetails,recordSets).from(record)
+    @Override
+    public void deleteCustomExercise(Long customExerciseId) {
+        deleteRecordSetsByCustomExercise(customExerciseId);
+        deleteRecordDetailsByCustomExercise(customExerciseId);
+    }
+
+    @Override
+    public void deleteRecord(Long recordId, Long memberId) {
+        deleteRecordSets(recordId);
+        deleteRecordDetails(recordId);
+        deleteRecords(recordId, memberId);
+    }
+
+    /**
+     * 기록페이지에서 해당 달의 일별로 진행한 기록을 조회
+     */
+    @Override
+    public Map<String, RecordData> getRecordCountAdnDataForMonth(Long memberId, Integer year, Integer month) {
+        List<Record> records = fetchRecordsByMonth(memberId, year, month);
+        return mapRecordsByDay(records);
+    }
+
+    /**
+     * 해당달의 진행만 모든 기록을 무한 스크롤 조회
+     */
+    @Override
+    public List<RecordDay> getRecordPage(Long memberId, Integer year, Integer month) {
+        List<Record> records = fetchRecordsForMonth(memberId, year, month);
+        return mapToRecordDays(records);
+    }
+
+    // === findByRecordId() === //
+    private List<Tuple> fetchRecordDataWithDetailsAndSets(Long recordId, Long memberId) {
+        return jpaQueryFactory.select(record, recordDetails, recordSets).from(record)
                 .join(recordDetails).on(record.id.eq(recordDetails.record.id))
                 .join(recordSets).on(recordSets.recordDetails.id.eq(recordDetails.id))
                 .where(record.id.eq(recordId).and(record.member.id.eq(memberId)))
                 .orderBy(recordDetails.orders.asc())
                 .fetch();
-
-        // Tuple 리스트를 Record를 키로 하고, RecordDetailsResponse 리스트를 값으로 가지는 Map으로 그룹화
-        Map<Record, List<RecordDetailsResponse>> groupedDetails = list.stream().collect(Collectors.groupingBy(
-                tuple -> tuple.get(0, Record.class),
-                Collectors.mapping(
-                        tuple -> {
-                            // RecordDetails에서 Exercise와 CustomExercise의 null 처리
-                            RecordDetails recordDetail = tuple.get(1, RecordDetails.class);
-                            Exercise exercise = Optional.ofNullable(recordDetail.getExercise())
-                                    .orElse(null);
-                            CustomExercise customExercise = Optional.ofNullable(recordDetail.getCustomExercise())
-                                    .orElse(null);
-                            
-                            // RecordDetailsResponse 객체를 생성하여 반환
-                            return RecordDetailsResponse.of(
-                                    recordDetail.getId(),
-                                    exercise,
-                                    customExercise,
-                                    recordDetail.getDetailsReps(),
-                                    recordDetail.getDetailsSets(),
-                                    recordDetail.getSumTimes(),
-                                    recordDetail.getDetailsVolume(),
-                                    recordDetail.getMaxReps(),
-                                    recordDetail.getMax1RM(),
-                                    new ArrayList<>()
-                            );
-                        },
-                        Collectors.toList()  // 생성된 RecordDetailsResponse를 리스트로 변환
-                )
-        ));
-
-        // 그룹화된 Map의 엔트리를 스트림으로 변환하여 처리
-        return groupedDetails.entrySet().stream().map(entry -> {
-            Record record = entry.getKey(); // 각 엔트리의 키인 Record 객체
-            List<RecordDetailsResponse> details = entry.getValue(); // 각 엔트리의 값인 RecordDetailsResponse 리스트
-
-            // RecordDetailId를 키로 하고, RecordDetailsResponse를 값으로 가지는 Map을 생성
-            Map<Long, RecordDetailsResponse> detailsMap = new LinkedHashMap<>();
-            details.forEach(detail -> detailsMap.put(detail.getRecordDetailId(), detail));
-
-            // 리스트를 다시 순회하며 RecordSets 정보를 RecordDetailsResponse에 추가
-            list.stream().filter(tuple -> tuple.get(1, RecordDetails.class) != null)
-                    .forEach(tuple -> {
-                Long detailId = tuple.get(1, RecordDetails.class).getId();
-                RecordSets recordSets = tuple.get(2, RecordSets.class);
-
-                if (detailsMap.containsKey(detailId)) {      // 해당 detailId를 키로 가진 RecordDetailsResponse가 있으면
-                    RecordDetailsResponse detail = detailsMap.get(detailId);
-                    List<RecordSetsResponse> sets = detail.getSets();
-                    if (sets == null) {
-                        sets = new ArrayList<>();        // sets 리스트가 null인 경우 새로운 ArrayList로 초기화
-                    }
-                    sets.add(RecordSetsResponse.of(
-                            recordSets.getId(),
-                            recordSets.getWeight(),
-                            recordSets.getReps(),
-                            recordSets.getTimes()
-                    )); // 현재의 RecordSets 정보를 RecordSetsResponse로 변환하여 sets 리스트에 추가
-                    detail.setSets(sets);   // 업데이트된 sets 리스트를 RecordDetailsResponse에 설정
-                }
-            });
-
-            return new RecordResponse(
-                    record.getId(),
-                    record.getRecordName(),
-                    converterTime(record),
-                    converterDurationTime(record),
-                    record.getDuration(),
-                    record.getRecordVolume(),
-                    record.getRecordSets(),
-                    record.getRecordCalorie(),
-                    new ArrayList<>(detailsMap.values())
-            );
-        }).findFirst().orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
     }
 
-    @Override
-    public void deleteCustomExercise(Long customExerciseId) {
+    private static Map<Record, List<RecordDetailsResponse>> groupRecordsWithDetails(List<Tuple> list) {
+        return list.stream()
+                .collect(
+                        Collectors.groupingBy(
+                                tuple -> Objects.requireNonNull(tuple.get(0, Record.class)), mapToDetailsResponses()
+                        )
+                );
+    }
+
+    private static Collector<Tuple, ?, List<RecordDetailsResponse>> mapToDetailsResponses() {
+        return Collectors.mapping(
+                tuple -> toRecordDetailsResponse(Objects.requireNonNull(tuple.get(1, RecordDetails.class))),
+                Collectors.toList()
+        );
+    }
+
+    private static RecordDetailsResponse toRecordDetailsResponse(RecordDetails recordDetail) {
+        return createRecordDetailsResponse(recordDetail, recordDetail.getExercise(), recordDetail.getCustomExercise());
+    }
+
+    private static RecordDetailsResponse createRecordDetailsResponse(RecordDetails recordDetail, Exercise exercise,
+                                                                     CustomExercise customExercise) {
+        return RecordDetailsResponse.of(recordDetail,exercise,customExercise);
+    }
+
+    private RecordResponse handleRecordResponse(Map<Record, List<RecordDetailsResponse>> groupedDetails, List<Tuple> list) {
+        return groupedDetails
+                .entrySet()
+                .stream()
+                .map(entry -> convertToRecordResponse(entry, list, mapDetailsToIdKeyedResponses(entry.getValue())))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+    }
+
+    private static Map<Long, RecordDetailsResponse> mapDetailsToIdKeyedResponses(List<RecordDetailsResponse> details) {
+        Map<Long, RecordDetailsResponse> detailsMap = new LinkedHashMap<>();
+        details.forEach(detail -> detailsMap.put(detail.getRecordDetailId(), detail));
+        return detailsMap;
+    }
+
+    private RecordResponse convertToRecordResponse(Map.Entry<Record, List<RecordDetailsResponse>> entry,
+                                                   List<Tuple> list, Map<Long, RecordDetailsResponse> detailsMap) {
+        list.stream()
+                .filter(tuple -> tuple.get(1, RecordDetails.class) != null)
+                .forEach(tuple -> populateDetailsWithSets(detailsMap, tuple));
+        return getRecordResponse(entry.getKey(), detailsMap);
+    }
+
+    private static void populateDetailsWithSets(Map<Long, RecordDetailsResponse> detailsMap, Tuple tuple) {
+        Long detailId = Objects.requireNonNull(tuple.get(1, RecordDetails.class)).getId();
+        RecordSets recordSets = tuple.get(2, RecordSets.class);
+
+        if (detailsMap.containsKey(detailId)) {      // 해당 detailId를 키로 가진 RecordDetailsResponse가 있으면
+            RecordDetailsResponse detail = detailsMap.get(detailId);
+            List<RecordSetsResponse> sets = updateOrInitializeSets(detail, recordSets);
+            detail.setSets(sets);   // 업데이트된 sets 리스트를 RecordDetailsResponse에 설정
+        }
+    }
+
+    private static List<RecordSetsResponse> updateOrInitializeSets(RecordDetailsResponse detail, RecordSets recordSets) {
+        List<RecordSetsResponse> sets = Optional.ofNullable(detail.getSets()).orElseGet(ArrayList::new);
+        sets.add(RecordSetsResponse.of(
+                Objects.requireNonNull(recordSets).getId(),
+                recordSets.getWeight(),
+                recordSets.getReps(),
+                recordSets.getTimes()
+        )); // 현재의 RecordSets 정보를 RecordSetsResponse로 변환하여 sets 리스트에 추가
+        return sets;
+    }
+
+    private RecordResponse getRecordResponse(Record record, Map<Long, RecordDetailsResponse> detailsMap) {
+        return RecordResponse.of(record,detailsMap);
+    }
+
+    // === deleteCustomExercise() === //
+    private void deleteRecordSetsByCustomExercise(Long customExerciseId) {
         jpaQueryFactory.delete(recordSets)
                 .where(recordDetails.id.in(
                         JPAExpressions.select(recordDetails.id)
                                 .from(recordDetails)
                                 .where(recordDetails.customExercise.id.eq(customExerciseId)))
                 ).execute();
-
-        jpaQueryFactory.delete(recordDetails).where(recordDetails.customExercise.id.eq(customExerciseId)).execute();
     }
 
-    @Override
-    public void deleteRecord(Long recordId, Long memberId) {
-        // 기록 세트 삭제
+    private void deleteRecordDetailsByCustomExercise(Long customExerciseId) {
+        jpaQueryFactory
+                .delete(recordDetails)
+                .where(recordDetails.customExercise.id.eq(customExerciseId))
+                .execute();
+    }
+
+    // === deleteRecord() === //
+    private void deleteRecordSets(Long recordId) {
         jpaQueryFactory.delete(recordSets)
                 .where(recordSets.recordDetails.id.in(
                         JPAExpressions.select(recordDetails.id)
                                 .from(recordDetails)
                                 .where(recordDetails.record.id.eq(recordId)))).execute();
+    }
 
-        // 기록 상세 삭제
+    private void deleteRecordDetails(Long recordId) {
         jpaQueryFactory.delete(recordDetails)
                 .where(recordDetails.record.id.eq(recordId))
                 .execute();
-
-        // 기록 삭제
-            jpaQueryFactory.delete(record)
-                    .where(record.id.eq(recordId).and(record.member.id.eq(memberId)))
-                    .execute();
     }
 
-    /**
-     * 기록페이지에서 해당 달의 일별로 진행한 기록을 조회
-     * @param memberId  로그인한 사용자 아이디
-     */
-    @Override
-    public Map<String, RecordData> getRecordCountAdnDataForMonth(Long memberId,Integer year, Integer month){
-        // 현재 시간으로부터 해당 달 조회
-        Result result = getResult(year,month);
+    private void deleteRecords(Long recordId, Long memberId) {
+        jpaQueryFactory.delete(record)
+                .where(record.id.eq(recordId).and(record.member.id.eq(memberId)))
+                .execute();
+    }
 
-        List<Record> records = jpaQueryFactory.selectFrom(record)
-                .where(record.member.id.eq(memberId).and(record.endTime.between(result.from(), result.to())))
+    // === getRecordCountAdnDataForMonth() === //
+    private List<Record> fetchRecordsByMonth(Long memberId, Integer year, Integer month) {
+        return jpaQueryFactory.selectFrom(record)
+                .where(record.member.id.eq(memberId)
+                        .and(record.endTime
+                                .between(getStartOfMonth(year, month), getEndOfMonth(year, month)))
+                )
                 .orderBy(record.endTime.asc()).fetch();
+    }
 
+    private static Map<String, RecordData> mapRecordsByDay(List<Record> records) {
         Map<String, RecordData> dayRecordCount = new LinkedHashMap<>();
         for (Record record : records) {
             String day = String.valueOf(record.getEndTime().getDayOfMonth());
-
-            // RecordDay 객체 생성
-            RecordDay recordDay = new RecordDay(record.getId(), record.getRecordName(),
-                    converterTime(record) + " · " + converterDurationTime(record));
-
-            // 해당 날짜에 대한 RecordData 객체를 가져옴
             RecordData recordData = dayRecordCount.getOrDefault(day, new RecordData());
-
-            // 기존의 RecordDay 리스트를 가져오거나, 없으면 새로 생성
-            List<RecordDay> recordDays = recordData.getRecordDays();
-            if (recordDays == null) {
-                recordDays = new ArrayList<>();
-            }
-
-            // 새로 생성한 RecordDay를 리스트에 추가
-            recordDays.add(recordDay);
-
-            // RecordData의 필드 업데이트
-            recordData.setDay(converterTime(record)); // 날짜가 여러 개일 경우, 이 줄이 여러 번 덮어써지므로 조심
-            recordData.setRecordDays(recordDays);
-
-            // dayRecordCount 맵에 업데이트된 RecordData를 다시 저장
+            List<RecordDay> recordDays = addRecordDayToList(recordData, RecordDay.of(record));
+            recordData.setDays(record, recordDays);
             dayRecordCount.put(day, recordData);
         }
         return dayRecordCount;
     }
 
-    /**
-     * 해당달의 진행만 모든 기록을 무한 스크롤 조회
-     * @param memberId  로그인한 사용자 ID
-     */
-    @Override
-    public List<RecordDay> getRecordPage(Long memberId,Integer year, Integer month){
+    private static List<RecordDay> addRecordDayToList(RecordData recordData, RecordDay recordDay) {
+        List<RecordDay> recordDays = Optional.ofNullable(recordData.getRecordDays()).orElseGet(ArrayList::new);
+        recordDays.add(recordDay);
+        return recordDays;
+    }
 
-        Result result = getResult(year, month);
-
-        List<Record> records = jpaQueryFactory.selectFrom(record)
-                .where(record.member.id.eq(memberId).and(record.endTime.between(result.from(), result.to())))
+    // === getRecordPage() === //
+    private List<Record> fetchRecordsForMonth(Long memberId, Integer year, Integer month) {
+        return jpaQueryFactory.selectFrom(record)
+                .where(record.member.id.eq(memberId).and(record.endTime
+                        .between(getStartOfMonth(year, month), getEndOfMonth(year, month))))
                 .orderBy(record.endTime.desc()).fetch();
-        
-        // 데이터 변환
-        List<RecordDay> recordData = records.stream()
-                .map(record ->
-                        new RecordDay(record.getId(),record.getRecordName(),
-                                converterTime(record)+" · "+converterDurationTime(record),record.getEndTime())).collect(Collectors.toList());
-        return recordData;
     }
 
-
-    /*
-    현재 일 기준으로 해당달의 1일부터 마지막 일의 시간을 구하는 메서드
-     */
-    private static Result getResult(Integer year, Integer month) {
-        LocalDateTime from = LocalDateTime.of(year, month, 1, 00, 00);      // 해당 시작 날짜
-        LocalDateTime to = LocalDate.of(year, month, 1).with(TemporalAdjusters.lastDayOfMonth()).atTime(23, 59, 59);    // 해당 마짐가 날짜
-        Result result = new Result(from, to);
-        return result;
+    private static List<RecordDay> mapToRecordDays(List<Record> records) {
+        return records.stream().map(RecordDay::recordPage_Of).collect(Collectors.toList());
     }
 
-    /*
-    레코드 생성
-     */
-    private record Result(LocalDateTime from, LocalDateTime to) {
-    }
-
-    /*
-    운동 시작 시간과 운동 끝시간을 18:14~20:15 로변환 하는메서드
-     */
-    private  String converterDurationTime(Record record) {
-        StringBuilder sb =new StringBuilder();
-        LocalDateTime startTime = record.getStartTime();
-        LocalDateTime endTime = record.getEndTime();
-
-        return sb.append(startTime.getHour()).append(":").append(startTime.getMinute()).append("~").append(endTime.getHour()).append(":").append(endTime.getMinute()).toString();
-    }
-
-    /*
-    LocalDateTime을 2024.08.25.(금) 형식으로변경
-     */
-    private String converterTime(Record record) {
-        LocalDateTime startTime = record.getStartTime();
-        String string = LocalDate.of(startTime.getYear(), startTime.getMonth(), startTime.getDayOfMonth()).toString().toString().replace('-', '.');
-        DayOfWeek dayOfWeek = startTime.getDayOfWeek();
-        String displayName = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.KOREA);
-        return string + ".(" + displayName + ")";
-    }
 }

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
+import team9499.commitbody.domain.exercise.dto.ExerciseDto;
 
 import java.util.List;
 
@@ -49,15 +50,12 @@ public class RoutineDetails {
 
     }
 
-    public static RoutineDetails of(Long id,Object exercise, Routine routine,Integer orders){
-        RoutineDetailsBuilder routineDetailsBuilder = RoutineDetails.builder().id(id).orders(orders).routine(routine);
+    public static RoutineDetails of(ExerciseDto exerciseDto, Object exercise, Routine routine){
+        RoutineDetailsBuilder routineDetailsBuilder = RoutineDetails.builder().id(exerciseDto.getRoutineDetailId()).routine(routine);
         if (exercise instanceof Exercise){
-            routineDetailsBuilder.exercise((Exercise) exercise).totalSets(4);
-        }else{
-            routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(4).orders(orders);
+            return routineDetailsBuilder.exercise((Exercise) exercise).totalSets(4).build();
         }
-        return routineDetailsBuilder.build();
-
+        return routineDetailsBuilder.customExercise((CustomExercise) exercise).totalSets(4).orders(exerciseDto.getOrders()).build();
     }
 
     public static RoutineDetails of(Object exercise, Routine routine){

@@ -1,7 +1,17 @@
 package team9499.commitbody.global.utils;
 
+import team9499.commitbody.domain.record.domain.Record;
+import team9499.commitbody.global.constants.Delimiter;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Locale;
+
+import static team9499.commitbody.global.constants.Delimiter.*;
 
 public class TimeConverter {
 
@@ -10,6 +20,9 @@ public class TimeConverter {
     private static final int HOUR = 24;
     private static final int DAY = 30;
     private static final int MONTH = 12;
+    public final static String OPEN_PARENTHESIS = ".(";
+    public final static String CLOSE_PARENTHESIS = ")";
+
 
     public static String converter(LocalDateTime updatedAt) {
         LocalDateTime now = LocalDateTime.now();
@@ -39,4 +52,47 @@ public class TimeConverter {
         diffTime = diffTime / MONTH;
         return diffTime + "년 전";
     }
+
+    public static LocalDateTime getStartOfMonth(int year, int month) {
+        return LocalDateTime.of(year, month, 1, 0, 0);
+    }
+
+    public static LocalDateTime getEndOfMonth(int year, int month) {
+        return LocalDate.of(year, month, 1)
+                .with(TemporalAdjusters.lastDayOfMonth())
+                .atTime(23, 59, 59);
+    }
+
+    /*
+   LocalDateTime을 2024.08.25.(금) 형식으로변경
+    */
+    public static String converterTime(Record record) {
+        LocalDateTime startTime = record.getStartTime();
+        String localDate = getLocalDateToString(startTime);
+        DayOfWeek dayOfWeek = startTime.getDayOfWeek();
+        String displayName = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.KOREA);
+        return localDate +OPEN_PARENTHESIS + displayName + CLOSE_PARENTHESIS;
+    }
+
+    private static String getLocalDateToString(LocalDateTime startTime) {
+        return LocalDate.of(startTime.getYear(),
+                startTime.getMonth(),
+                startTime.getDayOfMonth()).toString().replace(DASH_CH, COMMA_CH
+        );
+    }
+
+    /*
+ 운동 시작 시간과 운동 끝시간을 18:14~20:15 로변환 하는메서드
+  */
+    public static String converterDurationTime(Record record) {
+        StringBuilder sb = new StringBuilder();
+        LocalDateTime startTime = record.getStartTime();
+        LocalDateTime endTime = record.getEndTime();
+
+        return sb.append(startTime.getHour()).append(COLON_SEPARATOR)
+                .append(startTime.getMinute()).append(APPROXIMATION)
+                .append(endTime.getHour()).append(COLON_SEPARATOR)
+                .append(endTime.getMinute()).toString();
+    }
+
 }

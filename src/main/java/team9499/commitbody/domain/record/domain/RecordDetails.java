@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
-import team9499.commitbody.domain.exercise.domain.enums.ExerciseType;
+import team9499.commitbody.domain.record.dto.RecordDetailsDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,66 +58,28 @@ public class RecordDetails {
     private List<RecordSets> setsList = new ArrayList<>();
 
     public static RecordDetails create(Object exercise,Record record,Integer orders){
-        RecordDetailsBuilder builder = RecordDetails.builder().orders(orders);
+        RecordDetailsBuilder builder = RecordDetails.builder().record(record).orders(orders);
         if (exercise instanceof Exercise){
-            builder.exercise((Exercise) exercise);
-        }else
-            builder.customExercise((CustomExercise) exercise);
-
-        return builder.record(record).build();
-    }
-    public void updateDetailsReps(Integer reps){
-        this.detailsReps = reps;
-    }
-
-    public void updateMaxReps(Integer reps){
-        this.maxReps = reps;
-    }
-
-    public void updateMax1RM(Integer max1Rrm){
-        this.max1RM = max1Rrm;
-    }
-    public void updateDetailsVolume(Integer detailsVolume){
-        this.detailsVolume = detailsVolume;
-    }
-
-    public void updateDetailsTimes(Integer detailsTimes){
-        this.sumTimes = detailsTimes;
-    }
-
-    public void updateOrder(Integer orders){
-        this.orders = orders;
-    }
-
-    public void updateSets(Integer sets){
-        this.detailsSets = sets;
-    }
-
-    public static RecordDetails of(Object exercise,Record record,Integer orders){
-        RecordDetailsBuilder detailsBuilder = RecordDetails.builder().orders(orders).record(record).detailsSets(0);
-        if (exercise instanceof Exercise){
-            ExerciseType exerciseType = ((Exercise) exercise).getExerciseType();
-            if (exerciseType.equals(ExerciseType.REPS_ONLY)){
-                detailsBuilder.maxReps(0).detailsReps(0);
-            }else if (exerciseType.equals(ExerciseType.TIME_ONLY)){
-                detailsBuilder.sumTimes(0);
-            }else{
-                detailsBuilder.maxReps(0).detailsVolume(0).max1RM(0);
-            }
-            detailsBuilder.exercise((Exercise) exercise);
-        }else{
-            detailsBuilder.customExercise((CustomExercise) exercise).maxReps(0).max1RM(0);
+            return builder.exercise((Exercise) exercise).build();
         }
-        return detailsBuilder.build();
+        return builder.customExercise((CustomExercise) exercise).build();
     }
 
     public RecordDetails onlyExercise(Object exercise) {
         RecordDetailsBuilder builder = RecordDetails.builder();
         if (exercise instanceof Exercise)
-            builder.exercise((Exercise) exercise);
-        else
-            builder.customExercise((CustomExercise) exercise);
+            return builder.exercise((Exercise) exercise).build();
+        return builder.customExercise((CustomExercise) exercise).build();
+    }
 
-        return builder.build();
+    public void setWeight(RecordDetailsDto detailsDto){
+        this.detailsVolume = detailsDto.getDetailsVolume();
+        this.detailsReps = detailsDto.getDetailsReps();
+        this.max1RM = detailsDto.getMaxRm()/detailsDto.getWeightCount();
+    }
+    public void setReps(RecordDetailsDto detailsDto){
+        this.detailsSets = detailsDto.getDetailsSets();
+        this.maxReps = detailsDto.getMaxReps();
+        this.detailsReps = detailsDto.getDetailsReps();
     }
 }
