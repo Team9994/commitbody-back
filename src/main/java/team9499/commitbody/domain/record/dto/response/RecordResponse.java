@@ -3,8 +3,13 @@ package team9499.commitbody.domain.record.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import team9499.commitbody.domain.record.domain.Record;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import static team9499.commitbody.global.utils.TimeConverter.*;
 
 @Data
 @NoArgsConstructor
@@ -20,5 +25,20 @@ public class RecordResponse {
     private Integer recordSets;     // 세트 수 (예: 40)
     private Integer recordCalorie;  // 소모 칼로리 (kcal 단위, 예: 200)
     private List<RecordDetailsResponse> details;
+
+
+    public static RecordResponse of(Record record, Map<Long, RecordDetailsResponse> detailsMap){
+        return new RecordResponse(
+                record.getId(),
+                record.getRecordName(),
+                converterTime(record),
+                converterDurationTime(record),
+                record.getDuration(),
+                record.getRecordVolume(),
+                record.getRecordSets(),
+                record.getRecordCalorie(),
+                new ArrayList<>(detailsMap.values())
+        );
+    }
 
 }
