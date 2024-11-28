@@ -6,9 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
+import team9499.commitbody.domain.exercise.domain.Exercise;
 import team9499.commitbody.domain.exercise.domain.ExerciseInterest;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseEquipment;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
+import team9499.commitbody.domain.routin.domain.RoutineDetails;
+import team9499.commitbody.global.constants.ElasticFiled;
 
 @Data
 @Builder
@@ -44,6 +47,19 @@ public class CustomExerciseDto {
 
     public static CustomExerciseDto of(Long routineDetailId, Long customExerciseId,String exerciseName,String gifUrl,Integer sets,String exerciseType,Integer orders){
         return CustomExerciseDto.builder().routineDetailId(routineDetailId).exerciseId(customExerciseId).source("custom").exerciseName(exerciseName).gifUrl(gifUrl).sets(sets).orders(orders).exerciseType(exerciseType).build();
+    }
+
+    public static CustomExerciseDto of(RoutineDetails routineDetails, CustomExercise customExercise){
+        return CustomExerciseDto.builder()
+                .routineDetailId(routineDetails.getId())
+                .exerciseId(customExercise.getId())
+                .source(ElasticFiled.CUSTOM)
+                .exerciseName(customExercise.getCustomExName())
+                .gifUrl(customExercise.getCustomGifUrl())
+                .sets(routineDetails.getTotalSets())
+                .orders(routineDetails.getOrders())
+                .exerciseType("무게와 횟수").build();
+
     }
 
 

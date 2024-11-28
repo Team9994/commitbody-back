@@ -5,11 +5,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import team9499.commitbody.domain.exercise.domain.Exercise;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseEquipment;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
 import team9499.commitbody.domain.record.dto.RecordSetsDto;
+import team9499.commitbody.domain.routin.domain.RoutineDetails;
+import team9499.commitbody.global.constants.ElasticFiled;
 
 import java.util.List;
+
+import static team9499.commitbody.global.constants.ElasticFiled.*;
 
 @Data
 @Builder
@@ -54,5 +59,16 @@ public class ExerciseDto {
     public static ExerciseDto of(Long exerciseId, String name, String gifUrl, String target, String type, String equipment, String source, boolean interest){
         return ExerciseDto.builder().exerciseId(exerciseId).exerciseName(name).gifUrl(gifUrl).exerciseTarget(ExerciseTarget.valueOf(target)).exerciseType(type).exerciseEquipment(ExerciseEquipment.fromEventStatus(equipment))
                 .source(source).interest(interest).build();
+    }
+
+    public static ExerciseDto of(RoutineDetails routineDetails, Exercise exercise){
+        return ExerciseDto.builder().exerciseId(routineDetails.getId())
+                .exerciseName(exercise.getExerciseName())
+                .gifUrl(exercise.getGifUrl())
+                .sets(routineDetails.getTotalSets())
+                .exerciseType(exercise.getExerciseType().getDescription())
+                .orders(routineDetails.getOrders())
+                .source(DEFAULT)
+                .build();
     }
 }
