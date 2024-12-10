@@ -76,9 +76,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         Member member = validAccessTokenGetMember(jwtToken);
         saveElasticMember(nickName, member);
         createAdditionalInfo(nickName, gender, birthday, height, weight, boneMineralDensity, bodyFatPercentage, member);
+        memberRedisUpdate(member);
         return new TokenUserInfoResponse(TokenInfoDto.of(member.getId(), member.getNickname()));
     }
-    
+
+
+
     /**
      * 회원가입시 닉네임 검증 메서드
      */
@@ -210,7 +213,10 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         member.createAdditionalInfoNull(nickName, gender, birthday, height, weight);
     }
 
-
+    private void memberRedisUpdate(Member member) {
+        redisService.updateMember(member.getId().toString(),member);
+    }
+    
     private String getNicknameKey(String nickname) {
         return NICKNAME + nickname;
     }
