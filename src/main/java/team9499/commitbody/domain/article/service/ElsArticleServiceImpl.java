@@ -39,7 +39,6 @@ import java.util.Map;
 import static team9499.commitbody.domain.article.domain.ArticleCategory.*;
 import static team9499.commitbody.domain.article.domain.Visibility.*;
 import static team9499.commitbody.domain.article.domain.Visibility.PUBLIC;
-import static team9499.commitbody.global.Exception.ExceptionStatus.*;
 import static team9499.commitbody.global.constants.Delimiter.*;
 import static team9499.commitbody.global.constants.ElasticFiled.*;
 
@@ -306,7 +305,7 @@ public class ElsArticleServiceImpl implements ElsArticleService {
 
     private static void writDrawBuilder(BoolQuery.Builder builder) {
         // 탈퇴하지 않은 사용자의 게시글만 조회
-        builder.must(Query.of(q -> q.term(t -> t.field(WRIT_DRAW).value(false))));
+        builder.must(Query.of(q -> q.term(t -> t.field(WITH_DRAW).value(false))));
     }
 
     // 'PUBLIC' 게시글 조건 추가
@@ -413,7 +412,7 @@ public class ElsArticleServiceImpl implements ElsArticleService {
                 .query(Query.of(q -> q.bool(b -> b.must(m -> m.term(t -> t.field(MEMBER_ID).value(memberId))))))
                 .script(s -> s.inline(i -> i.source(CTX_WITH_DRAW)
                         .lang(PAINLESS)
-                        .params(WRIT_DRAW, JsonData.of(type)))).build();
+                        .params(WITH_DRAW, JsonData.of(type)))).build();
     }
 
     private static BulkRequest.Builder getBulkBuilder(Boolean type, List<Long> writeDrawArticleIdsByComment) {

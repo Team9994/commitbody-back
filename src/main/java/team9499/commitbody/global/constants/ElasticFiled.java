@@ -55,7 +55,7 @@ public class ElasticFiled {
     public static final String BLOCKER_REMOVE_IF = "ctx._source.blockerId.removeIf(id -> id == params.id)";
 
     public static final String PAINLESS = "painless";
-    public static final String WRIT_DRAW = "writDraw";
+    public static final String WITH_DRAW = "withDraw";
     public static final String WRIT_DRAW_KR = "탈퇴";
 
 

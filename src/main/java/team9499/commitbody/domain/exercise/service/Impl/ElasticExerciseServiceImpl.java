@@ -261,7 +261,7 @@ public class ElasticExerciseServiceImpl implements ElasticExerciseService {
                 .query(Query.of(q -> q.bool(b -> b.must(m -> m.term(t -> t.field(MEMBER_ID).value(memberId))))))
                 .script(s -> s.inline(i -> i.source(CTX_WITH_DRAW)
                         .lang(PAINLESS)
-                        .params(WRIT_DRAW, JsonData.of(type)))).build();
+                        .params(WITH_DRAW, JsonData.of(type)))).build();
     }
 
 
