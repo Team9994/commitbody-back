@@ -145,7 +145,7 @@ class ElasticExerciseServiceImplTest {
         assertThat(value.query().toString()).isEqualTo(new Query.Builder().bool(b -> b.must(m -> m.term(t -> t.field(MEMBER_ID).value(1)))).build().toString());
         assertThat(value.script().inline().lang()).isEqualTo("painless");
         assertThat(value.script().inline().source()).isEqualTo("ctx._source.withDraw = params.writDraw");
-        assertThat(value.script().inline().params().toString()).isEqualTo("{writDraw=true}");
+        assertThat(value.script().inline().params().toString()).isEqualTo("{withDraw=true}");
     }
 
 }
