@@ -1,7 +1,6 @@
 package team9499.commitbody.global.utils;
 
 import team9499.commitbody.domain.record.domain.Record;
-import team9499.commitbody.global.constants.Delimiter;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -22,7 +21,6 @@ public class TimeConverter {
     private static final int MONTH = 12;
     public final static String OPEN_PARENTHESIS = ".(";
     public final static String CLOSE_PARENTHESIS = ")";
-
 
     public static String converter(LocalDateTime updatedAt) {
         LocalDateTime now = LocalDateTime.now();
@@ -81,6 +79,17 @@ public class TimeConverter {
         );
     }
 
+    public static LocalDateTime startOfWeek(){
+        LocalDate today = getLocalDateNow();
+        return today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY)).atStartOfDay();
+    }
+
+    public static LocalDateTime endOfWeek(){
+        LocalDate today = getLocalDateNow();
+        return today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY)).atTime(23, 59, 59);
+    }
+
+
     /*
  운동 시작 시간과 운동 끝시간을 18:14~20:15 로변환 하는메서드
   */
@@ -95,4 +104,8 @@ public class TimeConverter {
                 .append(endTime.getMinute()).toString();
     }
 
+
+    private static LocalDate getLocalDateNow() {
+        return LocalDate.now();
+    }
 }
