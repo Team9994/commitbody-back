@@ -61,6 +61,16 @@ public class ExerciseDto {
                 .source(source).interest(interest).build();
     }
 
+    public static ExerciseDto of(Exercise exercise,boolean isInterest){
+        return ExerciseDto.builder().exerciseId(exercise.getId())
+                .exerciseType(exercise.getExerciseType().getDescription())
+                .exerciseName(exercise.getExerciseName())
+                .exerciseEquipment(exercise.getExerciseEquipment())
+                .gifUrl(exercise.getGifUrl())
+                .interest(isInterest).build();
+    }
+
+
     public static ExerciseDto of(RoutineDetails routineDetails, Exercise exercise){
         return ExerciseDto.builder().exerciseId(routineDetails.getId())
                 .exerciseName(exercise.getExerciseName())

@@ -39,7 +39,6 @@ import java.util.Map;
 import static team9499.commitbody.domain.article.domain.ArticleCategory.*;
 import static team9499.commitbody.domain.article.domain.Visibility.*;
 import static team9499.commitbody.domain.article.domain.Visibility.PUBLIC;
-import static team9499.commitbody.global.Exception.ExceptionStatus.*;
 import static team9499.commitbody.global.constants.Delimiter.*;
 import static team9499.commitbody.global.constants.ElasticFiled.*;
 
@@ -62,49 +61,23 @@ public class ElsArticleServiceImpl implements ElsArticleService {
     private final ArticleCommentService articleCommentService;
     private final FollowRepository followRepository;
 
-    /**
-     * 비동기를 통한 엘라스틱 게시글 저장
-     *
-     * @param articleDto 게시글DTO
-     */
     @Async
     @Override
     public void saveArticleAsync(ArticleDto articleDto) {
         elsArticleRepository.save(ArticleDoc.of(articleDto));
     }
 
-    /**
-     * 비동기를 통한 엘라스틱 게시글명, 카테고리,이미지주소를 변경
-     *
-     * @param articleDto 게시글DTO
-     */
     @Async
     @Override
     public void updateArticleAsync(ArticleDto articleDto) {
         handleElasticUpdateArticle(articleDto, createUpdateDoc(articleDto));
     }
 
-    /**
-     * 비동기를 통한 게시글 ID를 통한 게시글 삭제
-     *
-     * @param articleId 삭제할 게시글 ID
-     */
     @Async
     @Override
     public void deleteArticleAsync(Long articleId) {
         handleElasticDeleteArticle(articleId);
     }
-
-    /**
-     * 엘라스틱 게시글의 제목을 통한 검색 API
-     *
-     * @param memberId 로그인한 사용자 ID
-     * @param title    검색할 게시글 명
-     * @param category 필터링한 카테고리
-     * @param size     조회할 데이터 크기 기본 크기 10
-     * @param lastId   마지막 조회 ID
-     * @return AllArticleResponse을 반환
-     */
 
     @Override
     public AllArticleResponse searchArticleByTitle(Long memberId, String title, ArticleCategory category, Integer size, Long lastId) {
@@ -113,12 +86,6 @@ public class ElsArticleServiceImpl implements ElsArticleService {
         return handleSearchArticle(size, searchRequest);
     }
 
-    /**
-     * 사용자 프로필 변경시 게시글의 작성된 작성자 명을 비동기로 변경
-     *
-     * @param beforeNickname 이전 사용자 닉네임
-     * @param afterNickname  변경한 사용자 닉네임
-     */
     @Async
     @Override
     public void updateWriterAsync(String beforeNickname, String afterNickname) {
@@ -126,13 +93,6 @@ public class ElsArticleServiceImpl implements ElsArticleService {
         handleUpdateWriter(request);
     }
 
-    /**
-     * 게시글 인덱스의 댓글 수와 좋아요수를 MySQL에 저장된 데이터와 일관성을 유지하기 위해 댓글,좋아요(삭제,추가)기능 동작시 업데이트 하는 로직을 실행
-     *
-     * @param articleId 게시글 ID
-     * @param count     변경된 수
-     * @param type      댓글, 좋아요
-     */
     @Async
     @Override
     public void updateArticleCountAsync(Long articleId, Integer count, String type) {
@@ -148,13 +108,7 @@ public class ElsArticleServiceImpl implements ElsArticleService {
         handleArticleWithDraw(queryRequest);
     }
 
-    /**
-     * 사용자 탈퇴및 재가입시 발생
-     * - 탈퇴 및 재가입의 대한 사용자가 작성한 게시글의 대한 좋아요, 댓글의대한 카운트수를 감소및 증가
-     *
-     * @param memberId 사용자 ID
-     * @param type     true : 탈퇴 , false : 재가입
-     */
+
     @Override
     public void updateArticleLikeAndCommentCountAsync(Long memberId, Boolean type) {
         List<Long> writeDrawArticleIds = likeService.getWriteDrawArticleIds(memberId);
@@ -306,7 +260,7 @@ public class ElsArticleServiceImpl implements ElsArticleService {
 
     private static void writDrawBuilder(BoolQuery.Builder builder) {
         // 탈퇴하지 않은 사용자의 게시글만 조회
-        builder.must(Query.of(q -> q.term(t -> t.field(WRIT_DRAW).value(false))));
+        builder.must(Query.of(q -> q.term(t -> t.field(WITH_DRAW).value(false))));
     }
 
     // 'PUBLIC' 게시글 조건 추가
@@ -413,7 +367,7 @@ public class ElsArticleServiceImpl implements ElsArticleService {
                 .query(Query.of(q -> q.bool(b -> b.must(m -> m.term(t -> t.field(MEMBER_ID).value(memberId))))))
                 .script(s -> s.inline(i -> i.source(CTX_WITH_DRAW)
                         .lang(PAINLESS)
-                        .params(WRIT_DRAW, JsonData.of(type)))).build();
+                        .params(WITH_DRAW, JsonData.of(type)))).build();
     }
 
     private static BulkRequest.Builder getBulkBuilder(Boolean type, List<Long> writeDrawArticleIdsByComment) {

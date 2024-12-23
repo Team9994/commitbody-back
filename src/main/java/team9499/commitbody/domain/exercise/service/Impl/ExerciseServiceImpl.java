@@ -8,16 +8,22 @@ import org.springframework.web.multipart.MultipartFile;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
+import team9499.commitbody.domain.exercise.domain.Exercise;
+import team9499.commitbody.domain.exercise.domain.ExerciseMethod;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseEquipment;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
+import team9499.commitbody.domain.exercise.domain.enums.ExerciseType;
 import team9499.commitbody.domain.exercise.dto.CustomExerciseDto;
+import team9499.commitbody.domain.exercise.dto.ReportDto;
 import team9499.commitbody.domain.exercise.dto.response.ExerciseResponse;
 import team9499.commitbody.domain.exercise.repository.CustomExerciseRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseInterestRepository;
+import team9499.commitbody.domain.exercise.repository.ExerciseMethodRepository;
 import team9499.commitbody.domain.exercise.repository.ExerciseRepository;
 import team9499.commitbody.domain.exercise.service.ExerciseInterestService;
 import team9499.commitbody.domain.exercise.service.ExerciseService;
 import team9499.commitbody.domain.like.repository.LikeRepository;
+import team9499.commitbody.domain.record.dto.response.RecordSetsResponse;
 import team9499.commitbody.domain.record.repository.RecordRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
@@ -25,18 +31,23 @@ import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.aws.s3.S3Service;
 import team9499.commitbody.global.redis.RedisService;
 
+import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static team9499.commitbody.global.constants.ElasticFiled.*;
+
+@Slf4j
 @Service
 @Transactional(transactionManager = "dataTransactionManager")
 @RequiredArgsConstructor
 public class ExerciseServiceImpl implements ExerciseService {
 
     private final CustomExerciseRepository customExerciseRepository;
+    private final ExerciseMethodRepository exerciseMethodRepository;
     private final LikeRepository commentLikeRepository;
     private final RecordRepository recordRepository;
     private final ExerciseInterestRepository exerciseInterestRepository;
-    private final ExerciseInterestService exerciseInterestService;
     private final ExerciseRepository exerciseRepository;
     private final RedisService redisService;
     private final MemberRepository memberRepository;
@@ -88,25 +99,57 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Transactional(readOnly = true)
     @Override
     public ExerciseResponse detailsExercise(Long exerciseId, Long memberId, String source) {
-        ExerciseResponse exerciseDetailReport = exerciseRepository.getExerciseDetailReport(memberId, exerciseId, source);
-        boolean interestStatus = exerciseInterestService.checkInterestStatus(exerciseId, memberId);
-        exerciseDetailReport.setInterestStatus(interestStatus);
-
-        return exerciseDetailReport;
+        Object exerciseOb = filterExercise(source, exerciseId);
+        ReportDto exerciseDetailReport = getExerciseDetailReport(exerciseId, memberId, exerciseOb);
+        Set<String> methods = getExerciseMethods(exerciseId);
+        Map<LocalDate, List<RecordSetsResponse>> recentRecordsByExercise = getRecentRecordsByExercise(exerciseId, memberId, source);
+        return ExerciseResponse.of(exerciseOb,exerciseDetailReport,methods,recentRecordsByExercise);
     }
+
+
 
     private Optional<Member> getRedisMember(Long memberId) {
         Optional<Member> optionalMember = redisService.getMemberDto(String.valueOf(memberId));
 
         if (optionalMember.isEmpty()) {
-            Member member = memberRepository.findById(memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
             optionalMember = Optional.of(member);
         }
         return optionalMember;
     }
 
     private CustomExercise getCustomExercise(Long customExerciseId, Long memberId) {
-        return customExerciseRepository.findByIdAndAndMemberId(customExerciseId, memberId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+        return customExerciseRepository.findByIdAndAndMemberId(customExerciseId, memberId)
+                .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA));
+    }
+
+    private Object filterExercise(String source, Long exerciseId){
+        if (source.equals(DEFAULT)){
+            return exerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST,ExceptionType.NO_SUCH_DATA));
+        }
+        return customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST,ExceptionType.NO_SUCH_DATA));
+    }
+
+    private ReportDto getExerciseDetailReport(Long exerciseId, Long memberId, Object exerciseOb) {
+        return exerciseRepository.getWeeklyExerciseVolumeReport(memberId, exerciseId, getExerciseType(exerciseOb));
+    }
+
+    private ExerciseType getExerciseType(Object exercise){
+        if (exercise instanceof Exercise){
+            return ((Exercise) exercise).getExerciseType();
+        }
+        return ExerciseType.WEIGHT_AND_REPS;
+    }
+
+    private Set<String> getExerciseMethods(Long exerciseId) {
+        return exerciseMethodRepository.findAllByExerciseId(exerciseId).stream()
+                .map(ExerciseMethod::getExerciseContent)
+                .collect(Collectors.toSet());
+    }
+
+    private Map<LocalDate, List<RecordSetsResponse>> getRecentRecordsByExercise(Long exerciseId, Long memberId, String source) {
+        return recordRepository.getRecentRecordsByExercise(exerciseId, memberId, source);
     }
 
 }
