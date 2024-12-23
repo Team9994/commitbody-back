@@ -1,9 +1,12 @@
 package team9499.commitbody.domain.record.repository;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
@@ -16,6 +19,8 @@ import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.NoSuchException;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -24,8 +29,10 @@ import static team9499.commitbody.domain.record.domain.QRecord.*;
 import static team9499.commitbody.domain.record.domain.QRecordDetails.*;
 import static team9499.commitbody.domain.record.domain.QRecordSets.*;
 import static team9499.commitbody.domain.record.dto.response.RecordMonthResponse.*;
+import static team9499.commitbody.global.constants.ElasticFiled.*;
 import static team9499.commitbody.global.utils.TimeConverter.*;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class CustomRecordRepositoryImpl implements CustomRecordRepository {
@@ -74,6 +81,60 @@ public class CustomRecordRepositoryImpl implements CustomRecordRepository {
         return mapToRecordDays(records);
     }
 
+    @Override
+    public Map<LocalDate, List<RecordSetsResponse>> getRecentRecordsByExercise(Long exerciseId, Long memberId, String source) {
+        BooleanBuilder exerciseFilter = exerciseFilter(exerciseId, source);
+        List<Tuple> fetch = getFilteredRecordTuples(exerciseFilter, fetchTopRecordIds(memberId, exerciseFilter));
+        return getLocalDateTimeListMap(fetch);
+    }
+
+    private List<Tuple> getFilteredRecordTuples(BooleanBuilder exerciseFilter, List<Long> rankRecordIdsQuery) {
+        return jpaQueryFactory.select(recordSets, record.startTime)
+                .from(recordSets)
+                .join(recordDetails).on(recordSets.recordDetails.id.eq(recordDetails.id))
+                .join(record).on(recordDetails.record.id.eq(record.id))
+                .where(recordDetails.id.in(
+                        JPAExpressions.select(recordDetails.id)
+                                .from(recordDetails)
+                                .where(exerciseFilter.and(recordDetails.record.id.in(rankRecordIdsQuery)))
+                )).fetch();
+    }
+
+    private List<Long> fetchTopRecordIds(Long memberId, BooleanBuilder exerciseFilter) {
+        return jpaQueryFactory
+                .select(
+                        Expressions.numberTemplate(Integer.class,
+                                "row_number() over (order by {0} desc)", record.startTime).as("row_num"),
+                        record.id
+                )
+                .from(record)
+                .join(recordDetails).on(recordDetails.record.id.eq(record.id)).fetchJoin()
+                .where(exerciseFilter.and(record.member.id.eq(memberId)))
+                .limit(7)
+                .fetch()
+                .stream().map(tuple -> tuple.get(record.id)).toList();
+    }
+
+    private static Map<LocalDate, List<RecordSetsResponse>> getLocalDateTimeListMap(List<Tuple> fetch) {
+        return fetch.stream()
+                .collect(Collectors.groupingBy(
+                        tuple -> tuple.get(record.startTime).toLocalDate(),
+                        LinkedHashMap::new,
+                        Collectors.mapping(
+                                tuple -> RecordSetsResponse.of(tuple.get(recordSets)),
+                                Collectors.toList()
+                        )
+                ));
+    }
+
+    private BooleanBuilder exerciseFilter(Long exerciseId, String source) {
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
+        if (source.equals(DEFAULT)) {
+            return booleanBuilder.and(recordDetails.exercise.id.eq(exerciseId));
+        }
+        return booleanBuilder.and(recordDetails.customExercise.id.eq(exerciseId));
+    }
+
     // === findByRecordId() === //
     private List<Tuple> fetchRecordDataWithDetailsAndSets(Long recordId, Long memberId) {
         return jpaQueryFactory.select(record, recordDetails, recordSets).from(record)
@@ -106,7 +167,7 @@ public class CustomRecordRepositoryImpl implements CustomRecordRepository {
 
     private static RecordDetailsResponse createRecordDetailsResponse(RecordDetails recordDetail, Exercise exercise,
                                                                      CustomExercise customExercise) {
-        return RecordDetailsResponse.of(recordDetail,exercise,customExercise);
+        return RecordDetailsResponse.of(recordDetail, exercise, customExercise);
     }
 
     private RecordResponse handleRecordResponse(Map<Record, List<RecordDetailsResponse>> groupedDetails, List<Tuple> list) {
@@ -155,7 +216,7 @@ public class CustomRecordRepositoryImpl implements CustomRecordRepository {
     }
 
     private RecordResponse getRecordResponse(Record record, Map<Long, RecordDetailsResponse> detailsMap) {
-        return RecordResponse.of(record,detailsMap);
+        return RecordResponse.of(record, detailsMap);
     }
 
     // === deleteCustomExercise() === //

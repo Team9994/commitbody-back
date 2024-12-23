@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import team9499.commitbody.domain.record.domain.RecordSets;
 
 @Data
 @NoArgsConstructor
@@ -30,13 +31,12 @@ public class RecordSetsResponse {
     }
 
     public static RecordSetsResponse of(Integer weight, Integer reps, Integer times){
-        RecordSetsResponseBuilder builder = RecordSetsResponse.builder();
-        if (weight!=null && reps !=null){
-            builder.weight(weight).reps(reps);
-        }else if (times!=null){
-            builder.times(times);
-        }else
-            builder.reps(reps);
-        return builder.build();
+        return RecordSetsResponse.builder().weight(weight).reps(reps).times(times).build();
+    }
+
+    public static RecordSetsResponse of(RecordSets recordSets){
+        return RecordSetsResponse.builder().weight(recordSets.getWeight())
+                .reps(recordSets.getReps())
+                .times(recordSets.getTimes()).build();
     }
 }
