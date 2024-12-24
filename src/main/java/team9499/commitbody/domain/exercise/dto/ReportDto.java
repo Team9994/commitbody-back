@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
@@ -29,15 +30,15 @@ public class ReportDto {
     private List<WeekReport> weekReports;
 
 
-    public static ReportDtoBuilder weightOf(int oneRm, int totalVolume){
+    public static ReportDtoBuilder weightOf(@Nullable Integer oneRm, @Nullable Integer totalVolume){
         return ReportDto.builder().max1Rm(oneRm).totalVolume(totalVolume);
     }
 
-    public static ReportDtoBuilder repOf(int maxRep, int totalRep){
+    public static ReportDtoBuilder repOf(@Nullable Integer maxRep, @Nullable Integer totalRep){
         return ReportDto.builder().maxRep(maxRep).totalRep(totalRep);
     }
 
-    public static ReportDtoBuilder timeOf(int maxTime, int totalTime){
+    public static ReportDtoBuilder timeOf(@Nullable Integer maxTime, @Nullable Integer totalTime){
         return ReportDto.builder().maxTime(maxTime).totalTime(totalTime);
     }
 
