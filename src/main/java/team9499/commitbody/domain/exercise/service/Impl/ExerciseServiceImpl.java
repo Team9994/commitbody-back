@@ -9,6 +9,7 @@ import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
+import team9499.commitbody.domain.exercise.domain.ExerciseInterest;
 import team9499.commitbody.domain.exercise.domain.ExerciseMethod;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseEquipment;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
@@ -100,13 +101,12 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Override
     public ExerciseResponse detailsExercise(Long exerciseId, Long memberId, String source) {
         Object exerciseOb = filterExercise(source, exerciseId);
+        boolean interested = isExerciseInterested(exerciseId, memberId, source);
         ReportDto exerciseDetailReport = getExerciseDetailReport(exerciseId, memberId, exerciseOb);
         Set<String> methods = getExerciseMethods(exerciseId);
         Map<LocalDate, List<RecordSetsResponse>> recentRecordsByExercise = getRecentRecordsByExercise(exerciseId, memberId, source);
-        return ExerciseResponse.of(exerciseOb,exerciseDetailReport,methods,recentRecordsByExercise);
+        return ExerciseResponse.of(exerciseOb,exerciseDetailReport,methods,recentRecordsByExercise,interested);
     }
-
-
 
     private Optional<Member> getRedisMember(Long memberId) {
         Optional<Member> optionalMember = redisService.getMemberDto(String.valueOf(memberId));
@@ -129,6 +129,17 @@ public class ExerciseServiceImpl implements ExerciseService {
             return exerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST,ExceptionType.NO_SUCH_DATA));
         }
         return customExerciseRepository.findById(exerciseId).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST,ExceptionType.NO_SUCH_DATA));
+    }
+
+    private boolean isExerciseInterested(Long exerciseId, Long memberId, String source) {
+        if (DEFAULT.equals(source)) {
+            return exerciseInterestRepository.findByExerciseIdAndMemberId(exerciseId, memberId)
+                    .map(ExerciseInterest::isInterested)
+                    .orElse(false);
+        }
+        return exerciseInterestRepository.findByCustomExerciseIdAndMemberId(exerciseId,memberId)
+                .map(ExerciseInterest::isInterested)
+                .orElse(false);
     }
 
     private ReportDto getExerciseDetailReport(Long exerciseId, Long memberId, Object exerciseOb) {
