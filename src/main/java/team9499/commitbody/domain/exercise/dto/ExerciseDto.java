@@ -5,12 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import team9499.commitbody.domain.exercise.domain.CustomExercise;
 import team9499.commitbody.domain.exercise.domain.Exercise;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseEquipment;
 import team9499.commitbody.domain.exercise.domain.enums.ExerciseTarget;
+import team9499.commitbody.domain.exercise.domain.enums.ExerciseType;
 import team9499.commitbody.domain.record.dto.RecordSetsDto;
 import team9499.commitbody.domain.routin.domain.RoutineDetails;
-import team9499.commitbody.global.constants.ElasticFiled;
 
 import java.util.List;
 
@@ -67,6 +68,15 @@ public class ExerciseDto {
                 .exerciseName(exercise.getExerciseName())
                 .exerciseEquipment(exercise.getExerciseEquipment())
                 .gifUrl(exercise.getGifUrl())
+                .interest(isInterest).build();
+    }
+
+    public static ExerciseDto of(CustomExercise customExercise,boolean isInterest){
+        return ExerciseDto.builder().exerciseId(customExercise.getId())
+                .exerciseType(ExerciseType.WEIGHT_AND_REPS.getDescription())
+                .exerciseName(customExercise.getCustomExName())
+                .exerciseEquipment(customExercise.getExerciseEquipment())
+                .gifUrl(customExercise.getCustomGifUrl())
                 .interest(isInterest).build();
     }
 
