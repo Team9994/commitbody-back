@@ -66,6 +66,7 @@ public class ExerciseDto {
         return ExerciseDto.builder().exerciseId(exercise.getId())
                 .exerciseType(exercise.getExerciseType().getDescription())
                 .exerciseName(exercise.getExerciseName())
+                .exerciseTarget(exercise.getExerciseTarget())
                 .exerciseEquipment(exercise.getExerciseEquipment())
                 .gifUrl(exercise.getGifUrl())
                 .interest(isInterest).build();
@@ -74,6 +75,7 @@ public class ExerciseDto {
     public static ExerciseDto of(CustomExercise customExercise,boolean isInterest){
         return ExerciseDto.builder().exerciseId(customExercise.getId())
                 .exerciseType(ExerciseType.WEIGHT_AND_REPS.getDescription())
+                .exerciseTarget(customExercise.getExerciseTarget())
                 .exerciseName(customExercise.getCustomExName())
                 .exerciseEquipment(customExercise.getExerciseEquipment())
                 .gifUrl(customExercise.getCustomGifUrl())
