@@ -84,7 +84,7 @@ public class ExerciseDto {
 
 
     public static ExerciseDto of(RoutineDetails routineDetails, Exercise exercise){
-        return ExerciseDto.builder().exerciseId(routineDetails.getId())
+        return ExerciseDto.builder().exerciseId(exercise.getId())
                 .exerciseName(exercise.getExerciseName())
                 .gifUrl(exercise.getGifUrl())
                 .sets(routineDetails.getTotalSets())
