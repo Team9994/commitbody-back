@@ -26,6 +26,7 @@ import team9499.commitbody.domain.Member.dto.response.MemberInfoResponse;
 import team9499.commitbody.domain.Member.dto.response.MemberMyPageResponse;
 import team9499.commitbody.domain.Member.service.MemberDocService;
 import team9499.commitbody.domain.Member.service.MemberService;
+import team9499.commitbody.domain.follow.domain.FollowType;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
 import team9499.commitbody.global.Exception.InvalidUsageException;
@@ -81,7 +82,8 @@ class MemberControllerTest {
     @MockUser
     @Test
     void viewMyPage() throws Exception {
-        MemberMyPageResponse memberMyPageResponse = new MemberMyPageResponse(1L, "myPage", "사용자", "기본프로필.png", 0, 0, null, false, AccountStatus.PUBLIC);
+        MemberDto memberDto = MemberDto.builder().nickname("테스트닉네임").build();
+        MemberMyPageResponse memberMyPageResponse = new MemberMyPageResponse(memberDto,"myPage",1,0, FollowType.FOLLOW, false, AccountStatus.PUBLIC);
         given(memberService.getMyPage(anyLong(), anyString())).willReturn(memberMyPageResponse);
 
         mockMvc.perform(get("/api/v1/my-page/1"))

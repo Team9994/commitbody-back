@@ -121,7 +121,7 @@ public class RecordServiceImpl implements RecordService {
         int orders = 1;
         for (RecordDto recordDto : recordDtos) {        // 실행한 운동 루틴 순회
             recordStatistics.exerciseSizePlus();
-            RecordDetails recordDetail = RecordDetails.create(getExercise(recordDto, recordStatistics), record, orders++);       //운동이 적용된 상세 루턴 객체 생성
+            RecordDetails recordDetail = RecordDetails.create(getExercise(recordDto), record, orders++);       //운동이 적용된 상세 루턴 객체 생성
             RecordDetailsDto detailsDto = RecordDetailsDto.init();
             processExerciseSets(recordDto, recordStatistics, detailsDto, recordSets, recordDetail, member);
             recordDetail.setDetailsSets(detailsDto.getDetailsSets());
@@ -130,7 +130,7 @@ public class RecordServiceImpl implements RecordService {
         }
     }
 
-    private Object getExercise(RecordDto recordDto, RecordStatistics recordStatistics) {
+    private Object getExercise(RecordDto recordDto) {
         Long exerciseId = recordDto.getExerciseId();
         if (recordDto.getSource().equals(DEFAULT)) { // 기본 운동일때
             return getExercise(exerciseId);

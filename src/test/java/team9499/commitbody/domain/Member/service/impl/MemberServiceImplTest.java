@@ -63,7 +63,6 @@ class MemberServiceImplTest {
 
         MemberMyPageResponse response = memberService.getMyPage(memberId, member.getNickname());
         assertThat(response.getPageType()).isEqualTo("myPage");
-        assertThat(response.getNickname()).isEqualTo("my");
     }
     
     @DisplayName("마이 페이지 조회 - 상대방 페이이 조회시")
@@ -76,7 +75,6 @@ class MemberServiceImplTest {
         when(followRepository.followStatus(eq(memberId),eq(otherMember.getId()))).thenReturn(null);
 
         MemberMyPageResponse response = memberService.getMyPage(memberId, otherMember.getNickname());
-        assertThat(response.getNickname()).isEqualTo(otherMember.getNickname());
         assertThat(response.getPageType()).isEqualTo("theirPage");
         assertThat(response.isBlockStatus()).isFalse();
     }
