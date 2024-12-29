@@ -40,31 +40,13 @@ public class MemberServiceImpl implements MemberService {
     private final RedisService redisService;
     private final S3Service s3Service;
 
-    /**
-     * 마이페이지 조회 API
-     *
-     * @param memberId 현재 로그인한 사용자 정보
-     */
+
     @Override
     public MemberMyPageResponse getMyPage(Long memberId, String nickname) {
         Member member = filterWithDrawnMember(nickname);
-        MemberMyPageResponse.MemberMyPageResponseBuilder myPageBuilder = getMemberMyPageResponseBuilder(memberId, member);
-        return handleMyPageResponse(memberId, member, myPageBuilder);
+        return handleMyPageResponse(memberId,member);
     }
 
-    /**
-     * 프로필 업데이트
-     *
-     * @param memberId           수정할 사용자 ID
-     * @param nickname           닉네임
-     * @param gender             성별
-     * @param birthDay           생년월일
-     * @param height             키
-     * @param weight             몸무게
-     * @param boneMineralDensity 골근격량
-     * @param bodyFatPercentage  체지방량
-     * @param deleteProfile      기본 프로필 변경 여부
-     */
     @Override
     public void updateProfile(Long memberId, String nickname, Gender gender, LocalDate birthDay, Float height, Float weight,
                               Float boneMineralDensity, Float bodyFatPercentage, boolean deleteProfile, MultipartFile file) {
@@ -75,13 +57,6 @@ public class MemberServiceImpl implements MemberService {
         handleUpdateProfile(memberId, nickname, member, profile, beforeNickname);
     }
 
-
-    /**
-     * 현자 사용자의 알림 유뮤를 조회합니다.
-     *
-     * @param memberId 로그인한 사용자 아이디
-     * @return true 알림 수신 false 알림 미수신
-     */
     @Override
     public boolean getNotification(Long memberId) {
         Member member = redisService.getMemberDto(String.valueOf(memberId)).get();
@@ -108,28 +83,25 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
     }
 
-    private MemberMyPageResponse.MemberMyPageResponseBuilder getMemberMyPageResponseBuilder(Long memberId, Member member) {
-        boolean blockStatus = blockMemberService.checkBlock(member.getId(), memberId);
-
-        int countFollower = (int) followRepository.getCountFollower(member.getId());
-        int countFollowing = (int) followRepository.getCountFollowing(member.getId());
-        return MemberMyPageResponse.builder().nickname(member.getNickname()).profile(member.getProfile())
-                .followerCount(countFollower).followingCount((countFollowing)).blockStatus(blockStatus);
-    }
-
-    private MemberMyPageResponse handleMyPageResponse(Long memberId, Member member,
-                                                      MemberMyPageResponse.MemberMyPageResponseBuilder myPageBuilder) {
-        if (member.getId().equals(memberId)) {
-            return myPageBuilder.memberId(memberId).pageType(MY_PAGE).build();
-        }
-        FollowType followStatus = followRepository.followStatus(memberId, member.getId());  // 상대방과 팔로우 관계를 검사
-        return myPageBuilder.followStatus(followStatus).accountStatus(member.getAccountStatus())
-                .memberId(member.getId()).pageType(THEIR_PAGE).build();
-    }
-
     private Member getMember(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+    }
+
+    private MemberMyPageResponse handleMyPageResponse(Long memberId, Member member) {
+        boolean blockStatus = blockMemberService.checkBlock(member.getId(), memberId);
+        int countFollower = (int) followRepository.getCountFollower(member.getId());
+        int countFollowing = (int) followRepository.getCountFollowing(member.getId());
+        return getMemberMyPageResponse(memberId, member, blockStatus, countFollower, countFollowing);
+    }
+
+    private MemberMyPageResponse getMemberMyPageResponse(Long memberId, Member member, boolean blockStatus,
+                                                         int countFollower, int countFollowing) {
+        if (member.getId().equals(memberId)){
+            return MemberMyPageResponse.myPageOf(member, MY_PAGE, blockStatus, countFollower, countFollowing);
+        }
+        FollowType followStatus = followRepository.followStatus(memberId, member.getId());
+        return MemberMyPageResponse.otherPageOf(member, THEIR_PAGE, blockStatus, countFollower, countFollowing, followStatus);
     }
 
     private void handleUpdateProfile(Long memberId, String nickname, Member member, String profile, String beforeNickname) {
