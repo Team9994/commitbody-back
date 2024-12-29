@@ -67,4 +67,12 @@ public class MemberDto {
     public static MemberDto of(String verifyMemberId){
         return MemberDto.builder().memberId(Long.valueOf(verifyMemberId)).build();
     }
+
+    public static MemberDto myPageOf(Member member){
+        return MemberDto.builder().memberId(member.getId()).nickname(member.getNickname()).profile(member.getProfile())
+                .birthday(member.getBirthday()).height(String.valueOf(member.getHeight()))
+                .gender(member.getGender()).weight(String.valueOf(member.getWeight()))
+                .BodyFatPercentage(member.getBodyFatPercentage()).BoneMineralDensity(member.getBoneMineralDensity())
+                .build();
+    }
 }
