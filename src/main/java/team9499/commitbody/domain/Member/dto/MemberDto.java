@@ -68,6 +68,10 @@ public class MemberDto {
         return MemberDto.builder().memberId(Long.valueOf(verifyMemberId)).build();
     }
 
+    public static MemberDto of(Long memberId, String nickname){
+        return MemberDto.builder().memberId(memberId).nickname(nickname).build();
+    }
+
     public static MemberDto myPageOf(Member member){
         return MemberDto.builder().memberId(member.getId()).nickname(member.getNickname()).profile(member.getProfile())
                 .birthday(member.getBirthday()).height(String.valueOf(member.getHeight()))

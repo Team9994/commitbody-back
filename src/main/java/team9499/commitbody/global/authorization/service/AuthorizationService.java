@@ -13,9 +13,11 @@ public interface AuthorizationService {
 
     JoinResponse authenticateOrRegisterUser(LoginType loginType, String socialId, String fcmToken);
 
-    TokenUserInfoResponse additionalInfoSave(String nickName, Gender gender, LocalDate birthday, float height, float weight, Float boneMineralDensity, Float bodyFatPercentage, String jwtToken);
+    TokenUserInfoResponse additionalInfoSave(String nickName, Gender gender, LocalDate birthday, float height,
+                                             float weight, Float boneMineralDensity, Float bodyFatPercentage,
+                                             String jwtToken);
 
-    void registerNickname(String nickname);
+    void registerNickname(String nickname,Long memberId);
 
     Map<String,String> refreshAccessToken(String refreshToken);
 

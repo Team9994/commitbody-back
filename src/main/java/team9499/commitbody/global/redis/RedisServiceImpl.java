@@ -1,25 +1,24 @@
 package team9499.commitbody.global.redis;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import team9499.commitbody.domain.Member.domain.Member;
+import team9499.commitbody.domain.Member.dto.MemberDto;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.global.Exception.ExceptionStatus;
 import team9499.commitbody.global.Exception.ExceptionType;
+import team9499.commitbody.global.Exception.InvalidUsageException;
 import team9499.commitbody.global.Exception.NoSuchException;
-import team9499.commitbody.global.constants.Delimiter;
 import team9499.commitbody.global.utils.CustomMapper;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+import static team9499.commitbody.global.Exception.ExceptionStatus.BAD_REQUEST;
+import static team9499.commitbody.global.Exception.ExceptionType.DUPLICATE_NICKNAME;
 import static team9499.commitbody.global.constants.Delimiter.*;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RedisServiceImpl implements RedisService{
@@ -27,30 +26,13 @@ public class RedisServiceImpl implements RedisService{
     private final RedisTemplate<String,Object> redisTemplate;
     private final MemberRepository memberRepository;
     private static final String MEMBER_ID = "member_";
+    private static final String MEMBER_PATTERN = "member_*";
+    private static final String NICKNAME_PATTERN = "nickname_*";
+    private static final String NICKNAME = "nickname_";
     private static final String FCM = "fcm_";
     private static final String SEARCH = "search_";
     private static final String ALL = "all";
     private static final String BLACK_LIST = "blackList";
-
-
-    @Override
-    public void setValue(String key, String value) {
-        ValueOperations<String, Object> values = redisTemplate.opsForValue();
-        values.set(key,value);
-    }
-
-    @Override
-    public void setValues(String key, String value, Duration duration) {
-        ValueOperations<String, Object> values = redisTemplate.opsForValue();
-        values.set(key,value,duration);
-    }
-
-    @Override
-    public String getValue(String key) {
-        ValueOperations<String, Object> values = redisTemplate.opsForValue();
-        if(values.get(key) == null) return STRING_EMPTY;
-        return String.valueOf(values.get(key));
-    }
 
     @Override
     public void deleteValue(String key, AuthType type) {
@@ -72,28 +54,38 @@ public class RedisServiceImpl implements RedisService{
     public Optional<Member> getMemberDto(String key) {
         Object memberOb = redisTemplate.opsForValue().get(getKey(key));
         if (memberOb!=null){
-            CustomMapper<Member> customMapper = new CustomMapper<>();
-            return Optional.of(customMapper.to(memberOb, Member.class));
+            return Optional.of(getMemberCustomMapper().to(memberOb, Member.class));
         }
-        Member member = memberRepository.findById(Long.valueOf(key)).filter(member1 -> !member1.isWithdrawn()).orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
+        Member member = memberRepository.findById(Long.valueOf(key))
+                .filter(member1 -> !member1.isWithdrawn())
+                .orElseThrow(() -> new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.No_SUCH_MEMBER));
         setMember(member,Duration.ofDays(7));
         return Optional.of(member);
+    }
+
+
+    @Override
+    public void getMemberAllNickname(String nickname) {
+        Set<String> nicknames = getMemberNicknameByKey();
+        List<String> members = new ArrayList<>();
+        addNicknamesToMembers(nicknames, members);
+        validateUniqueNickname(nickname, members);
+
+    }
+
+    @Override
+    public void existNickname(String nickname,Long memberId){
+        Set<String> nicknameKey = getNicknameKey();
+        if (isDuplicateNicknameKey(nickname, memberId, nicknameKey))
+            return;
+        if (isDuplicateNicknameValue(nickname, nicknameKey))
+            throw new InvalidUsageException(BAD_REQUEST, DUPLICATE_NICKNAME);
     }
 
     @Override
     public void updateMember(String key,Member member) {
         deleteValue(getKey(key),AuthType.CERTIFICATION);
         setMember(member,Duration.ofDays(30));
-    }
-
-    @Override
-    public boolean nicknameLock(String key, String value, Duration duration) {
-        Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value);
-        if (result!=null && result){
-            redisTemplate.expire(key,duration);
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -184,6 +176,65 @@ public class RedisServiceImpl implements RedisService{
         return redisTemplate.hasKey(jwtToken);
     }
 
+    @Override
+    public void setNickname(MemberDto memberDto) {
+        redisTemplate.opsForValue()
+                .set(NICKNAME+memberDto.getMemberId()+HYPHEN+memberDto.getNickname(),memberDto.getNickname(),
+                        Duration.ofHours(1));
+    }
+
+    @Override
+    public void deleteNicknameAllByMemberId(Long memberId) {
+        Set<String> keys = redisTemplate.keys(NICKNAME + memberId+HYPHEN+STAR);
+        redisTemplate.delete(keys);
+    }
+
+    private Set<String> getMemberNicknameByKey() {
+        return redisTemplate.keys(MEMBER_PATTERN);
+    }
+
+    private void addNicknamesToMembers(Set<String> nicknames, List<String> members) {
+        for (String nicknameStr : nicknames) {
+            Object ob = redisTemplate.opsForValue().get(nicknameStr);
+            members.add(getMemberCustomMapper().to(ob,Member.class).getNickname());
+        }
+    }
+
+    private static void validateUniqueNickname(String nickname, List<String> members) {
+        members.stream()
+                .filter(Objects::nonNull)
+                .forEach(s -> {
+                    if (s.equals(nickname)) {
+                        throw new InvalidUsageException(BAD_REQUEST, DUPLICATE_NICKNAME);
+                    }
+                });
+    }
+
+    private Set<String> getNicknameKey() {
+        Set<String> nicknameKey = redisTemplate.keys(NICKNAME_PATTERN);
+        if (nicknameKey == null) {
+            nicknameKey = Collections.emptySet();
+        }
+        return nicknameKey;
+    }
+
+    private static boolean isDuplicateNicknameKey(String nickname, Long memberId, Set<String> nicknameKey) {
+        return nicknameKey.stream()
+                .anyMatch(key -> {
+                    String[] parts = key.split(HYPHEN, 3);
+                    return parts.length == 3
+                            && parts[1].equals(memberId.toString())
+                            && parts[2].equals(nickname);
+                });
+    }
+
+    private boolean isDuplicateNicknameValue(String nickname, Set<String> nicknameKey) {
+        return nicknameKey.stream()
+                .map(key -> (String) redisTemplate.opsForValue().get(key))
+                .anyMatch(value -> nickname.equals(value));
+    }
+
+
     private String getKey(String key) {
         return MEMBER_ID + key;
     }
@@ -191,4 +242,9 @@ public class RedisServiceImpl implements RedisService{
     private String getSearchKey(String memberId) {
         return SEARCH + memberId;
     }
+
+    private static CustomMapper<Member> getMemberCustomMapper() {
+        return new CustomMapper<>();
+    }
+
 }

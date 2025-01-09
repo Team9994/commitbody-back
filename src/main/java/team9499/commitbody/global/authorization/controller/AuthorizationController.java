@@ -82,6 +82,8 @@ public class AuthorizationController {
                 additionalInfoReqeust.getNickName(), additionalInfoReqeust.getGender(), additionalInfoReqeust.getBirthday(), additionalInfoReqeust.getHeight(), additionalInfoReqeust.getWeight(),
                 additionalInfoReqeust.getBodyFatPercentage(), additionalInfoReqeust.getBoneMineralDensity(), jwtToken
         );
+
+        eventPublisher.publishEvent(tokenUserInfoResponse.getTokenInfo().getMemberId());
         return ResponseEntity.ok(new SuccessResponse<>(true,"회원가입 성공",tokenUserInfoResponse));
     }
 
@@ -99,8 +101,10 @@ public class AuthorizationController {
                     examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
     @PostMapping("/register-nickname")
-    public ResponseEntity<?> registerNickname(@Valid @RequestBody RegisterNicknameRequest registerNicknameRequest, BindingResult result){
-        authorizationService.registerNickname(registerNicknameRequest.getNickname());
+    public ResponseEntity<?> registerNickname(@Valid @RequestBody RegisterNicknameRequest registerNicknameRequest,
+                                              @AuthenticationPrincipal PrincipalDetails principalDetails,
+                                              BindingResult result){
+        authorizationService.registerNickname(registerNicknameRequest.getNickname(),getMemberId(principalDetails));
         return ResponseEntity.ok(new SuccessResponse<>(true,"멋진 닉네임입니다!"));
     }
 
@@ -159,7 +163,7 @@ public class AuthorizationController {
     public ResponseEntity<?> withdraw(@Valid @RequestBody MemberWithdrawRequest withdrawRequest, BindingResult result,
                                       @AuthenticationPrincipal PrincipalDetails principalDetails,
                                       HttpServletRequest request){
-        Long memberId = principalDetails.getMember().getId();
+        Long memberId = getMemberId(principalDetails);
         authorizationService.withdrawMember(memberId,getJwtToken(request));
         eventPublisher.publishEvent(new DeleteMemberEvent(memberId,"탈퇴",LocalDateTime.now()));
         return ResponseEntity.ok(new SuccessResponse<>(true,"탈퇴 성공"));
@@ -170,4 +174,8 @@ public class AuthorizationController {
         if (authorization==null) throw new NoSuchException(ExceptionStatus.BAD_REQUEST, ExceptionType.NO_SUCH_DATA);
         return authorization.replace("Bearer ", "");
     }
+    private static Long getMemberId(PrincipalDetails principalDetails) {
+        return principalDetails.getMember().getId();
+    }
+
 }

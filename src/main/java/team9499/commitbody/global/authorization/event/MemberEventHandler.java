@@ -9,12 +9,14 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import team9499.commitbody.global.authorization.service.AuthorizationElsService;
+import team9499.commitbody.global.redis.RedisService;
 
 @Component
 @RequiredArgsConstructor
-public class WittDrawnMemberEventHandler {
+public class MemberEventHandler {
 
     private final AuthorizationElsService authorizationElsService;
+    private final RedisService redisService;
     private final JobLauncher jobLauncher;
     private final JobRegistry jobRegistry;
 
@@ -32,4 +34,11 @@ public class WittDrawnMemberEventHandler {
 
         jobLauncher.run(jobRegistry.getJob("updateBatchJob"),jobParameters);
     }
+
+    @Async
+    @EventListener
+    public void deleteRedisNickname(Long memberId){
+        redisService.deleteNicknameAllByMemberId(memberId);
+    }
+
 }

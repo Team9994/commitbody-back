@@ -1,7 +1,6 @@
 package team9499.commitbody.global.authorization.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -13,7 +12,6 @@ import team9499.commitbody.domain.Member.domain.MemberDoc;
 import team9499.commitbody.domain.Member.dto.MemberDto;
 import team9499.commitbody.domain.Member.repository.MemberRepository;
 import team9499.commitbody.domain.Member.service.MemberDocService;
-import team9499.commitbody.global.Exception.InvalidUsageException;
 import team9499.commitbody.global.Exception.NoSuchException;
 import team9499.commitbody.global.Exception.WithDrawException;
 import team9499.commitbody.global.authorization.domain.RefreshToken;
@@ -28,16 +26,14 @@ import team9499.commitbody.global.redis.AuthType;
 import team9499.commitbody.global.redis.RedisService;
 import team9499.commitbody.global.utils.JwtUtils;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static team9499.commitbody.global.Exception.ExceptionStatus.*;
 import static team9499.commitbody.global.Exception.ExceptionType.*;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(transactionManager = "dataTransactionManager")
@@ -49,6 +45,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final S3Service s3Service;
     private final JwtUtils jwtUtils;
     private final RefreshTokenRepository refreshTokenRepository;
+    private static Queue<MemberDto> nicknameQueue = new ConcurrentLinkedQueue<>();
 
     @Value("${jwt.refresh}")
     private int expired;        // 만료시간
@@ -80,18 +77,15 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         return new TokenUserInfoResponse(TokenInfoDto.of(member.getId(), member.getNickname()));
     }
 
-
-
-    /**
-     * 회원가입시 닉네임 검증 메서드
-     */
     @Override
-    public void registerNickname(String nickname) {
-        String redisKey = getNicknameKey(nickname);
-        if (isNicknameLock(nickname,redisKey)){
-            return;
+    public void registerNickname(String nickname, Long memberId) {
+        redisService.getMemberAllNickname(nickname);
+        redisService.existNickname(nickname,memberId);
+        nicknameQueue.add(MemberDto.of(memberId,nickname));
+        if (!nicknameQueue.isEmpty()){
+            MemberDto memberDto = nicknameQueue.poll();
+            redisService.setNickname(memberDto);
         }
-        handleRegisterNickName(nickname, redisKey);
     }
 
     /**
@@ -215,36 +209,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     private void memberRedisUpdate(Member member) {
         redisService.updateMember(member.getId().toString(),member);
-    }
-    
-    private String getNicknameKey(String nickname) {
-        return NICKNAME + nickname;
-    }
-
-    private boolean isNicknameLock(String nickname, String redisKey) {
-        // Redis 닉네임 잠금을 시도.(데이터가 없을시)
-        return redisService.nicknameLock(redisKey, nickname, Duration.ofHours(1));
-    }
-
-    private void handleRegisterNickName(String nickname, String redisKey) {
-        try {
-            verifyAndStoreNickname(nickname, redisKey);
-        } catch (Exception e) {
-            redisService.deleteValue(redisKey, AuthType.CERTIFICATION);
-            throw e;
-        }
-    }
-
-    private void verifyAndStoreNickname(String nickname, String redisKey) {
-        if (isMemberNicknamePresent(nickname)) {       // 닉네임 사용자 존재시
-            redisService.deleteValue(redisKey, AuthType.CERTIFICATION);
-            throw new InvalidUsageException(BAD_REQUEST, DUPLICATE_NICKNAME);
-        }        // 존재 하지 않을시 저장
-        redisService.setValues(redisKey, nickname, Duration.ofHours(1));
-    }
-
-    private boolean isMemberNicknamePresent(String nickname) {
-        return memberRepository.findByNickname(nickname).isPresent();
     }
 
     private void blacklistJwtAndClearMemberData(Long memberId, String jwtToken) {
