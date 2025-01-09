@@ -1,6 +1,7 @@
 package team9499.commitbody.global.redis;
 
 import team9499.commitbody.domain.Member.domain.Member;
+import team9499.commitbody.domain.Member.dto.MemberDto;
 
 import java.time.Duration;
 import java.util.List;
@@ -20,6 +21,10 @@ public interface RedisService {
 
     Optional<Member> getMemberDto(String key);
 
+    void getMemberAllNickname(String nickname);
+
+    void existNickname(String nickname,Long memberId);
+
     void updateMember(String key,Member member);
 
     boolean nicknameLock(String key, String value,Duration duration);
@@ -37,4 +42,8 @@ public interface RedisService {
     void setBlackListJwt(String jwtToken);
 
     boolean validBlackListJwt(String jwtToken);
+
+    void setNickname(MemberDto memberDto);
+
+    void deleteNicknameAllByMemberId(Long memberId);
 }
