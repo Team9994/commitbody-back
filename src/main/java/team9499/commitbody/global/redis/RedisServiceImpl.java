@@ -2,7 +2,6 @@ package team9499.commitbody.global.redis;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import team9499.commitbody.domain.Member.domain.Member;
 import team9499.commitbody.domain.Member.dto.MemberDto;
@@ -34,26 +33,6 @@ public class RedisServiceImpl implements RedisService{
     private static final String SEARCH = "search_";
     private static final String ALL = "all";
     private static final String BLACK_LIST = "blackList";
-
-
-    @Override
-    public void setValue(String key, String value) {
-        ValueOperations<String, Object> values = redisTemplate.opsForValue();
-        values.set(key,value);
-    }
-
-    @Override
-    public void setValues(String key, String value, Duration duration) {
-        ValueOperations<String, Object> values = redisTemplate.opsForValue();
-        values.set(key,value,duration);
-    }
-
-    @Override
-    public String getValue(String key) {
-        ValueOperations<String, Object> values = redisTemplate.opsForValue();
-        if(values.get(key) == null) return STRING_EMPTY;
-        return String.valueOf(values.get(key));
-    }
 
     @Override
     public void deleteValue(String key, AuthType type) {
@@ -107,16 +86,6 @@ public class RedisServiceImpl implements RedisService{
     public void updateMember(String key,Member member) {
         deleteValue(getKey(key),AuthType.CERTIFICATION);
         setMember(member,Duration.ofDays(30));
-    }
-
-    @Override
-    public boolean nicknameLock(String key, String value, Duration duration) {
-        Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value);
-        if (result!=null && result){
-            redisTemplate.expire(key,duration);
-            return true;
-        }
-        return false;
     }
 
     @Override

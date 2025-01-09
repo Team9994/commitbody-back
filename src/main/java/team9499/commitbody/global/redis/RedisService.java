@@ -9,12 +9,6 @@ import java.util.Optional;
 
 public interface RedisService {
 
-    void setValue(String key, String value);
-
-    void setValues(String key, String value, Duration duration);
-
-    String getValue(String key);
-
     void deleteValue(String key,AuthType type);
 
     void setMember(Member member,Duration duration);
@@ -26,8 +20,6 @@ public interface RedisService {
     void existNickname(String nickname,Long memberId);
 
     void updateMember(String key,Member member);
-
-    boolean nicknameLock(String key, String value,Duration duration);
 
     void setFCM(String memberId, String token);
 
