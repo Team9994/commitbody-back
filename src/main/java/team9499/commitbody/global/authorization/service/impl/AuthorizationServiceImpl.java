@@ -1,7 +1,6 @@
 package team9499.commitbody.global.authorization.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -31,13 +30,12 @@ import team9499.commitbody.global.utils.JwtUtils;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static team9499.commitbody.global.Exception.ExceptionStatus.*;
 import static team9499.commitbody.global.Exception.ExceptionType.*;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(transactionManager = "dataTransactionManager")
@@ -49,6 +47,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final S3Service s3Service;
     private final JwtUtils jwtUtils;
     private final RefreshTokenRepository refreshTokenRepository;
+    private static Queue<MemberDto> nicknameQueue = new ConcurrentLinkedQueue<>();
 
     @Value("${jwt.refresh}")
     private int expired;        // 만료시간
@@ -80,18 +79,15 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         return new TokenUserInfoResponse(TokenInfoDto.of(member.getId(), member.getNickname()));
     }
 
-
-
-    /**
-     * 회원가입시 닉네임 검증 메서드
-     */
     @Override
-    public void registerNickname(String nickname) {
-        String redisKey = getNicknameKey(nickname);
-        if (isNicknameLock(nickname,redisKey)){
-            return;
+    public void registerNickname(String nickname, Long memberId) {
+        redisService.getMemberAllNickname(nickname);
+        redisService.existNickname(nickname,memberId);
+        nicknameQueue.add(MemberDto.of(memberId,nickname));
+        if (!nicknameQueue.isEmpty()){
+            MemberDto memberDto = nicknameQueue.poll();
+            redisService.setNickname(memberDto);
         }
-        handleRegisterNickName(nickname, redisKey);
     }
 
     /**
