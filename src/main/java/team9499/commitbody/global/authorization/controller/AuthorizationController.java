@@ -63,7 +63,7 @@ public class AuthorizationController {
             eventPublisher.publishEvent(new DeleteMemberEvent(joinResponse.getTokenInfoDto().getMemberId(),"재가입", LocalDateTime.now()));
         }
 
-        String cookie = visitor==null ? visitorCookie() : null;
+        String cookie = visitor==null ? visitorCookie(joinResponse.getTokenInfoDto().getNickname()) : null;
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", cookie)
