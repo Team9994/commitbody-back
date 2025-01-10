@@ -1,10 +1,9 @@
 package team9499.commitbody.global.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import team9499.commitbody.domain.record.domain.Record;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
@@ -12,6 +11,7 @@ import java.util.Locale;
 
 import static team9499.commitbody.global.constants.Delimiter.*;
 
+@Slf4j
 public class TimeConverter {
 
     private static final int SEC = 60;
@@ -104,6 +104,13 @@ public class TimeConverter {
                 .append(endTime.getMinute()).toString();
     }
 
+
+    public static Duration calculateMaxAge() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime endOfDay = LocalDateTime.of(now.toLocalDate(), LocalTime.of(23, 59, 58));
+        long secondsUntilEndOfDay = ChronoUnit.SECONDS.between(now, endOfDay);
+        return Duration.ofSeconds(secondsUntilEndOfDay);
+    }
 
     private static LocalDate getLocalDateNow() {
         return LocalDate.now();
