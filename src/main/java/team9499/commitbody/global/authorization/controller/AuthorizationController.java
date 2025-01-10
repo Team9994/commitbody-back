@@ -31,6 +31,8 @@ import team9499.commitbody.global.payload.SuccessResponse;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import static team9499.commitbody.global.utils.CookieUtils.*;
+
 @Tag(name = "인증 인가",description = "인증 인가관련된 API")
 @Slf4j
 @RestController
@@ -51,15 +53,21 @@ public class AuthorizationController {
             examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
     @PostMapping("/auth")
-    public ResponseEntity<?> socialLogin(@RequestBody JoinLoginRequest joinLoginRequest){
+    public ResponseEntity<?> socialLogin(@RequestBody JoinLoginRequest joinLoginRequest,
+                                         @CookieValue(value = "visitor",required = false) String visitor){
         JoinResponse joinResponse = authorizationService.authenticateOrRegisterUser(
                 joinLoginRequest.getLoginType(), joinLoginRequest.getSocialId(), joinLoginRequest.getFcmToken()
         );
 
-        if (joinResponse.getAuthMode().equals("재가입"))
-            eventPublisher.publishEvent(new DeleteMemberEvent(joinResponse.getTokenInfoDto().getMemberId(),"재가입",LocalDateTime.now()));
+        if (joinResponse.getAuthMode().equals("재가입")) {
+            eventPublisher.publishEvent(new DeleteMemberEvent(joinResponse.getTokenInfoDto().getMemberId(),"재가입", LocalDateTime.now()));
+        }
 
-        return ResponseEntity.ok().body(new SuccessResponse<>(true,"성공",joinResponse));
+        String cookie = visitor.isEmpty() ? visitorCookie() : null;
+
+        return ResponseEntity.ok()
+                .header("Set-Cookie", cookie)
+                .body(new SuccessResponse<>(true,"성공",joinResponse));
     }
 
     @Operation(summary = "회원가입-추가정보", description = "회원가입의 필요한 추가 개인정보를 작성합니다. 추가정보 입력 완료시 tokenInfo에 사용자 정보가 포함됩니다.")
@@ -142,8 +150,10 @@ public class AuthorizationController {
     })
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestBody LogoutRequest logoutRequest){
+
         authorizationService.logout(logoutRequest);
-        return ResponseEntity.ok(new SuccessResponse<>(true,"로그아웃 성공"));
+        return ResponseEntity.ok()
+                .body(new SuccessResponse<>(true,"로그아웃 성공"));
     }
 
     @Operation(summary = "회원 탈퇴", description = "탈퇴 약관 동의을 필수로 동의해야합니다. 탈퇴시 15일이내 재가입을 허용하며 이후 3개월 동안 재가입이 불가하며, 3개월 이후 모든 데이터는 삭제됩니다.")
