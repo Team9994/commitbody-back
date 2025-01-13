@@ -1,5 +1,6 @@
 package team9499.commitbody.global.authorization.controller;
 
+import com.google.api.gax.rpc.internal.Headers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -12,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
@@ -31,6 +33,7 @@ import team9499.commitbody.global.payload.SuccessResponse;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import static org.springframework.http.HttpHeaders.*;
 import static team9499.commitbody.global.utils.CookieUtils.*;
 
 @Tag(name = "인증 인가",description = "인증 인가관련된 API")
@@ -53,8 +56,7 @@ public class AuthorizationController {
             examples = @ExampleObject(value = "{\"success\" : false,\"message\":\"토큰이 존재하지 않습니다.\"}")))
     })
     @PostMapping("/auth")
-    public ResponseEntity<?> socialLogin(@RequestBody JoinLoginRequest joinLoginRequest,
-                                         @CookieValue(value = "visitor",required = false) String visitor){
+    public ResponseEntity<?> socialLogin(@RequestBody JoinLoginRequest joinLoginRequest){
         JoinResponse joinResponse = authorizationService.authenticateOrRegisterUser(
                 joinLoginRequest.getLoginType(), joinLoginRequest.getSocialId(), joinLoginRequest.getFcmToken()
         );
@@ -63,10 +65,10 @@ public class AuthorizationController {
             eventPublisher.publishEvent(new DeleteMemberEvent(joinResponse.getTokenInfoDto().getMemberId(),"재가입", LocalDateTime.now()));
         }
 
-        String cookie = visitor==null ? visitorCookie(joinResponse.getTokenInfoDto().getNickname()) : null;
+//        String cookie = visitor==null ? visitorCookie(joinResponse.getTokenInfoDto().getNickname()) : null;
 
         return ResponseEntity.ok()
-                .header("Set-Cookie", cookie)
+//                .header(SET_COOKIE, cookie)
                 .body(new SuccessResponse<>(true,"성공",joinResponse));
     }
 
