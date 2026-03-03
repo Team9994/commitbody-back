@@ -1,0 +1,88 @@
+server:
+  port: ${SERVER_PORT:8082}
+
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:commitbody}
+
+  datasource-data:
+    driver-class-name: ${DATA_DB_DRIVER:com.mysql.cj.jdbc.Driver}
+    jdbc-url: ${DATA_DB_URL}
+    username: ${DATA_DB_USERNAME}
+    password: ${DATA_DB_PASSWORD}
+
+  datasource-meta:
+    driver-class-name: ${META_DB_DRIVER:com.mysql.cj.jdbc.Driver}
+    jdbc-url: ${META_DB_URL}
+    username: ${META_DB_USERNAME}
+    password: ${META_DB_PASSWORD}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+    elasticsearch:
+      username: ${ES_USERNAME}
+      password: ${ES_PASSWORD}
+      url: ${ES_URL}
+
+  batch:
+    jdbc:
+      initialize-schema: ${BATCH_INITIALIZE_SCHEMA:always}
+    job:
+      enabled: ${BATCH_JOB_ENABLED:false}
+
+jwt:
+  secret: ${JWT_SECRET}
+  access: ${JWT_ACCESS_HOURS:24}
+  refresh: ${JWT_REFRESH_MONTHS:3}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ${AWS_REGION:ap-northeast-2}
+    s3:
+      bucket:
+        image: ${AWS_S3_IMAGE_BUCKET}
+        video: ${AWS_S3_VIDEO_BUCKET}
+    cdn:
+      root: ${AWS_CDN_ROOT}
+      url: ${AWS_CDN_IMAGE_URL}
+      video: ${AWS_CDN_VIDEO_URL}
+
+fcm:
+  firebase_config_path: ${FCM_CONFIG_PATH:firebase-service-account.json}
+
+api:
+  key: ${RAPID_API_KEY}
+  url: ${RAPID_API_URL:https://exercisedb.p.rapidapi.com}
+
+default:
+  profile-1: ${DEFAULT_PROFILE_1}
+  profile-2: ${DEFAULT_PROFILE_2}
+  profile-3: ${DEFAULT_PROFILE_3}
+  profile-4: ${DEFAULT_PROFILE_4}
+
+springdoc:
+  swagger-ui:
+    path: ${SWAGGER_UI_PATH:/api/v1/swagger-ui}
+  api-docs:
+    path: ${API_DOCS_PATH:/v3/api-docs}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${ACTUATOR_EXPOSE:health,info}
+  endpoint:
+    health:
+      show-details: ${ACTUATOR_HEALTH_DETAILS:always}
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    team9499.commitbody: ${LOG_LEVEL_APP:DEBUG}
