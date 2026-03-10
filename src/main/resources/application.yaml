@@ -69,7 +69,7 @@ default:
 
 springdoc:
   swagger-ui:
-    path: ${SWAGGER_UI_PATH:/api/v1/swagger-ui}
+    path: ${SWAGGER_UI_PATH:/api/commitbody/v1/swagger-ui}
   api-docs:
     path: ${API_DOCS_PATH:/v3/api-docs}
 
