@@ -33,7 +33,7 @@ public class SecurityConfig {
     private static final List<String> WHITELISTED_URLS = List.of(
             "/api/v1/auth",
             "/actuator/**",
-            "/api/v1/swagger-ui/**",
+            "/api/commitbody/v1/swagger-ui/**",
             "/v3/api-docs/**",
             "/api/v1/swagger-ui.html",
             "/api-docs/**",
