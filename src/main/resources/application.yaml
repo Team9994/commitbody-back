@@ -71,7 +71,7 @@ springdoc:
   swagger-ui:
     path: ${SWAGGER_UI_PATH:/api/commitbody/v1/swagger-ui}
   api-docs:
-    path: ${API_DOCS_PATH:/v3/api-docs}
+    path: ${API_DOCS_PATH:/api/commitbody/v3/api-docs}
 
 management:
   endpoints:

@@ -35,7 +35,7 @@ public class SecurityConfig {
             "/actuator/**",
             "/api/commitbody/v1/swagger-ui",
             "/api/commitbody/v1/swagger-ui/**",
-            "/v3/api-docs/**",
+            "/api/commitbody/v3/api-docs/**",
             "/api/v1/swagger-ui.html",
             "/api-docs/**",
             "/api/v1/additional-info",
